@@ -1,0 +1,12 @@
+services:
+    app:
+        image: manage-graduation-thesis-iuh-se:api
+        command: sh -c "npm install && npm run build && npm start"
+        ports:
+            - 3000:3000
+        working_dir: /app
+        volumes:
+            - ./:/app
+            - /app/node_modules
+        environment:
+            NODE_ENV: production
