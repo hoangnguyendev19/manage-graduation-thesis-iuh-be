@@ -1,46 +1,48 @@
 const APP_ROUTER = {
     //CORE
     INDEX: '/',
+    ID: '/:id',
     LOGIN: '/login',
     REGISTER: '/register',
     UPDATE_PASSWORD: '/update-password',
+    ME: '/me',
     // FORGOT_PASSWORD: '/forgot-password',
     // GENERATE_ACCESSTOKEN: '/accessToken-generate',
 
     //MAJORS
     MAJORS: '/api/v1/majors',
-    MAJORS_BY_ID: '/:id',
 
     //LECTURERS:
     LECTURER: '/api/v1/lecturers',
-    LECTURER_BY_ID: '/:id',
     // LECTURER_AVAILABLE_GROUP: '/available-group',
     CHANGE_ROLE_LECTURE: '/:id/role',
     // IMPORT_LECTURE: '/import-lecturer',
 
-    //STUDENTS
-    STUDENT: '/students',
-    STUDENT_BY_ID: '/:id',
+    // LECTURER_TERM
+    LECTURER_TERM: '/api/v1/lecturer-terms',
 
-    STUDENT_RESET_PASSWORD: '/:id/reset-password',
-    STUDENT_IMPORT: '/import-student',
-    STUDENT_EXPORT: '/export-transcript',
+    //STUDENTS
+    STUDENT: '/api/v1/students',
+    // STUDENT_RESET_PASSWORD: '/:id/reset-password',
+    // STUDENT_IMPORT: '/import-student',
+    // STUDENT_EXPORT: '/export-transcript',
 
     //TERMS
-    TERM: '/terms',
-    TERM_BY_ID: '/:id',
-    TERM_PUBLIC_RESULT: '/:id/public-result',
+    TERM: '/api/v1/terms',
     TERM_NOW: '/now',
+    TERM_PUBLIC_RESULT: '/:id/public-result',
+    TERM_DISCUSSION: '/:id/discussion',
+    TERM_CHOOSE_TOPIC: '/:id/choose-topic',
+    TERM_REPORT: '/:id/report',
+    TERM_SUBMIT_TOPIC: '/:id/submit-topic',
 
     //TRANSCRIPTS
     TRANSCRIPT: '/transcripts',
-    TRANSCRIPT_BY_ID: '/:id',
     TRANSCRIPT_BY_GROUP_STUDENT: '/group-student/:group_student_id',
     TRANSCRIPT_BY_SUMMARY: '/summary',
 
     //TOPICS
     TOPIC: '/topics',
-    TOPIC_BY_ID: '/:id',
     TOPIC_REVIEW: '/:id/review',
 
     //GROUP_LECTURER

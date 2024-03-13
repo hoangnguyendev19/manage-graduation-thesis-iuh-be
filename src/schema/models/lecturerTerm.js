@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
             role: {
                 type: DataTypes.ENUM('HEAD_LECTURER', 'LECTURER', 'SUB_HEAD_LECTURER'),
                 allowNull: true,
+                defaultValue: 'LECTURER',
             },
         },
         {

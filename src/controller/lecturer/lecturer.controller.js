@@ -3,7 +3,6 @@ const Error = require('../../handler/errors');
 const { generateAccessToken, generateRefreshToken } = require('../../handler/jwt');
 const { HTTP_STATUS } = require('../../constants/constant');
 const { comparePassword, hashPassword } = require('../../handler/bcrypt');
-const { where } = require('sequelize');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -144,18 +143,65 @@ exports.changeRole = async (req, res) => {
 
 exports.updatePassword = async (req, res) => {
     try {
-        let { password } = req.body;
-        password = await hashPassword(password);
+        let { password, newPassword } = req.body;
+
         let lecturer = await Lecturer.findByPk(req.user.id);
         if (!lecturer) {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
 
-        await Lecturer.update({ password }, { where: { id: req.user.id } });
+        const flag = await comparePassword(password, lecturer.password);
+        if (!flag) {
+            return Error.sendWarning(res, 'Password not match');
+        }
+
+        newPassword = await hashPassword(newPassword);
+
+        await Lecturer.update({ password: newPassword }, { where: { id: req.user.id } });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update Password Success',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getMe = async (req, res) => {
+    try {
+        console.log(req.user.id);
+        const lecturer = await Lecturer.findByPk(req.user.id);
+        console.log(lecturer);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Lecturer not found');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            lecturer,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.updateMe = async (req, res) => {
+    try {
+        const { fullName, email, phoneNumber } = req.body;
+        const lecturer = await Lecturer.findByPk(req.user.id);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Lecturer not found');
+        }
+
+        await Lecturer.update({ fullName, email, phoneNumber }, { where: { id: req.user.id } });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Update Success',
         });
     } catch (error) {
         console.log(error);

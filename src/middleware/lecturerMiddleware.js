@@ -19,7 +19,6 @@ exports.protectLecturer = async (req, res, next) => {
         if (!lecturer) {
             return Error.sendUnauthenticated(res);
         }
-        // console.log(lecturer.isAdmin, lecturer.userName, lecturer.role);
         req.user = lecturer;
 
         next();

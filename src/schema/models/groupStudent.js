@@ -22,10 +22,12 @@ module.exports = (sequelize, DataTypes) => {
                     'PASS_SESSION_HOST',
                 ),
                 allowNull: false,
+                defaultValue: 'OPEN',
             },
             typeReport: {
                 type: DataTypes.ENUM('OPEN', 'POSTER', 'SESSION_HOST'),
                 allowNull: false,
+                defaultValue: 'OPEN',
                 field: 'type_report',
             },
         },

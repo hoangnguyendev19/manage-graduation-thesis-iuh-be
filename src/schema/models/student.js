@@ -49,7 +49,8 @@ module.exports = (sequelize, DataTypes) => {
             },
             typeTraning: {
                 type: DataTypes.ENUM('COLLEGE', 'UNIVERSITY'),
-                allowNull: true,
+                allowNull: false,
+                defaultValue: 'UNIVERSITY',
                 field: 'type_traning',
             },
         },

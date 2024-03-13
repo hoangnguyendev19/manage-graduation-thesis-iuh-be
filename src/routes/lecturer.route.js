@@ -8,6 +8,8 @@ const {
     changeRole,
     createLecturer,
     updatePassword,
+    getMe,
+    updateMe,
 } = require('../controller/lecturer/lecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturerMiddleware');
@@ -20,12 +22,16 @@ router.post(APP_ROUTER.REGISTER, register);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
 
+router.get(APP_ROUTER.ME, protectLecturer, getMe);
+
 router.get(APP_ROUTER.INDEX, getLecturers);
 
-router.get(APP_ROUTER.LECTURER_BY_ID, getLecturerById);
+router.get(APP_ROUTER.ID, getLecturerById);
 
 router.put(APP_ROUTER.CHANGE_ROLE_LECTURE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectLecturer, updatePassword);
+
+router.put(APP_ROUTER.ME, protectLecturer, updateMe);
 
 module.exports = router;

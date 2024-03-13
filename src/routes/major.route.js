@@ -13,12 +13,12 @@ const router = express.Router();
 
 router.get(APP_ROUTER.INDEX, getMajors);
 
-router.get(APP_ROUTER.MAJORS_BY_ID, getMajorById);
+router.get(APP_ROUTER.ID, getMajorById);
 
 router.post(APP_ROUTER.INDEX, createMajor);
 
-router.put(APP_ROUTER.MAJORS_BY_ID, updateMajor);
+router.put(APP_ROUTER.ID, updateMajor);
 
-router.delete(APP_ROUTER.MAJORS_BY_ID, deleteMajor);
+router.delete(APP_ROUTER.ID, deleteMajor);
 
 module.exports = router;
