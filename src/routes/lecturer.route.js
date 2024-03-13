@@ -12,7 +12,7 @@ const {
     updateMe,
 } = require('../controller/lecturer/lecturer.controller');
 
-const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturerMiddleware');
+const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 
 const router = express.Router();
 

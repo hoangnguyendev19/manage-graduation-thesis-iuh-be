@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
             },
             scoreMax: {
                 type: DataTypes.INTEGER,
-                allowNull: true,
+                allowNull: false,
                 field: 'score_max',
             },
             description: {
@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
             type: {
                 type: DataTypes.ENUM('ADVISOR', 'REVIEWER', 'SESSION_HOST'),
                 allowNull: true,
+                defaultValue: 'REVIEWER',
             },
         },
         {

@@ -42,13 +42,12 @@ const APP_ROUTER = {
     TRANSCRIPT_BY_SUMMARY: '/summary',
 
     //TOPICS
-    TOPIC: '/topics',
-    TOPIC_REVIEW: '/:id/review',
+    TOPIC: '/api/v1/topics',
+    TOPIC_STATUS: '/:id/status',
 
     //GROUP_LECTURER
-    GROUP_LECTURER: '/group_lecturers',
-    GROUP_LECTURER_BY_ID: '/:id',
-    GROUP_LECTURER_MEMBERS: '/:id/members/:lecturer_id',
+    GROUP_LECTURER: '/api/v1/group-lecturers',
+    GROUP_LECTURER_MEMBERS: '/:id/members/:lecturerId',
 
     //GROUP_STUDENT
     GROUP_STUDENT: '/group_students',
@@ -67,10 +66,9 @@ const APP_ROUTER = {
     NOTIFICATION_STUDENT_BY_ID: '/:id',
 
     //EVALUATIONS
-    EVALUATION: '/evaluations',
-    EVALUATION_BY_ID: '/:id',
-    EVALUATION_EXPORT_PDF: '/pdf/assigns/:assign_id/download',
-    GENERATE_EVALUATION: '/pdf/download',
+    EVALUATION: '/api/v1/evaluations',
+    // EVALUATION_EXPORT_PDF: '/pdf/assigns/:assign_id/download',
+    // GENERATE_EVALUATION: '/pdf/download',
 
     //ASSIGNS
     ASSIGN: '/assigns',

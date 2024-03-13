@@ -44,11 +44,13 @@ module.exports = (sequelize, DataTypes) => {
             },
             status: {
                 type: DataTypes.ENUM('PENDING', 'APPROVED', 'REJECTED'),
+                defaultValue: 'PENDING',
                 allowNull: false,
             },
             level: {
                 type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH'),
                 allowNull: false,
+                defaultValue: 'LOW',
             },
         },
         {

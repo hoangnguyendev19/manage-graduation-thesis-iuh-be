@@ -1,4 +1,4 @@
-const { lecturerTerm } = require('../../schema/index');
+const { LecturerTerm } = require('../../schema/index');
 const Error = require('../../handler/errors');
 const { HTTP_STATUS } = require('../../constants/constant');
 const { Op } = require('sequelize');
@@ -7,7 +7,7 @@ exports.getLecturerTerms = async (req, res) => {
     try {
         const { termId } = req.query;
 
-        const lecturerTerms = await lecturerTerm.findAll({
+        const lecturerTerms = await LecturerTerm.findAll({
             where: {
                 term_id: termId,
             },
@@ -28,7 +28,7 @@ exports.createLecturerTerm = async (req, res) => {
     try {
         const { termId, lecturerId } = req.body;
 
-        const lecturerTerm = await lecturerTerm.create({
+        const lecturerTerm = await LecturerTerm.create({
             term_id: termId,
             lecturer_id: lecturerId,
         });
@@ -49,7 +49,7 @@ exports.updateRoleLecturerTerm = async (req, res) => {
         const { id } = req.params;
         const { role } = req.body;
 
-        const lecturerTerm = await lecturerTerm.findByPk(id);
+        const lecturerTerm = await LecturerTerm.findByPk(id);
         if (!lecturerTerm) {
             return Error.sendNotFound(res, 'Lecturer Term not found');
         }
@@ -72,7 +72,7 @@ exports.deleteLecturerTerm = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const lecturerTerm = await lecturerTerm.findByPk(id);
+        const lecturerTerm = await LecturerTerm.findByPk(id);
         if (!lecturerTerm) {
             return Error.sendNotFound(res, 'Lecturer Term not found');
         }

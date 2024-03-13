@@ -10,8 +10,8 @@ const {
     updateMe,
 } = require('../controller/student/student.controller');
 
-const { protectStudent } = require('../middleware/studentMiddleware');
-const { checkRoleLecturer, protectLecturer } = require('../middleware/lecturerMiddleware');
+const { protectStudent } = require('../middleware/student.middleware');
+const { checkRoleLecturer, protectLecturer } = require('../middleware/lecturer.middleware');
 
 const router = express.Router();
 
