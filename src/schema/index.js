@@ -247,6 +247,16 @@ NotificationLecturer.belongsTo(Lecturer, {
     as: 'lecturer',
 });
 
+Transcript.hasMany(LecturerTerm, {
+    foreignKey: 'transcript_id',
+    as: 'lecturerTerms',
+});
+
+LecturerTerm.belongsTo(Transcript, {
+    foreignKey: 'transcript_id',
+    as: 'transcript',
+});
+
 connectDB();
 
 module.exports = {

@@ -119,7 +119,8 @@ exports.deleteGroupLecturer = async (req, res) => {
 
 exports.removeLecturerFromGroupLecturer = async (req, res) => {
     try {
-        const { id, lecturerId } = req.params;
+        const { id } = req.params;
+        const { lecturerId } = req.body;
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 lecturer_id: lecturerId,
@@ -154,7 +155,9 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
 
 exports.addLecturerToGroupLecturer = async (req, res) => {
     try {
-        const { id, lecturerId } = req.params;
+        const { id } = req.params;
+        const { lecturerId } = req.body;
+
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 lecturer_id: lecturerId,

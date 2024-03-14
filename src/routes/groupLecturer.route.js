@@ -36,15 +36,15 @@ router.delete(
     deleteGroupLecturer,
 );
 
-router.post(
-    APP_ROUTER.GROUP_LECTURER_MEMBERS,
+router.put(
+    APP_ROUTER.GROUP_LECTURER_ADD_MEMBER,
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
     addLecturerToGroupLecturer,
 );
 
-router.delete(
-    APP_ROUTER.GROUP_LECTURER_MEMBERS,
+router.put(
+    APP_ROUTER.GROUP_LECTURER_REMOVE_MEMBER,
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
     removeLecturerFromGroupLecturer,

@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
                     'GROUP_STUDENT',
                     'CHOOSE_TOPIC',
                 ),
+                defaultValue: 'LECTURER',
                 allowNull: true,
             },
         },
