@@ -1,5 +1,3 @@
-const groupLecturerMember = require('./groupLecturerMember');
-
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define(
         'GroupLecturer',

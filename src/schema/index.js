@@ -1,4 +1,4 @@
-const { sequelize, connectDB } = require('../config/connectDB');
+const { sequelize } = require('../config/connectDB');
 const StudentModel = require('./models/student');
 const MajorModel = require('./models/major');
 const LecturerModel = require('./models/lecturer');
@@ -247,17 +247,15 @@ NotificationLecturer.belongsTo(Lecturer, {
     as: 'lecturer',
 });
 
-Transcript.hasMany(LecturerTerm, {
-    foreignKey: 'transcript_id',
-    as: 'lecturerTerms',
+LecturerTerm.hasMany(Transcript, {
+    foreignKey: 'lecturer_term_id',
+    as: 'transcripts',
 });
 
-LecturerTerm.belongsTo(Transcript, {
-    foreignKey: 'transcript_id',
-    as: 'transcript',
+Transcript.belongsTo(LecturerTerm, {
+    foreignKey: 'lecturer_term_id',
+    as: 'lecturerTerm',
 });
-
-connectDB();
 
 module.exports = {
     Student,

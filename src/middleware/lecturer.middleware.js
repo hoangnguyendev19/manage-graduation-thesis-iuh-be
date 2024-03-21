@@ -1,6 +1,6 @@
-const Error = require('../handler/errors');
+const Error = require('../helper/errors');
 const { Lecturer } = require('../schema/index');
-const { verifyAccessToken } = require('../handler/jwt');
+const { verifyAccessToken } = require('../helper/jwt');
 
 exports.protectLecturer = async (req, res, next) => {
     try {
@@ -23,7 +23,7 @@ exports.protectLecturer = async (req, res, next) => {
 
         next();
     } catch (error) {
-        return Error.sendUnauthenticated(res);
+        return Error.sendError(res, error);
     }
 };
 

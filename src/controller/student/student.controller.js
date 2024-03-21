@@ -1,8 +1,12 @@
 const { Student } = require('../../schema/index');
-const Error = require('../../handler/errors');
-const { generateAccessToken, generateRefreshToken } = require('../../handler/jwt');
+const Error = require('../../helper/errors');
+const {
+    generateAccessToken,
+    generateRefreshToken,
+    verifyRefreshToken,
+} = require('../../helper/jwt');
 const { HTTP_STATUS } = require('../../constants/constant');
-const { comparePassword, hashPassword } = require('../../handler/bcrypt');
+const { comparePassword, hashPassword } = require('../../helper/bcrypt');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -26,6 +30,29 @@ exports.login = async (req, res) => {
             message: 'Login Success',
             accessToken,
             refreshToken,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.refreshToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+        if (!refreshToken) {
+            return Error.sendBadRequest(res, 'Invalid token');
+        }
+
+        const { id } = verifyRefreshToken(refreshToken);
+        const accessToken = generateAccessToken(id);
+        const newRefreshToken = generateRefreshToken(id);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Refresh Token Success',
+            accessToken,
+            refreshToken: newRefreshToken,
         });
     } catch (error) {
         console.log(error);
@@ -123,7 +150,10 @@ exports.updatePassword = async (req, res) => {
 
 exports.getMe = async (req, res) => {
     try {
-        const student = await Student.findByPk(req.user.id);
+        const student = await Student.findByPk(req.user.id, {
+            attributes: { exclude: ['password'] },
+        });
+
         if (!student) {
             return Error.sendNotFound(res, 'Student not found');
         }

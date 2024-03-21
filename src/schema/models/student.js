@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
             },
             gender: {
-                type: DataTypes.ENUM('MALE', 'FEMALE', 'OTHER'),
+                type: DataTypes.ENUM('MALE', 'FEMALE'),
                 allowNull: true,
             },
             schoolYear: {
@@ -47,11 +47,11 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
                 field: 'school_year',
             },
-            typeTraning: {
+            typeTraining: {
                 type: DataTypes.ENUM('COLLEGE', 'UNIVERSITY'),
                 allowNull: false,
                 defaultValue: 'UNIVERSITY',
-                field: 'type_traning',
+                field: 'type_training',
             },
         },
         {

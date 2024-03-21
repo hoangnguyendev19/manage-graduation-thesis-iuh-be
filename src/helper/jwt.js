@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const client = require('../config/connectRedis');
+const Error = require('./errors');
 
 dotenv.config();
 
@@ -15,6 +17,12 @@ exports.generateRefreshToken = (id) => {
         expiresIn: process.env.REFRESH_TOKEN_LIFE,
     });
 
+    client.set(id.toString(), token, 'EX', 24 * 3600, (error, reply) => {
+        if (error) {
+            return Error.sendError(res, error);
+        }
+    });
+
     return token;
 };
 
@@ -23,5 +31,16 @@ exports.verifyAccessToken = (token) => {
 };
 
 exports.verifyRefreshToken = (token) => {
-    return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET_KEY);
+    const data = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET_KEY);
+
+    client.get(data.id.toString(), (error, result) => {
+        if (error) {
+            return Error.sendError(res, error);
+        }
+        if (result !== token) {
+            return Error.sendUnauthenticated(res);
+        }
+    });
+
+    return data;
 };

@@ -1,5 +1,5 @@
 const { Term } = require('../../schema/index');
-const Error = require('../../handler/errors');
+const Error = require('../../helper/errors');
 const { HTTP_STATUS } = require('../../constants/constant');
 const { Op } = require('sequelize');
 const moment = require('moment');

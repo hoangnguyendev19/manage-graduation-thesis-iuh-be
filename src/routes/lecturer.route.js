@@ -3,6 +3,7 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     login,
     register,
+    refreshToken,
     getLecturers,
     getLecturerById,
     changeRole,
@@ -19,6 +20,8 @@ const router = express.Router();
 router.post(APP_ROUTER.LOGIN, login);
 
 router.post(APP_ROUTER.REGISTER, register);
+
+router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
 
