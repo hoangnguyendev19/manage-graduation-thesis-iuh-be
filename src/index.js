@@ -7,13 +7,10 @@ const { connectDB } = require('./config/connectDB');
 require('dotenv').config();
 
 const app = express();
-const corsOptions = {
-    origin: '*',
-    optionsSuccessStatus: 200,
-};
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cors(corsOptions));
+app.use(cors({ origin: '*' }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 

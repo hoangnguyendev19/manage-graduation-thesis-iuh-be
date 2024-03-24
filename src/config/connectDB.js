@@ -13,7 +13,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 });
 
 // (async () => await sequelize.sync({ alter: true }))();
-(async () => await sequelize.sync({}))();
+// (async () => await sequelize.sync({}))();
 
 let connectDB = async () => {
     try {

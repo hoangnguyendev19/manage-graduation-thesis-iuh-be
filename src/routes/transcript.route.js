@@ -3,7 +3,7 @@ const express = require('express');
 const { APP_ROUTER } = require('../constants/router');
 
 const {
-    getTranscriptsByStudentId,
+    getTranscriptByTypeEvaluation,
     getTranscriptSummary,
     createTranscript,
     updateTranscript,
@@ -13,7 +13,7 @@ const { protectStudent } = require('../middleware/student.middleware');
 
 const router = express.Router();
 
-router.get(APP_ROUTER.INDEX, protectLecturer, getTranscriptsByStudentId);
+router.get(APP_ROUTER.INDEX, protectStudent, getTranscriptByTypeEvaluation);
 
 router.get(APP_ROUTER.TRANSCRIPT_BY_SUMMARY, protectStudent, getTranscriptSummary);
 

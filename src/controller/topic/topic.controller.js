@@ -1,26 +1,84 @@
-const { Topic, LecturerTerm } = require('../../schema/index');
+const { Topic, LecturerTerm, Lecturer, Major } = require('../../schema/index');
 const Error = require('../../helper/errors');
 const { HTTP_STATUS } = require('../../constants/constant');
 const { Op } = require('sequelize');
 
 exports.getTopics = async (req, res) => {
     try {
-        const { lecturerId } = req.query;
-        const lecturerTerm = await LecturerTerm.findOne({
-            where: {
-                lecturer_id: lecturerId,
-            },
-        });
+        const { lecturerId, termId, majorId } = req.query;
+        let topics = null;
+        if (!lecturerId && termId && majorId) {
+            const lecturers = await Lecturer.findAll({
+                where: {
+                    major_id: majorId,
+                },
+                attributes: ['id'],
+            });
 
-        if (!lecturerTerm) {
-            return Error.sendNotFound(res, 'Lecturer Term not found');
+            const lecturerTerms = await LecturerTerm.findAll({
+                where: {
+                    term_id: termId,
+                    lecturer_id: {
+                        [Op.in]: lecturers.map((lecturer) => lecturer.id),
+                    },
+                },
+            });
+
+            if (lecturerTerms.length === 0) {
+                return Error.sendNotFound(res, 'Lecturer Term not found');
+            }
+
+            topics = await Topic.findAll({
+                where: {
+                    lecturer_term_id: {
+                        [Op.in]: lecturerTerms.map((lecturerTerm) => lecturerTerm.id),
+                    },
+                },
+                attributes: { exclude: ['lecturer_term_id'] },
+
+                include: {
+                    model: LecturerTerm,
+                    attributes: ['id'],
+                    include: {
+                        model: Lecturer,
+                        attributes: [
+                            'id',
+                            'fullName',
+                            'avatarUrl',
+                            'email',
+                            'phoneNumber',
+                            'gender',
+                            'degree',
+                        ],
+                        include: {
+                            model: Major,
+                            attributes: ['id', 'name'],
+                            as: 'major',
+                        },
+                        as: 'lecturer',
+                    },
+                    as: 'lecturerTerm',
+                },
+            });
+        } else if (lecturerId && termId && !majorId) {
+            const lecturerTerm = await LecturerTerm.findOne({
+                where: {
+                    lecturer_id: lecturerId,
+                    term_id: termId,
+                },
+            });
+
+            if (!lecturerTerm) {
+                return Error.sendNotFound(res, 'Lecturer Term not found');
+            }
+
+            topics = await Topic.findAll({
+                where: {
+                    lecturer_term_id: lecturerTerm.id,
+                },
+            });
         }
 
-        const topics = await Topic.findAll({
-            where: {
-                lecturer_term_id: lecturerTerm.id,
-            },
-        });
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',

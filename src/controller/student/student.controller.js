@@ -12,7 +12,9 @@ const { comparePassword, hashPassword } = require('../../helper/bcrypt');
 exports.login = async (req, res) => {
     try {
         const { userName, password } = req.body;
-        const student = await Student.findOne({ where: { userName } });
+        const student = await Student.findOne({
+            where: { userName },
+        });
 
         if (!student) {
             return Error.sendNotFound(res, 'Invalid email or password');
@@ -22,6 +24,11 @@ exports.login = async (req, res) => {
             return Error.sendNotFound(res, 'Invalid email or password');
         }
 
+        const user = await Student.findOne({
+            where: { userName },
+            attributes: { exclude: ['password'] },
+        });
+
         const accessToken = generateAccessToken(student.id);
         const refreshToken = generateRefreshToken(student.id);
 
@@ -30,6 +37,7 @@ exports.login = async (req, res) => {
             message: 'Login Success',
             accessToken,
             refreshToken,
+            user,
         });
     } catch (error) {
         console.log(error);

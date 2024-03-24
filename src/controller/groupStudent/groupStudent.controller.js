@@ -68,6 +68,31 @@ exports.getGroupStudentById = async (req, res) => {
     }
 };
 
+exports.getMyGroupStudent = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const { id } = req.user;
+        console.log(id);
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                student_id: id,
+                term_id: termId,
+            },
+        });
+
+        const groupStudent = await GroupStudent.findByPk(studentTerm.group_student_id);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            group: groupStudent,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.createGroupStudent = async (req, res) => {
     try {
         const { name, termId } = req.body;

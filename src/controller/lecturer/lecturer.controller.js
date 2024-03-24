@@ -92,7 +92,14 @@ exports.refreshToken = async (req, res) => {
 
 exports.getLecturers = async (req, res) => {
     try {
-        const lecturers = await Lecturer.findAll();
+        const { majorId } = req.query;
+        let lecturers = null;
+        if (majorId) {
+            lecturers = await Lecturer.findAll({ where: { major_id: majorId } });
+        } else {
+            lecturers = await Lecturer.findAll();
+        }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',

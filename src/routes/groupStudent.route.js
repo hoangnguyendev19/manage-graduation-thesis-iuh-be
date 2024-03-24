@@ -5,6 +5,7 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     getGroupStudents,
     getGroupStudentById,
+    getMyGroupStudent,
     createGroupStudent,
     updateTypeReport,
     updateStatus,
@@ -16,6 +17,8 @@ const {
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
 const router = express.Router();
+
+router.get(APP_ROUTER.ME, protectStudent, getMyGroupStudent);
 
 router.get(APP_ROUTER.INDEX, getGroupStudents);
 

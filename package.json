@@ -7,7 +7,7 @@
         "start": "nodemon ./src/index.js",
         "test": "echo \"Error: no test specified\" && exit 1",
         "build-database": "npx sequelize db:create",
-        "import-data": "node ./src/config/importData.js"
+        "insert-data": "node ./src/config/insertData.js"
     },
     "author": "Nguyen Huy Hoang",
     "license": "ISC",

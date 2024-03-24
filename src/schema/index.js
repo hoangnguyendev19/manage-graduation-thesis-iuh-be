@@ -257,6 +257,9 @@ Transcript.belongsTo(LecturerTerm, {
     as: 'lecturerTerm',
 });
 
+// (async () => await sequelize.sync({ alter: true }))();
+(async () => await sequelize.sync({}))();
+
 module.exports = {
     Student,
     StudentTerm,
