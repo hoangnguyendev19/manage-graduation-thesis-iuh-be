@@ -1,20 +1,20 @@
-const { sequelize } = require('../config/connectDB');
-const StudentModel = require('./models/student');
-const MajorModel = require('./models/major');
-const LecturerModel = require('./models/lecturer');
-const GroupLecturerModel = require('./models/groupLecturer');
-const GroupLecturerMemberModel = require('./models/groupLecturerMember');
-const LecturerTermModel = require('./models/lecturerTerm');
-const TermModel = require('./models/term');
-const TopicModel = require('./models/topic');
-const TranscriptModel = require('./models/transcript');
-const EvaluationModel = require('./models/evaluation');
-const GroupStudentModel = require('./models/groupStudent');
-const AchievementModel = require('./models/achievement');
-const AssignModel = require('./models/assign');
-const StudentTermModel = require('./models/studentTerm');
-const NotificationStudentModel = require('./models/notificationStudent');
-const NotificationLecturerModel = require('./models/notificationLecturer');
+const { sequelize } = require('../configs/connectDB');
+const StudentModel = require('./student.model');
+const MajorModel = require('./major.model');
+const LecturerModel = require('./lecturer.model');
+const GroupLecturerModel = require('./groupLecturer.model');
+const GroupLecturerMemberModel = require('./groupLecturerMember.model');
+const LecturerTermModel = require('./lecturerTerm.model');
+const TermModel = require('./term.model');
+const TopicModel = require('./topic.model');
+const TranscriptModel = require('./transcript.model');
+const EvaluationModel = require('./evaluation.model');
+const GroupStudentModel = require('./groupStudent.model');
+const AchievementModel = require('./achievement.model');
+const AssignModel = require('./assign.model');
+const StudentTermModel = require('./studentTerm.model');
+const NotificationStudentModel = require('./notificationStudent.model');
+const NotificationLecturerModel = require('./notificationLecturer.model');
 
 const { DataTypes } = require('sequelize');
 

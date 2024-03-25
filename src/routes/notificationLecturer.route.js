@@ -7,7 +7,7 @@ const {
     updateNotificationLecturer,
     updateReadStatus,
     deleteNotificationLecturer,
-} = require('../controller/notificationLecturer/notificationLecturer.controller');
+} = require('../controllers/notificationLecturer.controller');
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 
 const router = express.Router();

@@ -6,7 +6,7 @@ const {
     createAchievement,
     updateAchievement,
     deleteAchievement,
-} = require('../controller/achievement/achievement.controller');
+} = require('../controllers/achievement.controller');
 
 const router = express.Router();
 

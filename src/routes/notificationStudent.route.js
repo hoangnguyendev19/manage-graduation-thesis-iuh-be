@@ -7,7 +7,7 @@ const {
     updateNotificationStudent,
     updateReadStatus,
     deleteNotificationStudent,
-} = require('../controller/notificationStudent/notificationStudent.controller');
+} = require('../controllers/notificationStudent.controller');
 const { protectStudent } = require('../middleware/student.middleware');
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 

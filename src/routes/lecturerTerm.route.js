@@ -7,7 +7,7 @@ const {
     createLecturerTerm,
     updateRoleLecturerTerm,
     deleteLecturerTerm,
-} = require('../controller/lecturerTerm/lecturerTerm.controller');
+} = require('../controllers/lecturerTerm.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 

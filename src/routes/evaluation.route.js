@@ -8,7 +8,7 @@ const {
     createEvaluation,
     updateEvaluation,
     deleteEvaluation,
-} = require('../controller/evaluation/evaluation.controller');
+} = require('../controllers/evaluation.controller');
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 const router = express.Router();
 

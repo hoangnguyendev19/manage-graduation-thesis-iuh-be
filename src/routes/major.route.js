@@ -7,7 +7,7 @@ const {
     getMajorById,
     updateMajor,
     deleteMajor,
-} = require('../controller/major/major.controller');
+} = require('../controllers/major.controller');
 
 const router = express.Router();
 

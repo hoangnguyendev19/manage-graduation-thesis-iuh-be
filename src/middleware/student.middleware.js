@@ -1,5 +1,5 @@
 const Error = require('../helper/errors');
-const { Student } = require('../schema/index');
+const { Student } = require('../models/index');
 const { verifyAccessToken } = require('../helper/jwt');
 
 exports.protectStudent = async (req, res, next) => {

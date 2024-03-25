@@ -13,6 +13,7 @@ const transcript = require('./transcript.route');
 const achievement = require('./achievement.route');
 const notificationStudent = require('./notificationStudent.route');
 const notificationLecturer = require('./notificationLecturer.route');
+const upload = require('./upload.route');
 
 function router(app) {
     app.use(APP_ROUTER.MAJORS, major);
@@ -28,6 +29,7 @@ function router(app) {
     app.use(APP_ROUTER.ACHIEVEMENT, achievement);
     app.use(APP_ROUTER.NOTIFICATION_STUDENT, notificationStudent);
     app.use(APP_ROUTER.NOTIFICATION_LECTURER, notificationLecturer);
+    app.use(APP_ROUTER.UPLOAD, upload);
 }
 
 module.exports = router;

@@ -11,7 +11,7 @@ const {
     updatePassword,
     getMe,
     updateMe,
-} = require('../controller/lecturer/lecturer.controller');
+} = require('../controllers/lecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 

@@ -11,7 +11,7 @@ const {
     updateChooseTopicTerm,
     updateReportTerm,
     updateSubmitTopicTerm,
-} = require('../controller/term/term.controller');
+} = require('../controllers/term.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 

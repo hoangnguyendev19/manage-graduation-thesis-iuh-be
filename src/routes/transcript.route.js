@@ -7,7 +7,7 @@ const {
     getTranscriptSummary,
     createTranscript,
     updateTranscript,
-} = require('../controller/transcript/transcript.controller');
+} = require('../controllers/transcript.controller');
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
 

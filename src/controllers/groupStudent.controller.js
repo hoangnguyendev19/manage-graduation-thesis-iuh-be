@@ -1,6 +1,6 @@
-const { GroupStudent, StudentTerm } = require('../../schema/index');
-const Error = require('../../helper/errors');
-const { HTTP_STATUS } = require('../../constants/constant');
+const { GroupStudent, StudentTerm } = require('../models/index');
+const Error = require('../helper/errors');
+const { HTTP_STATUS } = require('../constants/constant');
 const { Op } = require('sequelize');
 
 exports.getGroupStudents = async (req, res) => {
@@ -72,7 +72,7 @@ exports.getMyGroupStudent = async (req, res) => {
     try {
         const { termId } = req.query;
         const { id } = req.user;
-        console.log(id);
+
         const studentTerm = await StudentTerm.findOne({
             where: {
                 student_id: id,

@@ -8,7 +8,9 @@ const APP_ROUTER = {
     UPDATE_PASSWORD: '/update-password',
     ME: '/me',
     // FORGOT_PASSWORD: '/forgot-password',
-    // GENERATE_ACCESSTOKEN: '/accessToken-generate',
+
+    // UPLOAD
+    UPLOAD: '/api/v1/uploads',
 
     //MAJORS
     MAJORS: '/api/v1/majors',

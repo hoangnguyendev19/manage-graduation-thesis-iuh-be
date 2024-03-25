@@ -1,12 +1,8 @@
-const { Lecturer } = require('../../schema/index');
-const Error = require('../../helper/errors');
-const {
-    generateAccessToken,
-    generateRefreshToken,
-    verifyRefreshToken,
-} = require('../../helper/jwt');
-const { HTTP_STATUS } = require('../../constants/constant');
-const { comparePassword, hashPassword } = require('../../helper/bcrypt');
+const { Lecturer } = require('../models/index');
+const Error = require('../helper/errors');
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../helper/jwt');
+const { HTTP_STATUS } = require('../constants/constant');
+const { comparePassword, hashPassword } = require('../helper/bcrypt');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {

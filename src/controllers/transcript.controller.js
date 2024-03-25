@@ -1,12 +1,6 @@
-const {
-    Transcript,
-    StudentTerm,
-    LecturerTerm,
-    Evaluation,
-    Lecturer,
-} = require('../../schema/index');
-const Error = require('../../helper/errors');
-const { HTTP_STATUS } = require('../../constants/constant');
+const { Transcript, StudentTerm, LecturerTerm, Evaluation, Lecturer } = require('../models/index');
+const Error = require('../helper/errors');
+const { HTTP_STATUS } = require('../constants/constant');
 const { Op } = require('sequelize');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {

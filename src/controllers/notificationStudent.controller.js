@@ -1,6 +1,6 @@
-const { NotificationStudent } = require('../../schema/index');
-const Error = require('../../helper/errors');
-const { HTTP_STATUS } = require('../../constants/constant');
+const { NotificationStudent } = require('../models/index');
+const Error = require('../helper/errors');
+const { HTTP_STATUS } = require('../constants/constant');
 const { Op } = require('sequelize');
 
 exports.getNotificationStudents = async (req, res) => {

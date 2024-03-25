@@ -9,7 +9,7 @@ const {
     updatePassword,
     getMe,
     updateMe,
-} = require('../controller/student/student.controller');
+} = require('../controllers/student.controller');
 
 const { protectStudent } = require('../middleware/student.middleware');
 const { checkRoleLecturer, protectLecturer } = require('../middleware/lecturer.middleware');

@@ -1,6 +1,6 @@
-const { Achievement, StudentTerm } = require('../../schema/index');
-const Error = require('../../helper/errors');
-const { HTTP_STATUS } = require('../../constants/constant');
+const { Achievement, StudentTerm } = require('../models/index');
+const Error = require('../helper/errors');
+const { HTTP_STATUS } = require('../constants/constant');
 const { Op } = require('sequelize');
 
 exports.getAchievements = async (req, res) => {

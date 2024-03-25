@@ -10,7 +10,7 @@ const {
     deleteGroupLecturer,
     addLecturerToGroupLecturer,
     removeLecturerFromGroupLecturer,
-} = require('../controller/groupLecturer/groupLecturer.controller');
+} = require('../controllers/groupLecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 

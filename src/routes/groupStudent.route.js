@@ -13,7 +13,7 @@ const {
     deleteGroupStudent,
     addStudentToGroupStudent,
     removeStudentFromGroupStudent,
-} = require('../controller/groupStudent/groupStudent.controller');
+} = require('../controllers/groupStudent.controller');
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
 const router = express.Router();

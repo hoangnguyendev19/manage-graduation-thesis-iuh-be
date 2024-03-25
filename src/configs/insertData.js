@@ -20,7 +20,7 @@ const {
     Term,
     Topic,
     Transcript,
-} = require('../schema/index');
+} = require('../models/index');
 
 const majorList = [
     {

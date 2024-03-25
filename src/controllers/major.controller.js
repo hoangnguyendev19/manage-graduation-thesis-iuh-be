@@ -1,6 +1,6 @@
-const { Major } = require('../../schema/index');
-const Error = require('../../helper/errors');
-const { HTTP_STATUS } = require('../../constants/constant');
+const { Major } = require('../models/index');
+const Error = require('../helper/errors');
+const { HTTP_STATUS } = require('../constants/constant');
 
 exports.getMajors = async (req, res) => {
     try {

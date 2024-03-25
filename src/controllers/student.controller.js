@@ -1,12 +1,8 @@
-const { Student } = require('../../schema/index');
-const Error = require('../../helper/errors');
-const {
-    generateAccessToken,
-    generateRefreshToken,
-    verifyRefreshToken,
-} = require('../../helper/jwt');
-const { HTTP_STATUS } = require('../../constants/constant');
-const { comparePassword, hashPassword } = require('../../helper/bcrypt');
+const { Student } = require('../models/index');
+const Error = require('../helper/errors');
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../helper/jwt');
+const { HTTP_STATUS } = require('../constants/constant');
+const { comparePassword, hashPassword } = require('../helper/bcrypt');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -169,7 +165,7 @@ exports.getMe = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            student,
+            user: student,
         });
     } catch (error) {
         console.log(error);
@@ -179,17 +175,25 @@ exports.getMe = async (req, res) => {
 
 exports.updateMe = async (req, res) => {
     try {
-        const { fullName, email, phoneNumber } = req.body;
-        const student = await Student.findByPk(req.user.id);
+        const { fullName, email, phoneNumber, avatarUrl, gender } = req.body;
+        const student = await Student.findOne({
+            where: { id: req.user.id },
+            attributes: { exclude: ['password'] },
+        });
+
         if (!student) {
             return Error.sendNotFound(res, 'Student not found');
         }
 
-        await student.update({ fullName, email, phoneNumber }, { where: { id: req.user.id } });
+        await student.update(
+            { fullName, email, phoneNumber, gender, avatarUrl },
+            { where: { id: req.user.id } },
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update Success',
+            user: student,
         });
     } catch (error) {
         console.log(error);

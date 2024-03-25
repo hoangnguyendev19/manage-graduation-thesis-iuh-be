@@ -9,7 +9,7 @@ const {
     updateTopic,
     updateStatusTopic,
     deleteTopic,
-} = require('../controller/topic/topic.controller');
+} = require('../controllers/topic.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 
