@@ -21,15 +21,20 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 field: 'end_date',
             },
-            isSubmitTopic: {
+            isChooseGroup: {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false,
-                field: 'is_submit_topic',
+                field: 'is_choose_group',
             },
             isChooseTopic: {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false,
                 field: 'is_choose_topic',
+            },
+            isSubmitTopic: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false,
+                field: 'is_submit_topic',
             },
             isDiscussion: {
                 type: DataTypes.BOOLEAN,

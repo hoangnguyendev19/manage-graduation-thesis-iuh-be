@@ -7,6 +7,11 @@ module.exports = (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
+            isAdmin: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false,
+                field: 'is_admin',
+            },
         },
         {
             // Other model options go here

@@ -9,12 +9,15 @@ exports.getNotificationStudents = async (req, res) => {
             where: {
                 student_id: req.user.id,
             },
+            attributes: {
+                exclude: ['student_id'],
+            },
         });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            notificationStudents,
+            notifications: notificationStudents,
         });
     } catch (error) {
         console.log(error);
@@ -79,7 +82,7 @@ exports.updateReadStatus = async (req, res) => {
         }
 
         await notificationStudent.update({
-            is_read: true,
+            isRead: true,
         });
 
         res.status(HTTP_STATUS.OK).json({

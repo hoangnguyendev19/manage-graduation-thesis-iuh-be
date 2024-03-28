@@ -43,6 +43,7 @@ exports.getTopics = async (req, res) => {
                         model: Lecturer,
                         attributes: [
                             'id',
+                            'userName',
                             'fullName',
                             'avatarUrl',
                             'email',
@@ -93,7 +94,36 @@ exports.getTopics = async (req, res) => {
 exports.getTopicById = async (req, res) => {
     try {
         const { id } = req.params;
-        const topic = await Topic.findByPk(id);
+        const topic = await Topic.findOne({
+            where: {
+                id,
+            },
+            include: {
+                model: LecturerTerm,
+                attributes: ['id'],
+                include: {
+                    model: Lecturer,
+                    attributes: [
+                        'id',
+                        'userName',
+                        'fullName',
+                        'avatarUrl',
+                        'email',
+                        'phoneNumber',
+                        'gender',
+                        'degree',
+                    ],
+                    include: {
+                        model: Major,
+                        attributes: ['id', 'name'],
+                        as: 'major',
+                    },
+                    as: 'lecturer',
+                },
+                as: 'lecturerTerm',
+            },
+        });
+
         if (!topic) {
             return Error.sendNotFound(res, 'Topic not found');
         }
