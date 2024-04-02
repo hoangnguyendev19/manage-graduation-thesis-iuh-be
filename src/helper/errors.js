@@ -8,6 +8,14 @@ exports.sendError = (res, error) => {
     });
 };
 
+exports.sendForbidden = (res, msg) => {
+    res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        status: 403,
+        message: msg,
+    });
+};
+
 exports.sendWarning = (res, msg) => {
     res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,

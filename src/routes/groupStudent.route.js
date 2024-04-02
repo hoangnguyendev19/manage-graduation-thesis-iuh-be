@@ -10,10 +10,12 @@ const {
     createGroupStudent,
     updateTypeReport,
     updateStatus,
+    assignAdminGroupStudent,
+    deleteMemberGroupStudent,
+    removeGroupStudent,
+    joinGroupStudent,
     assignTopic,
     deleteGroupStudent,
-    addStudentToGroupStudent,
-    removeStudentFromGroupStudent,
 } = require('../controllers/groupStudent.controller');
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -33,6 +35,14 @@ router.put(APP_ROUTER.GROUP_STUDENT_TYPE_REPORT, protectLecturer, updateTypeRepo
 
 router.put(APP_ROUTER.GROUP_STUDENT_STATUS, protectLecturer, updateStatus);
 
+router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);
+
+router.put(APP_ROUTER.GROUP_STUDENT_DELETE_MEMBER, protectStudent, deleteMemberGroupStudent);
+
+router.put(APP_ROUTER.GROUP_STUDENT_REMOVE_GROUP, protectStudent, removeGroupStudent);
+
+router.put(APP_ROUTER.GROUP_STUDENT_JOIN_GROUP, protectStudent, joinGroupStudent);
+
 router.put(
     APP_ROUTER.GROUP_STUDENT_ASSIGN_TOPIC,
     protectLecturer,
@@ -46,9 +56,5 @@ router.delete(
     checkRoleLecturer('HEAD_LECTURER'),
     deleteGroupStudent,
 );
-
-router.put(APP_ROUTER.GROUP_STUDENT_ADD_MEMBER, addStudentToGroupStudent);
-
-router.put(APP_ROUTER.GROUP_STUDENT_REMOVE_MEMBER, removeStudentFromGroupStudent);
 
 module.exports = router;
