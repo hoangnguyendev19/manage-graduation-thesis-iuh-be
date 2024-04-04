@@ -11,11 +11,13 @@ const {
     updateTypeReport,
     updateStatus,
     assignAdminGroupStudent,
-    deleteMemberGroupStudent,
-    removeGroupStudent,
+    removeMemberGroupStudent,
+    leaveGroupStudent,
     joinGroupStudent,
     assignTopic,
     deleteGroupStudent,
+    chooseTopic,
+    cancelTopic,
 } = require('../controllers/groupStudent.controller');
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -37,11 +39,15 @@ router.put(APP_ROUTER.GROUP_STUDENT_STATUS, protectLecturer, updateStatus);
 
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);
 
-router.put(APP_ROUTER.GROUP_STUDENT_DELETE_MEMBER, protectStudent, deleteMemberGroupStudent);
+router.put(APP_ROUTER.GROUP_STUDENT_REMOVE_MEMBER, protectStudent, removeMemberGroupStudent);
 
-router.put(APP_ROUTER.GROUP_STUDENT_REMOVE_GROUP, protectStudent, removeGroupStudent);
+router.put(APP_ROUTER.GROUP_STUDENT_LEAVE_GROUP, protectStudent, leaveGroupStudent);
 
 router.put(APP_ROUTER.GROUP_STUDENT_JOIN_GROUP, protectStudent, joinGroupStudent);
+
+router.put(APP_ROUTER.GROUP_STUDENT_CHOOSE_TOPIC, protectStudent, chooseTopic);
+
+router.put(APP_ROUTER.GROUP_STUDENT_CANCEL_TOPIC, protectStudent, cancelTopic);
 
 router.put(
     APP_ROUTER.GROUP_STUDENT_ASSIGN_TOPIC,

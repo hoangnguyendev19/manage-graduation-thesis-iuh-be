@@ -1,4 +1,4 @@
-const { Topic, LecturerTerm, Lecturer, Major } = require('../models/index');
+const { Topic, LecturerTerm, Lecturer, Major, GroupStudent } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { Op } = require('sequelize');
@@ -61,6 +61,17 @@ exports.getTopics = async (req, res) => {
                     as: 'lecturerTerm',
                 },
             });
+
+            for (let i = 0; i < topics.length; i++) {
+                const topic = topics[i];
+                const groupStudents = await GroupStudent.findAll({
+                    where: {
+                        topic_id: topic.id,
+                    },
+                });
+
+                topic.dataValues.quantityGroup = groupStudents.length;
+            }
         } else if (lecturerId && termId && !majorId) {
             const lecturerTerm = await LecturerTerm.findOne({
                 where: {
@@ -240,52 +251,3 @@ exports.deleteTopic = async (req, res) => {
         Error.sendError(res, error);
     }
 };
-
-// exports.chooseTopic = async (req, res) => {
-//     try {
-//         const { studentId, topicId } = req.body;
-//         const topic = await Topic.findByPk(topicId);
-//         if (!topic) {
-//             return Error.sendNotFound(res, 'Topic not found');
-//         }
-
-//         const lecturerTerm = await LecturerTerm.findOne({
-//             where: {
-//                 id: topic.lecturer_term_id,
-//             },
-//         });
-
-//         if (!lecturerTerm) {
-//             return Error.sendNotFound(res, 'Lecturer Term not found');
-//         }
-
-//         const topicChoose = await Topic.findOne({
-//             where: {
-//                 [Op.and]: [
-//                     {
-//                         lecturer_term_id: lecturerTerm.id,
-//                     },
-//                     {
-//                         status: 'APPROVED',
-//                     },
-//                 ],
-//             },
-//         });
-
-//         if (!topicChoose) {
-//             return Error.sendNotFound(res, 'Topic not found');
-//         }
-
-//         topicChoose.status = 'PENDING';
-//         await topicChoose.save();
-
-//         res.status(HTTP_STATUS.OK).json({
-//             success: true,
-//             message: 'Choose Topic Success',
-//             topic: topicChoose,
-//         });
-//     } catch (error) {
-//         console.log(error);
-//         Error.sendError(res, error);
-//     }
-// };

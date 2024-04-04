@@ -59,9 +59,11 @@ const APP_ROUTER = {
     GROUP_STUDENT_STATUS: '/:id/status',
     GROUP_STUDENT_ASSIGN_ADMIN: '/:id/assign-admin',
     GROUP_STUDENT_ASSIGN_TOPIC: '/:id/assign-topic',
-    GROUP_STUDENT_DELETE_MEMBER: '/:id/delete-member',
-    GROUP_STUDENT_REMOVE_GROUP: '/:id/remove-group',
+    GROUP_STUDENT_REMOVE_MEMBER: '/:id/remove-member',
+    GROUP_STUDENT_LEAVE_GROUP: '/:id/leave-group',
     GROUP_STUDENT_JOIN_GROUP: '/:id/join-group',
+    GROUP_STUDENT_CHOOSE_TOPIC: '/:id/choose-topic',
+    GROUP_STUDENT_CANCEL_TOPIC: '/:id/cancel-topic',
 
     //test route
     GROUP_NOTIFICATION: '/:id/notfication',

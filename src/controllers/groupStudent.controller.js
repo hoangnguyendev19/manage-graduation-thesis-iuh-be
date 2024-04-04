@@ -321,7 +321,7 @@ exports.assignAdminGroupStudent = async (req, res) => {
     }
 };
 
-exports.deleteMemberGroupStudent = async (req, res) => {
+exports.removeMemberGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
         const { studentId } = req.body;
@@ -363,7 +363,7 @@ exports.deleteMemberGroupStudent = async (req, res) => {
     }
 };
 
-exports.removeGroupStudent = async (req, res) => {
+exports.leaveGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -468,6 +468,78 @@ exports.deleteGroupStudent = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Delete Success',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.chooseTopic = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { topicId } = req.body;
+
+        const groupStudent = await GroupStudent.findByPk(id);
+        if (!groupStudent) {
+            return Error.sendNotFound(res, 'Group Student not found');
+        }
+
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                student_id: req.user.id,
+                group_student_id: id,
+            },
+        });
+
+        if (!studentTerm.isAdmin) {
+            return Error.sendForbidden(res, 'You are not admin of group');
+        }
+
+        const topic = await Topic.findByPk(topicId);
+        if (!topic) {
+            return Error.sendNotFound(res, 'Topic not found');
+        }
+
+        groupStudent.topic_id = topicId;
+        await groupStudent.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Choose Topic Success',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.cancelTopic = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                student_id: req.user.id,
+                group_student_id: id,
+            },
+        });
+
+        if (!studentTerm.isAdmin) {
+            return Error.sendForbidden(res, 'You are not admin of group');
+        }
+
+        const groupStudent = await GroupStudent.findByPk(id);
+        if (!groupStudent) {
+            return Error.sendNotFound(res, 'Group Student not found');
+        }
+
+        groupStudent.topic_id = null;
+        await groupStudent.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Cancel Topic Success',
         });
     } catch (error) {
         console.log(error);
