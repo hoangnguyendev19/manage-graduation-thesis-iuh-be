@@ -44,3 +44,17 @@ exports.verifyRefreshToken = (token) => {
 
     return data;
 };
+
+exports.removeRefreshToken = (id) => {
+    client.del(id.toString(), (error, reply) => {
+        if (error) {
+            return Error.sendError(res, error);
+        }
+
+        if (reply !== 1) {
+            return Error.sendError(res, 'Token not deleted');
+        }
+
+        return reply;
+    });
+};

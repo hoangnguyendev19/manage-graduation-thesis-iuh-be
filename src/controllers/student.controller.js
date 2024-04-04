@@ -1,6 +1,11 @@
 const { Student } = require('../models/index');
 const Error = require('../helper/errors');
-const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../helper/jwt');
+const {
+    generateAccessToken,
+    generateRefreshToken,
+    verifyRefreshToken,
+    removeRefreshToken,
+} = require('../helper/jwt');
 const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 
@@ -57,6 +62,19 @@ exports.refreshToken = async (req, res) => {
             message: 'Refresh Token Success',
             accessToken,
             refreshToken: newRefreshToken,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.logout = async (req, res) => {
+    try {
+        removeRefreshToken(req.user.id);
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Logout Success',
         });
     } catch (error) {
         console.log(error);

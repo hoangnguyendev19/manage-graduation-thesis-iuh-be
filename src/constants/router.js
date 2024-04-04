@@ -4,6 +4,7 @@ const APP_ROUTER = {
     ID: '/:id',
     LOGIN: '/login',
     REGISTER: '/register',
+    LOGOUT: '/logout',
     REFRESH_TOKEN: '/refresh-token',
     UPDATE_PASSWORD: '/update-password',
     ME: '/me',

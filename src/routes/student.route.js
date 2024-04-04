@@ -3,6 +3,7 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     login,
     refreshToken,
+    logout,
     getStudents,
     getStudentById,
     createStudent,
@@ -19,6 +20,8 @@ const router = express.Router();
 router.post(APP_ROUTER.LOGIN, login);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
+
+router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createStudent);
 

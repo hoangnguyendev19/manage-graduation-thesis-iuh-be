@@ -4,6 +4,7 @@ const {
     login,
     register,
     refreshToken,
+    logout,
     getLecturers,
     getLecturerById,
     changeRole,
@@ -20,6 +21,8 @@ const router = express.Router();
 router.post(APP_ROUTER.LOGIN, login);
 
 router.post(APP_ROUTER.REGISTER, register);
+
+router.delete(APP_ROUTER.LOGOUT, protectLecturer, logout);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
