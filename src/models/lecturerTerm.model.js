@@ -7,17 +7,20 @@ module.exports = (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            role: {
-                type: DataTypes.ENUM('HEAD_LECTURER', 'LECTURER', 'SUB_HEAD_LECTURER'),
-                allowNull: true,
-                defaultValue: 'LECTURER',
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'created_at',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'updated_at',
             },
         },
         {
-            // Other model options go here
-            tableName: 'lecturer_term',
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
+            tableName: 'lecturer_terms',
+            timestamps: false,
         },
     );
 };

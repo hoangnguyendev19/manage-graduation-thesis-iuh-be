@@ -28,7 +28,7 @@ exports.protectLecturer = async (req, res, next) => {
 };
 
 exports.checkRoleLecturer = (roleName) => {
-    // roleName: 'ADMIN' | 'LECTURER' | 'HEAD_LECTURER | 'SUB_HEAD_LECTURER'
+    // roleName: 'ADMIN' | 'LECTURER' | 'HEAD_LECTURER' | 'SUB_HEAD_LECTURER'
     return async (req, res, next) => {
         try {
             if (roleName === 'ADMIN' && req.user.isAdmin === true) {

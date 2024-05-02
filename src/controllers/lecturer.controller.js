@@ -29,6 +29,7 @@ exports.login = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Login Success',
+            lecturer,
             accessToken,
             refreshToken,
         });

@@ -16,11 +16,20 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 field: 'bonus_score',
             },
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'created_at',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'updated_at',
+            },
         },
         {
-            // Other model options go here
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
+            tableName: 'achievements',
+            timestamps: false,
         },
     );
 };

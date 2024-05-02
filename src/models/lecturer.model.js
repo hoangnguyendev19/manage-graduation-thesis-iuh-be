@@ -3,43 +3,37 @@ module.exports = (sequelize, DataTypes) => {
         'Lecturer',
         {
             id: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.STRING,
                 primaryKey: true,
-                autoIncrement: true,
             },
-            userName: {
+            username: {
                 type: DataTypes.STRING,
                 allowNull: false,
                 unique: true,
-                field: 'user_name',
             },
             password: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
             fullName: {
-                // name
                 type: DataTypes.STRING,
                 allowNull: false,
                 field: 'full_name',
             },
-            avatarUrl: {
-                // avatar
+            avatar: {
                 type: DataTypes.STRING,
                 allowNull: true,
-                field: 'avatar_url',
             },
-            phoneNumber: {
+            phone: {
                 type: DataTypes.STRING,
                 allowNull: false,
-                field: 'phone_number',
             },
             email: {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
             gender: {
-                type: DataTypes.ENUM('MALE', 'FEMALE', 'OTHER'),
+                type: DataTypes.ENUM('MALE', 'FEMALE'),
                 allowNull: true,
             },
             degree: {
@@ -58,11 +52,20 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: false,
                 field: 'is_admin',
             },
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'created_at',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'updated_at',
+            },
         },
         {
-            // Other model options go here
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
+            tableName: 'lecturers',
+            timestamps: false,
         },
     );
 };

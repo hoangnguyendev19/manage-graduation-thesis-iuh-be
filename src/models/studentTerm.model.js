@@ -12,12 +12,20 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: false,
                 field: 'is_admin',
             },
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'created_at',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'updated_at',
+            },
         },
         {
-            // Other model options go here
-            tableName: 'student_term',
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
+            tableName: 'student_terms',
+            timestamps: false,
         },
     );
 };

@@ -16,12 +16,20 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
                 defaultValue: 'REVIEWER',
             },
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'created_at',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'updated_at',
+            },
         },
         {
-            // Other model options go here
             tableName: 'group_lecturers',
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
+            timestamps: false,
         },
     );
 };

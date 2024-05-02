@@ -17,25 +17,20 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: false,
                 field: 'is_read',
             },
-            type: {
-                type: DataTypes.ENUM(
-                    'UPDATE_STATUS_COMMENT_MY_TOPIC',
-                    'ASSIGN_REVIEW',
-                    'ASSIGN_SESSION_HOST',
-                    'ASSIGN_ADVISOR',
-                    'LECTURER',
-                    'GROUP_STUDENT',
-                    'CHOOSE_TOPIC',
-                ),
-                defaultValue: 'LECTURER',
-                allowNull: true,
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'created_at',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'updated_at',
             },
         },
         {
-            // Other model options go here
             tableName: 'notification_lecturers',
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
+            timestamps: false,
         },
     );
 };

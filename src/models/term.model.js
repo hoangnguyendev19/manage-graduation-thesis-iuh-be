@@ -21,41 +21,70 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 field: 'end_date',
             },
-            isChooseGroup: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
-                field: 'is_choose_group',
+            startChooseGroup: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'start_choose_group',
             },
-            isChooseTopic: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
-                field: 'is_choose_topic',
+            endChooseGroup: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'end_choose_group',
             },
-            isSubmitTopic: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
-                field: 'is_submit_topic',
+            startChooseTopic: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'start_choose_topic',
             },
-            isDiscussion: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
-                field: 'is_discussion',
+            endChooseTopic: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'end_choose_topic',
             },
-            isReport: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
-                field: 'is_report',
+            startDiscussion: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'start_discussion',
             },
-            isPublicResult: {
-                type: DataTypes.BOOLEAN,
-                defaultValue: false,
-                field: 'is_public_result',
+            endDiscussion: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'end_discussion',
+            },
+            startReport: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'start_report',
+            },
+            endReport: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'end_report',
+            },
+            startPublicResult: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'start_public_result',
+            },
+            endPublicResult: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'end_public_result',
+            },
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'created_at',
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+                field: 'updated_at',
             },
         },
         {
-            // Other model options go here
-            createdAt: 'created_at',
-            updatedAt: 'updated_at',
+            tableName: 'terms',
+            timestamps: false,
         },
     );
 };

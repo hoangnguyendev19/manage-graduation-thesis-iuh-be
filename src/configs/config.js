@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config();
 module.exports = {
     development: {
         username: process.env.DB_USERNAME,
@@ -7,6 +7,8 @@ module.exports = {
         host: process.env.HOST,
         dialect: 'mysql',
         logging: false,
+        charset: 'utf8',
+        collate: 'utf8_unicode_ci',
         timezone: '+07:00',
     },
     test: {
@@ -23,4 +25,4 @@ module.exports = {
         host: process.env.HOST,
         dialect: 'mysql',
     },
-}
+};
