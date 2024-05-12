@@ -7,6 +7,8 @@ const {
     getStudents,
     getStudentById,
     createStudent,
+    updateStudent,
+    deleteStudent,
     updatePassword,
     getMe,
     updateMe,
@@ -17,22 +19,29 @@ const { checkRoleLecturer, protectLecturer } = require('../middleware/lecturer.m
 
 const router = express.Router();
 
+// ----------------- Auth -----------------
 router.post(APP_ROUTER.LOGIN, login);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
 router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
+// ----------------- Admin -----------------
+router.get(APP_ROUTER.INDEX, getStudents);
+
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createStudent);
 
+router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), updateStudent);
+
+router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), deleteStudent);
+
+// ----------------- Student -----------------
 router.get(APP_ROUTER.ME, protectStudent, getMe);
 
-router.get(APP_ROUTER.INDEX, getStudents);
+router.put(APP_ROUTER.ME, protectStudent, updateMe);
 
 router.get(APP_ROUTER.ID, getStudentById);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, updatePassword);
-
-router.put(APP_ROUTER.ME, protectStudent, updateMe);
 
 module.exports = router;

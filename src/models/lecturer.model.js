@@ -52,6 +52,12 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: false,
                 field: 'is_admin',
             },
+            isActive: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: true,
+                field: 'is_active',
+            },
             createdAt: {
                 type: DataTypes.DATE,
                 defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),

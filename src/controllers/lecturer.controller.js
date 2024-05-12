@@ -1,4 +1,4 @@
-const { Lecturer } = require('../models/index');
+const { Lecturer, Major } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -103,16 +103,35 @@ exports.logout = async (req, res) => {
     }
 };
 
-// ----------------- Lecturer -----------------
+// ----------------- Admin -----------------
 
 exports.getLecturers = async (req, res) => {
     try {
         const { majorId } = req.query;
         let lecturers = null;
         if (majorId) {
-            lecturers = await Lecturer.findAll({ where: { major_id: majorId } });
+            lecturers = await Lecturer.findAll({
+                where: { major_id: majorId },
+                attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'major_id'] },
+                include: [
+                    {
+                        model: Major,
+                        attributes: ['id', 'name'],
+                        as: 'major',
+                    },
+                ],
+            });
         } else {
-            lecturers = await Lecturer.findAll();
+            lecturers = await Lecturer.findAll({
+                attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'major_id'] },
+                include: [
+                    {
+                        model: Major,
+                        attributes: ['id', 'name'],
+                        as: 'major',
+                    },
+                ],
+            });
         }
 
         res.status(HTTP_STATUS.OK).json({
@@ -147,21 +166,86 @@ exports.getLecturerById = async (req, res) => {
 
 exports.createLecturer = async (req, res) => {
     try {
-        let { fullName, userName, password, majorId, email, phoneNumber } = req.body;
-        password = await hashPassword(password);
+        let { id, fullName, gender, phone, email, degree, role, majorId } = req.body;
+        const password = await hashPassword(id);
         const lecturer = await Lecturer.create({
+            id,
             fullName,
-            userName,
+            username: id,
             password,
-            major_id: majorId,
+            gender,
             email,
-            phoneNumber,
+            phone,
+            degree,
+            role,
+            major_id: majorId,
+        });
+
+        const newLecturer = await Lecturer.findByPk(lecturer.id, {
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
         });
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Create Success',
+            lecturer: newLecturer,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.updateLecturer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { fullName, gender, phone, email, degree, role, majorId } = req.body;
+        const lecturer = await Lecturer.findByPk(id);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Lecturer not found');
+        }
+
+        lecturer.fullName = fullName;
+        lecturer.gender = gender;
+        lecturer.phone = phone;
+        lecturer.email = email;
+        lecturer.degree = degree;
+        lecturer.role = role;
+        lecturer.major_id = majorId;
+
+        await lecturer.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Update Success',
             lecturer,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.deleteLecturer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const lecturer = await Lecturer.findByPk(id);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Lecturer not found');
+        }
+
+        await lecturer.destroy();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Delete Success',
         });
     } catch (error) {
         console.log(error);
@@ -189,6 +273,8 @@ exports.changeRole = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
+// ----------------- Lecturer -----------------
 
 exports.updatePassword = async (req, res) => {
     try {

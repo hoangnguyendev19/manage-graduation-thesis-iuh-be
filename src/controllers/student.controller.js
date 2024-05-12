@@ -1,4 +1,4 @@
-const { Student } = require('../models/index');
+const { Student, Major } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -82,11 +82,21 @@ exports.logout = async (req, res) => {
     }
 };
 
-// ----------------- Student -----------------
+// ----------------- Admin -----------------
 
 exports.getStudents = async (req, res) => {
     try {
-        const students = await Student.findAll();
+        const students = await Student.findAll({
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+        });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
@@ -119,16 +129,19 @@ exports.getStudentById = async (req, res) => {
 
 exports.createStudent = async (req, res) => {
     try {
-        let { fullName, userName, password, majorId, email, phoneNumber, typeTraining } = req.body;
-        password = await hashPassword(password);
+        let { id, fullName, gender, phone, email, majorId, typeTraining, schoolYear } = req.body;
+        const password = await hashPassword(id);
         const student = await Student.create({
+            id,
             fullName,
-            userName,
+            username: id,
             password,
+            gender,
             email,
-            phoneNumber,
+            phone,
             major_id: majorId,
             type_training: typeTraining,
+            school_year: schoolYear,
         });
 
         res.status(HTTP_STATUS.CREATED).json({
@@ -141,6 +154,59 @@ exports.createStudent = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
+exports.updateStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        let { fullName, gender, phone, email, majorId, typeTraining, schoolYear } = req.body;
+        const student = await Student.findByPk(id);
+        if (!student) {
+            return Error.sendNotFound(res, 'Student not found');
+        }
+
+        student.id = id;
+        student.fullName = fullName;
+        student.gender = gender;
+        student.phone = phone;
+        student.email = email;
+        student.major_id = majorId;
+        student.type_training = typeTraining;
+        student.school_year = schoolYear;
+
+        await student.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Update Success',
+            student,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.deleteStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const student = await Student.findByPk(id);
+        if (!student) {
+            return Error.sendNotFound(res, 'Student not found');
+        }
+
+        await student.destroy();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Delete Success',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+// ----------------- Student -----------------
 
 exports.updatePassword = async (req, res) => {
     try {
