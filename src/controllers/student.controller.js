@@ -12,9 +12,9 @@ const { comparePassword, hashPassword } = require('../helper/bcrypt');
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
     try {
-        const { userName, password } = req.body;
+        const { username, password } = req.body;
         const student = await Student.findOne({
-            where: { userName },
+            where: { username },
         });
 
         if (!student) {
@@ -26,7 +26,7 @@ exports.login = async (req, res) => {
         }
 
         const user = await Student.findOne({
-            where: { userName },
+            where: { username },
             attributes: { exclude: ['password'] },
         });
 

@@ -12,8 +12,8 @@ const { comparePassword, hashPassword } = require('../helper/bcrypt');
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
     try {
-        const { userName, password } = req.body;
-        const lecturer = await Lecturer.findOne({ where: { userName } });
+        const { username, password } = req.body;
+        const lecturer = await Lecturer.findOne({ where: { username } });
 
         if (!lecturer) {
             return Error.sendNotFound(res, 'Invalid email or password');
@@ -41,11 +41,11 @@ exports.login = async (req, res) => {
 
 exports.register = async (req, res) => {
     try {
-        let { fullName, userName, password, majorId, email, phoneNumber } = req.body;
+        let { fullName, username, password, majorId, email, phoneNumber } = req.body;
         password = await hashPassword(password);
         const lecturer = await Lecturer.create({
             fullName,
-            userName,
+            username,
             password,
             major_id: majorId,
             email,
