@@ -6,32 +6,64 @@ INSERT INTO majors (name) VALUES ('Khoa học máy tính');
 INSERT INTO majors (name) VALUES ('Khoa học dữ liệu');
 
 -- Term
-INSERT INTO terms (name, start_date, end_date, start_choose_group, end_choose_group, start_choose_topic, end_choose_topic, start_discussion, end_discussion, start_report, end_report, start_public_result, end_public_result) VALUES ('HK1_2023-2024', '2023-09-01', '2024-01-01', '2023-09-01', '2024-10-01', '2023-10-02', '2023-10-15', '2023-10-16', '2023-11-15', '2023-11-16', '2023-12-01', '2024-12-02', '2024-01-01');
-INSERT INTO terms (name, start_date, end_date, start_choose_group, end_choose_group, start_choose_topic, end_choose_topic, start_discussion, end_discussion, start_report, end_report, start_public_result, end_public_result) VALUES ('HK2_2023-2024', '2024-01-02', '2024-05-01', '2024-01-02', '2024-06-01', '2024-02-02', '2024-02-15', '2024-02-16', '2024-03-15', '2024-03-16', '2024-04-01', '2024-04-02', '2024-05-01');
-INSERT INTO terms (name, start_date, end_date, start_choose_group, end_choose_group, start_choose_topic, end_choose_topic, start_discussion, end_discussion, start_report, end_report, start_public_result, end_public_result) VALUES ('HK3_2023-2024', '2024-05-02', '2024-09-01', '2024-05-02', '2024-10-01', '2024-06-02', '2024-06-15', '2024-06-16', '2024-07-15', '2024-07-16', '2024-08-01', '2024-08-02', '2024-09-01');
-INSERT INTO terms (name, start_date, end_date, start_choose_group, end_choose_group, start_choose_topic, end_choose_topic, start_discussion, end_discussion, start_report, end_report, start_public_result, end_public_result) VALUES ('HK1_2024-2025', '2024-09-02', '2025-01-01', '2024-09-02', '2025-01-01', '2024-10-02', '2024-10-15', '2024-10-16', '2024-11-15', '2024-11-16', '2024-12-01', '2025-12-02', '2025-01-01');
-INSERT INTO terms (name, start_date, end_date, start_choose_group, end_choose_group, start_choose_topic, end_choose_topic, start_discussion, end_discussion, start_report, end_report, start_public_result, end_public_result) VALUES ('HK2_2024-2025', '2025-01-02', '2025-05-01', '2025-01-02', '2025-06-01', '2025-02-02', '2025-02-15', '2025-02-16', '2025-03-15', '2025-03-16', '2025-04-01', '2025-04-02', '2025-05-01');
-INSERT INTO terms (name, start_date, end_date, start_choose_group, end_choose_group, start_choose_topic, end_choose_topic, start_discussion, end_discussion, start_report, end_report, start_public_result, end_public_result) VALUES ('HK3_2024-2025', '2025-05-02', '2025-09-01', '2025-05-02', '2025-10-01', '2025-06-02', '2025-06-15', '2025-06-16', '2025-07-15', '2025-07-16', '2025-08-01', '2025-08-02', '2025-09-01');
+INSERT INTO terms (name, start_date, end_date) VALUES ('HK1_2023-2024', '2023-09-01', '2024-01-01');
+INSERT INTO terms (name, start_date, end_date) VALUES ('HK2_2023-2024', '2024-01-02', '2024-05-01');
+INSERT INTO terms (name, start_date, end_date) VALUES ('HK3_2023-2024', '2024-05-02', '2024-09-01');
+INSERT INTO terms (name, start_date, end_date) VALUES ('HK1_2024-2025', '2024-09-02', '2025-01-01');
+INSERT INTO terms (name, start_date, end_date) VALUES ('HK2_2024-2025', '2025-01-02', '2025-05-01');
+INSERT INTO terms (name, start_date, end_date) VALUES ('HK3_2024-2025', '2025-05-02', '2025-09-01');
+
+-- Term Detail
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_GROUP', '2023-09-01', '2023-10-01', 1);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_TOPIC', '2023-10-02', '2023-10-15', 1);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('DISCUSSION', '2023-10-16', '2023-11-15', 1);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('REPORT', '2023-11-16', '2023-12-01', 1);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('PUBLIC_RESULT', '2023-12-02', '2024-01-01', 1);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_GROUP', '2024-01-02', '2024-02-01', 2);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_TOPIC', '2024-02-02', '2024-02-15', 2);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('DISCUSSION', '2024-02-16', '2024-03-15', 2);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('REPORT', '2024-03-16', '2024-04-01', 2);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('PUBLIC_RESULT', '2024-04-02', '2024-05-01', 2);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_GROUP', '2024-05-02', '2024-06-01', 3);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_TOPIC', '2024-06-02', '2024-06-15', 3);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('DISCUSSION', '2024-06-16', '2024-07-15', 3);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('REPORT', '2024-07-16', '2024-08-01', 3);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('PUBLIC_RESULT', '2024-08-02', '2024-09-01', 3);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_GROUP', '2024-09-02', '2024-10-01', 4);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_TOPIC', '2024-10-02', '2024-10-15', 4);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('DISCUSSION', '2024-10-16', '2024-11-15', 4);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('REPORT', '2024-11-16', '2024-12-01', 4);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('PUBLIC_RESULT', '2024-12-02', '2025-01-01', 4);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_GROUP', '2025-01-02', '2025-02-01', 5);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_TOPIC', '2025-02-02', '2025-02-15', 5);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('DISCUSSION', '2025-02-16', '2025-03-15', 5);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('REPORT', '2025-03-16', '2025-04-01', 5);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('PUBLIC_RESULT', '2025-04-02', '2025-05-01', 5);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_GROUP', '2025-05-02', '2025-06-01', 6);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('CHOOSE_TOPIC', '2025-06-02', '2025-06-15', 6);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('DISCUSSION', '2025-06-16', '2025-07-15', 6);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('REPORT', '2025-07-16', '2025-08-01', 6);
+INSERT INTO term_details (name, start_date, end_date, term_id) VALUES ('PUBLIC_RESULT', '2025-08-02', '2025-09-01', 6);
 
 -- Student 
-INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21084321', '21084321', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Nguyễn Huy Hoàng', 'hoangnguyen@gmail.com', 'MALE', '0327194436', '2021-2025', 'UNIVERSITY', 1, 3);
-INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21092341', '21092341', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Nguyễn Minh Quang', 'quangnguyen@gmail.com', 'MALE', '0326104436', '2021-2025', 'UNIVERSITY', 1, 3); 
-INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21062341', '21062341', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Đỗ Chí Tường', 'tuongnguyen@gmail.com', 'MALE', '0326224436', '2021-2025', 'UNIVERSITY', 1, 3);
-INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21112142', '21112142', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Trần Thị Tường Vy', 'vynguyen@gmail.com', 'FEMALE', '0321124439', '2021-2025', 'UNIVERSITY', 1, 1);
-INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21232341', '21232341', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Trần Thị Yến Nhi', 'nhitran@gmail.com', 'FEMALE', '0321124430', '2021-2025', 'UNIVERSITY', 1, 2);
-INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('20512341', '20052341', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Nguyễn Văn Tiến', 'tiennguyen@gmail.com', 'MALE', '0321124431', '2021-2025', 'UNIVERSITY', 1, 4);
-INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21021234', '21021234', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Phạm Thị Hương', 'huongpham@gmail.com', 'FEMALE', '0321124446', '2021-2025', 'UNIVERSITY', 1, 5);
+INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21084321', '21084321', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Nguyễn Huy Hoàng', 'hoangnguyen@gmail.com', 'MALE', '0327194436', '2021-2025', 'UNIVERSITY', 1, 3);
+INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21092341', '21092341', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Nguyễn Minh Quang', 'quangnguyen@gmail.com', 'MALE', '0326104436', '2021-2025', 'UNIVERSITY', 1, 3); 
+INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21062341', '21062341', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Đỗ Chí Tường', 'tuongnguyen@gmail.com', 'MALE', '0326224436', '2021-2025', 'UNIVERSITY', 1, 3);
+INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21112142', '21112142', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Trần Thị Tường Vy', 'vynguyen@gmail.com', 'FEMALE', '0321124439', '2021-2025', 'UNIVERSITY', 1, 1);
+INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21232341', '21232341', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Trần Thị Yến Nhi', 'nhitran@gmail.com', 'FEMALE', '0321124430', '2021-2025', 'UNIVERSITY', 1, 2);
+INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('20512341', '20052341', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Nguyễn Văn Tiến', 'tiennguyen@gmail.com', 'MALE', '0321124431', '2021-2025', 'UNIVERSITY', 1, 4);
+INSERT INTO students (id, username, password, full_name, email, gender, phone, school_year, type_training, is_active, major_id) VALUES ('21021234', '21021234', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Phạm Thị Hương', 'huongpham@gmail.com', 'FEMALE', '0321124446', '2021-2025', 'UNIVERSITY', 1, 5);
 
 -- Lecturer
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20018432', '20018432', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Nguyễn Thị Hạnh', 'hanhnguyen@gmail.com', '0304125678', 'FEMALE', 'DOCTOR', 'HEAD_LECTURER', 0, 1, 3);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20118432', '20118432', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Tôn Long Phước', 'phuocton@gmail.com', '0315125678', 'MALE', 'DOCTOR', 'LECTURER', 0, 1, 3);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20418432', '20418432', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Đặng Thị Thu Hà', 'phuocton@gmail.com', '0315125678', 'FEMALE', 'MASTER', 'SUB_HEAD_LECTURER', 0, 1, 3);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20046432', '20046432', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Nguyễn Trọng Tiến', 'tiennguyen@gmail.com', '0315125678', 'MALE', 'DOCTOR', 'LECTURER', 0, 1, 3);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20098321', '20098321', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Lê Nhật Duy', 'duyle@gmail.com', '0304125600', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 4);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20156321', '20156321', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Hồ Đắc Quán', 'quanho@gmail.com', '0304125100', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 4);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20981321', '20981321', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Ngô Hữu Dũng', 'dungngo@gmail.com', '0304125122', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 1);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20174321', '20174321', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Tạ Duy Công Chiến', 'chienta@gmail.com', '0304134122', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 2);
-INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20194321', '20194321', '$2y$12$7IGsuCmRaSKn/enVQI0yXemQQCWQF5rI647UftquKkdMvIJg0AvB.', 'Nguyễn Chí Kiên', 'kiennguyen@gmail.com', '0308934122', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 5);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20018432', '20018432', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Nguyễn Thị Hạnh', 'hanhnguyen@gmail.com', '0304125678', 'FEMALE', 'DOCTOR', 'HEAD_LECTURER', 0, 1, 3);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20118432', '20118432', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Tôn Long Phước', 'phuocton@gmail.com', '0315125678', 'MALE', 'DOCTOR', 'LECTURER', 0, 1, 3);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20418432', '20418432', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Đặng Thị Thu Hà', 'phuocton@gmail.com', '0315125678', 'FEMALE', 'MASTER', 'SUB_HEAD_LECTURER', 0, 1, 3);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20046432', '20046432', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Nguyễn Trọng Tiến', 'tiennguyen@gmail.com', '0315125678', 'MALE', 'DOCTOR', 'LECTURER', 0, 1, 3);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20098321', '20098321', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Lê Nhật Duy', 'duyle@gmail.com', '0304125600', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 4);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20156321', '20156321', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Hồ Đắc Quán', 'quanho@gmail.com', '0304125100', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 4);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20981321', '20981321', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Ngô Hữu Dũng', 'dungngo@gmail.com', '0304125122', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 1);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20174321', '20174321', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Tạ Duy Công Chiến', 'chienta@gmail.com', '0304134122', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 2);
+INSERT INTO lecturers (id, username, password, full_name, email, phone, gender, degree, role, is_admin, is_active, major_id) VALUES ('20194321', '20194321', '$2a$10$gYo3oBzaWd1CHTBScE7Ko..rgKId21y3L9QkGowCoi3D32cfWKXG6', 'Nguyễn Chí Kiên', 'kiennguyen@gmail.com', '0308934122', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, 5);
 
 -- Lecturer term (lecturer_id, term_id)
 INSERT INTO lecturer_terms (lecturer_id, term_id) VALUES ('20018432', 1);

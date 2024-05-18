@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define(
-        'Term',
+        'TermDetail',
         {
             id: {
                 type: DataTypes.INTEGER,
@@ -8,7 +8,13 @@ module.exports = (sequelize, DataTypes) => {
                 autoIncrement: true,
             },
             name: {
-                type: DataTypes.STRING,
+                type: DataTypes.ENUM(
+                    'CHOOSE_GROUP',
+                    'CHOOSE_TOPIC',
+                    'DISCUSSION',
+                    'REPORT',
+                    'PUBLIC_RESULT',
+                ),
                 allowNull: false,
             },
             startDate: {
@@ -33,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
             },
         },
         {
-            tableName: 'terms',
+            tableName: 'term_details',
             timestamps: false,
         },
     );

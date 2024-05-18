@@ -208,6 +208,24 @@ exports.createLecturer = async (req, res) => {
     }
 };
 
+exports.importLecturers = async (req, res) => {
+    try {
+        const { lecturers } = req.body;
+        const newLecturers = await Lecturer.bulkCreate(lecturers);
+
+        // I want to
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Import Success',
+            lecturers: newLecturers,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.updateLecturer = async (req, res) => {
     try {
         const { id } = req.params;
