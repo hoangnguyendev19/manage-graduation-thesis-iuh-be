@@ -33,6 +33,12 @@ exports.login = async (req, res) => {
         const accessToken = generateAccessToken(student.id);
         const refreshToken = generateRefreshToken(student.id);
 
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+        });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Login Success',
