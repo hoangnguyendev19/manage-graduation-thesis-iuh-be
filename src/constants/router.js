@@ -34,11 +34,11 @@ const APP_ROUTER = {
     //TERMS
     TERM: '/api/v1/terms',
     TERM_NOW: '/now',
-    TERM_PUBLIC_RESULT: '/:id/public-result',
-    TERM_DISCUSSION: '/:id/discussion',
+    TERM_CHOOSE_GROUP: '/:id/choose-group',
     TERM_CHOOSE_TOPIC: '/:id/choose-topic',
+    TERM_DISCUSSION: '/:id/discussion',
     TERM_REPORT: '/:id/report',
-    TERM_SUBMIT_TOPIC: '/:id/submit-topic',
+    TERM_PUBLIC_RESULT: '/:id/public-result',
 
     //TRANSCRIPTS
     TRANSCRIPT: '/api/v1/transcripts',

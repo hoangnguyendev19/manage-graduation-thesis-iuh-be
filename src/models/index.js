@@ -6,6 +6,7 @@ const GroupLecturerModel = require('./groupLecturer.model');
 const GroupLecturerMemberModel = require('./groupLecturerMember.model');
 const LecturerTermModel = require('./lecturerTerm.model');
 const TermModel = require('./term.model');
+const TermDetailModel = require('./termDetail.model');
 const TopicModel = require('./topic.model');
 const TranscriptModel = require('./transcript.model');
 const EvaluationModel = require('./evaluation.model');
@@ -26,6 +27,7 @@ const GroupLecturer = GroupLecturerModel(sequelize, DataTypes);
 const GroupLecturerMember = GroupLecturerMemberModel(sequelize, DataTypes);
 const LecturerTerm = LecturerTermModel(sequelize, DataTypes);
 const Term = TermModel(sequelize, DataTypes);
+const TermDetail = TermDetailModel(sequelize, DataTypes);
 const Topic = TopicModel(sequelize, DataTypes);
 const Transcript = TranscriptModel(sequelize, DataTypes);
 const Evaluation = EvaluationModel(sequelize, DataTypes);
@@ -93,6 +95,16 @@ Term.hasMany(LecturerTerm, {
 });
 
 LecturerTerm.belongsTo(Term, {
+    foreignKey: 'term_id',
+    as: 'term',
+});
+
+Term.hasMany(TermDetail, {
+    foreignKey: 'term_id',
+    as: 'termDetails',
+});
+
+TermDetail.belongsTo(Term, {
     foreignKey: 'term_id',
     as: 'term',
 });
@@ -270,6 +282,7 @@ module.exports = {
     GroupLecturer,
     GroupLecturerMember,
     Term,
+    TermDetail,
     Topic,
     Achievement,
     Assign,
