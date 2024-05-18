@@ -34,7 +34,8 @@ router.get(APP_ROUTER.INDEX, getLecturers);
 
 router.get(APP_ROUTER.ID, getLecturerById);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
+// router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
+router.post(APP_ROUTER.INDEX, createLecturer);
 
 router.put(APP_ROUTER.CHANGE_ROLE_LECTURE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
 
