@@ -14,6 +14,7 @@ const {
     updatePassword,
     getMe,
     updateMe,
+    getLecturersByParams,
 } = require('../controllers/lecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
@@ -29,25 +30,26 @@ router.delete(APP_ROUTER.LOGOUT, protectLecturer, logout);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
+// ----------------- Me -----------------
+
+router.get(APP_ROUTER.ME, protectLecturer, getMe);
+router.put(APP_ROUTER.ME, protectLecturer, updateMe);
+
 // ----------------- Admin -----------------
 router.get(APP_ROUTER.INDEX, getLecturers);
+router.get(APP_ROUTER.PARAMS, getLecturersByParams);
 
 router.get(APP_ROUTER.ID, getLecturerById);
 
-// router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
+// ----------------- Lecturer -----------------
 router.post(APP_ROUTER.INDEX, createLecturer);
+
+router.put(APP_ROUTER.UPDATE_PASSWORD, protectLecturer, updatePassword);
 
 router.put(APP_ROUTER.CHANGE_ROLE_LECTURE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
 
 router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), updateLecturer);
 
 router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), deleteLecturer);
-
-// ----------------- Lecturer -----------------
-router.get(APP_ROUTER.ME, protectLecturer, getMe);
-
-router.put(APP_ROUTER.UPDATE_PASSWORD, protectLecturer, updatePassword);
-
-router.put(APP_ROUTER.ME, protectLecturer, updateMe);
 
 module.exports = router;
