@@ -8,6 +8,7 @@ const {
 } = require('../helper/jwt');
 const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
+const xlsx = require('xlsx');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -155,6 +156,24 @@ exports.createStudent = async (req, res) => {
             message: 'Create Success',
             student,
         });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.importStudents = async (req, res) => {
+    try {
+        const { majorId, termId } = req.body;
+        if (!req.file) {
+            return Error.sendWarning(res, 'Please upload a file');
+        }
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = xlsx.utils.sheet_to_json(sheet);
+
+        res.json({ message: 'File processed successfully', data: jsonData });
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);
