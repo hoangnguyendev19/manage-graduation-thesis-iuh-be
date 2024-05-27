@@ -3,7 +3,8 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { Op } = require('sequelize');
 
-exports.getTopics = async (req, res) => {
+//  get all topic -> ???
+const getTopics = async (req, res) => {
     try {
         const { lecturerId, termId, majorId } = req.query;
         let topics = null;
@@ -102,7 +103,7 @@ exports.getTopics = async (req, res) => {
     }
 };
 
-exports.getTopicById = async (req, res) => {
+const getTopicById = async (req, res) => {
     try {
         const { id } = req.params;
         const topic = await Topic.findOne({
@@ -149,7 +150,7 @@ exports.getTopicById = async (req, res) => {
     }
 };
 
-exports.createTopic = async (req, res) => {
+const createTopic = async (req, res) => {
     try {
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
@@ -184,7 +185,7 @@ exports.createTopic = async (req, res) => {
     }
 };
 
-exports.updateTopic = async (req, res) => {
+const updateTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, quantityGroupMax, target, standardOutput, requireInput } =
@@ -212,7 +213,7 @@ exports.updateTopic = async (req, res) => {
     }
 };
 
-exports.updateStatusTopic = async (req, res) => {
+const updateStatusTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -234,7 +235,7 @@ exports.updateStatusTopic = async (req, res) => {
     }
 };
 
-exports.deleteTopic = async (req, res) => {
+const deleteTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const topic = await Topic.findByPk(id);
@@ -250,4 +251,13 @@ exports.deleteTopic = async (req, res) => {
         console.log(error);
         Error.sendError(res, error);
     }
+};
+
+module.exports = {
+    getTopics,
+    getTopicById,
+    createTopic,
+    updateTopic,
+    updateStatusTopic,
+    deleteTopic,
 };

@@ -20,7 +20,6 @@ exports.protectLecturer = async (req, res, next) => {
             return Error.sendUnauthenticated(res);
         }
         req.user = lecturer;
-
         next();
     } catch (error) {
         return Error.sendError(res, error);

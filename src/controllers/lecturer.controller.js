@@ -8,6 +8,7 @@ const {
 } = require('../helper/jwt');
 const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
+const _ = require('lodash');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -97,7 +98,8 @@ exports.refreshToken = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
-        removeRefreshToken(req.user.id);
+        const lecturer = req.user;
+        removeRefreshToken(lecturer.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Logout Success',
@@ -145,6 +147,35 @@ exports.getLecturers = async (req, res) => {
             lecturers,
         });
     } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getLecturersByParams = async (req, res) => {
+    const { page, limit } = req.query;
+    try {
+        var offset = (page - 1) * limit;
+        const lecturers = await Lecturer.findAll({
+            offset: offset,
+            limit: parseInt(limit),
+        });
+        var totalPage = lecturers.length;
+
+        totalPage = _.ceil(totalPage / _.toInteger(limit));
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get all lecturers by params success',
+            lecturers,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getLecturersByParams= ~ error:', error);
         console.log(error);
         Error.sendError(res, error);
     }
@@ -303,7 +334,7 @@ exports.updatePassword = async (req, res) => {
     try {
         let { password, newPassword } = req.body;
 
-        let lecturer = await Lecturer.findByPk(req.user.id);
+        let lecturer = req.user;
         if (!lecturer) {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
@@ -329,13 +360,7 @@ exports.updatePassword = async (req, res) => {
 
 exports.getMe = async (req, res) => {
     try {
-        console.log(req.user.id);
-        const lecturer = await Lecturer.findByPk(req.user.id);
-        console.log(lecturer);
-        if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
-        }
-
+        const lecturer = req.user;
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
@@ -350,12 +375,12 @@ exports.getMe = async (req, res) => {
 exports.updateMe = async (req, res) => {
     try {
         const { fullName, email, phoneNumber } = req.body;
-        const lecturer = await Lecturer.findByPk(req.user.id);
+        const lecturer = req.user;
         if (!lecturer) {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
 
-        await Lecturer.update({ fullName, email, phoneNumber }, { where: { id: req.user.id } });
+        await Lecturer.update({ fullName, email, phoneNumber }, { where: { id: lecturer.id } });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
