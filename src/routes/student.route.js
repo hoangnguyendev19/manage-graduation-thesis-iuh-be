@@ -7,6 +7,7 @@ const {
     getStudents,
     getStudentById,
     createStudent,
+    importStudents,
     updateStudent,
     deleteStudent,
     updatePassword,
@@ -16,6 +17,7 @@ const {
 
 const { protectStudent } = require('../middleware/student.middleware');
 const { checkRoleLecturer, protectLecturer } = require('../middleware/lecturer.middleware');
+const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
 
@@ -34,6 +36,8 @@ router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'
 router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), updateStudent);
 
 router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), deleteStudent);
+
+router.post(APP_ROUTER.IMPORT, upload.single('file'), importStudents);
 
 // ----------------- Student -----------------
 router.get(APP_ROUTER.ME, protectStudent, getMe);
