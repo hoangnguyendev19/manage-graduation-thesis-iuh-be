@@ -1,4 +1,4 @@
-const { Student, Major } = require('../models/index');
+const { Student, Major, StudentTerm, GroupStudent } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -9,6 +9,7 @@ const {
 const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const xlsx = require('xlsx');
+const moment = require('moment');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -34,18 +35,12 @@ exports.login = async (req, res) => {
         const accessToken = generateAccessToken(student.id);
         const refreshToken = generateRefreshToken(student.id);
 
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-        });
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Login Success',
+            user,
             accessToken,
             refreshToken,
-            user,
         });
     } catch (error) {
         console.log(error);
@@ -173,7 +168,55 @@ exports.importStudents = async (req, res) => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
 
-        res.json({ message: 'File processed successfully', data: jsonData });
+        const students = [];
+        const password = await hashPassword('12345678');
+        // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Số điện thoại, Mã lớp
+        jsonData.forEach(async (student) => {
+            const id = student['Mã SV'];
+            const fullName = `${student['Họ đệm']} ${student['Tên']}`;
+            const gender = student['Giới tính'] === 'Nam' ? 1 : 0;
+            const dateOfBirth = moment(student['Ngày sinh'], 'DD/MM/YYYY').format('YYYY-MM-DD');
+            const phone = student['Số điện thoại'];
+            const clazzName = student['Mã lớp'];
+            const username = id;
+            const major_id = majorId;
+
+            students.push({
+                id,
+                username,
+                password,
+                fullName,
+                gender,
+                dateOfBirth,
+                phone,
+                clazzName,
+                major_id,
+            });
+        });
+
+        // Create students
+        await Student.bulkCreate(students);
+
+        // Create student term
+        students.forEach(async (student) => {
+            await StudentTerm.create({
+                student_id: student.id,
+                term_id: termId,
+            });
+        });
+
+        // Create group student
+        students.forEach(async (student) => {
+            await GroupStudent.create({
+                term_id: termId,
+            });
+        });
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Import Success',
+            students,
+        });
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);

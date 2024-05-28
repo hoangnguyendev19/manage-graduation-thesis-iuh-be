@@ -7,10 +7,6 @@ module.exports = (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
-            name: {
-                type: DataTypes.STRING,
-                allowNull: false,
-            },
             status: {
                 type: DataTypes.ENUM(
                     'OPEN',
@@ -30,20 +26,11 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: 'OPEN',
                 field: 'type_report',
             },
-            createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'created_at',
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'updated_at',
-            },
         },
         {
             tableName: 'group_students',
-            timestamps: false,
+            createdAt: 'created_at',
+            updatedAt: 'updated_at',
         },
     );
 };

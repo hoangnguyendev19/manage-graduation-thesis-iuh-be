@@ -24,20 +24,20 @@ exports.login = async (req, res) => {
             return Error.sendNotFound(res, 'Invalid email or password');
         }
 
+        const user = await Lecturer.findOne({
+            where: { username },
+            attributes: { exclude: ['password'] },
+        });
+
         const accessToken = generateAccessToken(lecturer.id);
         const refreshToken = generateRefreshToken(lecturer.id);
-
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-        });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Login Success',
-            lecturer,
+            user,
             accessToken,
+            refreshToken,
         });
     } catch (error) {
         console.log(error);

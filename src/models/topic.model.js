@@ -53,20 +53,11 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 defaultValue: 'LOW',
             },
-            createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'created_at',
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'updated_at',
-            },
         },
         {
             tableName: 'topics',
-            timestamps: false,
+            createdAt: 'created_at',
+            updatedAt: 'updated_at',
         },
     );
 };
