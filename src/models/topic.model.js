@@ -39,19 +39,10 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
                 field: 'require_input',
             },
-            comment: {
-                type: DataTypes.STRING,
-                allowNull: true,
-            },
             status: {
                 type: DataTypes.ENUM('PENDING', 'APPROVED', 'REJECTED'),
                 defaultValue: 'PENDING',
                 allowNull: false,
-            },
-            level: {
-                type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH'),
-                allowNull: false,
-                defaultValue: 'LOW',
             },
         },
         {
