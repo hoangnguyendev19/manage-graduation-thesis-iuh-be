@@ -3,11 +3,13 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { Op } = require('sequelize');
 
-//  get all topic -> ???
+//  get all topic -> theo chuyên ngành, học kì
 const getTopics = async (req, res) => {
     try {
         const { lecturerId, termId, majorId } = req.query;
         let topics = null;
+
+        //case 1
         if (!lecturerId && termId && majorId) {
             const lecturers = await Lecturer.findAll({
                 where: {
@@ -15,6 +17,8 @@ const getTopics = async (req, res) => {
                 },
                 attributes: ['id'],
             });
+
+            console.log('🚀 ~ getTopics ~ lecturers:', lecturers);
 
             const lecturerTerms = await LecturerTerm.findAll({
                 where: {
@@ -46,9 +50,9 @@ const getTopics = async (req, res) => {
                             'id',
                             'userName',
                             'fullName',
-                            'avatarUrl',
+                            'avatar',
                             'email',
-                            'phoneNumber',
+                            'phone',
                             'gender',
                             'degree',
                         ],
@@ -73,7 +77,9 @@ const getTopics = async (req, res) => {
 
                 topic.dataValues.quantityGroup = groupStudents.length;
             }
-        } else if (lecturerId && termId && !majorId) {
+        }
+        //case 2
+        else if (lecturerId && termId && !majorId) {
             const lecturerTerm = await LecturerTerm.findOne({
                 where: {
                     lecturer_id: lecturerId,
@@ -119,9 +125,9 @@ const getTopicById = async (req, res) => {
                         'id',
                         'userName',
                         'fullName',
-                        'avatarUrl',
+                        'avatar',
                         'email',
-                        'phoneNumber',
+                        'phone',
                         'gender',
                         'degree',
                     ],
@@ -151,18 +157,18 @@ const getTopicById = async (req, res) => {
 };
 
 const createTopic = async (req, res) => {
+    const { name, description, quantityGroupMax, target, standardOutput, requireInput } = req.body;
     try {
+        const lecturer_id = req.user.id;
+
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
-                lecturer_id: req.user.id,
+                lecturer_id: lecturer_id,
             },
         });
         if (!lecturerTerm) {
             return Error.sendNotFound(res, 'Lecturer Term not found');
         }
-
-        const { name, description, quantityGroupMax, target, standardOutput, requireInput } =
-            req.body;
 
         const topic = await Topic.create({
             name,
@@ -260,4 +266,5 @@ module.exports = {
     updateTopic,
     updateStatusTopic,
     deleteTopic,
+    // getAllTopics,
 };

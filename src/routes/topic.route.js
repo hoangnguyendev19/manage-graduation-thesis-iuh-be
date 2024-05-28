@@ -9,6 +9,7 @@ const {
     updateTopic,
     updateStatusTopic,
     deleteTopic,
+    getAllTopics,
 } = require('../controllers/topic.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
@@ -19,7 +20,11 @@ router.get(APP_ROUTER.INDEX, getTopics);
 
 router.get(APP_ROUTER.ID, getTopicById);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, createTopic);
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    createTopic,
+);
 
 router.put(APP_ROUTER.ID, protectLecturer, updateTopic);
 
