@@ -39,34 +39,16 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
                 field: 'require_input',
             },
-            comment: {
-                type: DataTypes.STRING,
-                allowNull: true,
-            },
             status: {
                 type: DataTypes.ENUM('PENDING', 'APPROVED', 'REJECTED'),
                 defaultValue: 'PENDING',
                 allowNull: false,
             },
-            level: {
-                type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH'),
-                allowNull: false,
-                defaultValue: 'LOW',
-            },
-            createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'created_at',
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'updated_at',
-            },
         },
         {
             tableName: 'topics',
-            timestamps: false,
+            createdAt: 'created_at',
+            updatedAt: 'updated_at',
         },
     );
 };

@@ -7,14 +7,29 @@ const moment = require('moment');
 exports.getTerms = async (req, res) => {
     try {
         const terms = await Term.findAll({
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
             order: [['startDate', 'DESC']],
+        });
+
+        const termDetails = await TermDetail.findAll();
+
+        const termList = await terms.map((term) => {
+            term = term.toJSON();
+            termDetails.forEach((termDetail) => {
+                if (termDetail.term_id === term.id) {
+                    term[termDetail.name] = true;
+                } else {
+                    term[termDetail.name] = false;
+                }
+            });
+
+            return term;
         });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            terms,
+            termList,
         });
     } catch (error) {
         console.log(error);
@@ -27,7 +42,7 @@ exports.getTermById = async (req, res) => {
         const { id } = req.params;
         const term = await Term.findOne({
             where: { id },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
         if (!term) {
@@ -58,7 +73,7 @@ exports.getTermNow = async (req, res) => {
                     [Op.gte]: date,
                 },
             },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['createdAt', 'updated_at'] },
         });
 
         if (!term) {
@@ -82,7 +97,7 @@ exports.getTermDetailWithChooseGroup = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'CHOOSE_GROUP' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
         if (!termDetail) {
@@ -106,7 +121,7 @@ exports.getTermDetailWithChooseTopic = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'CHOOSE_TOPIC' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
         if (!termDetail) {
@@ -130,7 +145,7 @@ exports.getTermDetailWithDiscussion = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'DISCUSSION' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
         if (!termDetail) {
@@ -154,7 +169,7 @@ exports.getTermDetailWithReport = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'REPORT' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
         if (!termDetail) {
@@ -178,7 +193,7 @@ exports.getTermDetailWithPublicResult = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'PUBLIC_RESULT' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
         if (!termDetail) {
@@ -242,7 +257,7 @@ exports.updateChooseGroupTerm = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'CHOOSE_GROUP' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updated_at'] },
         });
         if (!termDetail) {
             return Error.sendNotFound(res, 'Term not found');
@@ -266,7 +281,7 @@ exports.updateChooseTopicTerm = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'CHOOSE_TOPIC' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updatedAt'] },
         });
         if (!termDetail) {
             return Error.sendNotFound(res, 'Term not found');
@@ -290,7 +305,7 @@ exports.updateDiscussionTerm = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'DISCUSSION' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updatedAt'] },
         });
 
         if (!termDetail) {
@@ -315,7 +330,7 @@ exports.updateReportTerm = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'REPORT' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updatedAt'] },
         });
         if (!termDetail) {
             return Error.sendNotFound(res, 'Term not found');
@@ -339,7 +354,7 @@ exports.updatePublicResultTerm = async (req, res) => {
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'PUBLIC_RESULT' },
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['created_at', 'updatedAt'] },
         });
 
         if (!termDetail) {

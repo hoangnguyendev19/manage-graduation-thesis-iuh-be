@@ -10,6 +10,7 @@ const {
     importStudents,
     updateStudent,
     deleteStudent,
+    resetPassword,
     updatePassword,
     getMe,
     updateMe,
@@ -37,7 +38,20 @@ router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), u
 
 router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), deleteStudent);
 
-router.post(APP_ROUTER.IMPORT, upload.single('file'), importStudents);
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    upload.single('file'),
+    importStudents,
+);
+
+router.post(
+    APP_ROUTER.RESET_PASSWORD,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    resetPassword,
+);
 
 // ----------------- Student -----------------
 router.get(APP_ROUTER.ME, protectStudent, getMe);
