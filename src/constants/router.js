@@ -8,6 +8,8 @@ const APP_ROUTER = {
     REFRESH_TOKEN: '/refresh-token',
     UPDATE_PASSWORD: '/update-password',
     ME: '/me',
+    IMPORT: '/import',
+    RESET_PASSWORD: '/reset-password',
     // FORGOT_PASSWORD: '/forgot-password',
 
     // UPLOAD
@@ -29,7 +31,6 @@ const APP_ROUTER = {
     //STUDENTS
     STUDENT: '/api/v1/students',
     // STUDENT_RESET_PASSWORD: '/:id/reset-password',
-    // STUDENT_IMPORT: '/import-student',
     // STUDENT_EXPORT: '/export-transcript',
 
     //TERMS

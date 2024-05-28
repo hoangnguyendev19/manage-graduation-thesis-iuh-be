@@ -1,4 +1,4 @@
-const { Student, Major } = require('../models/index');
+const { Student, Major, StudentTerm, GroupStudent } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -8,6 +8,8 @@ const {
 } = require('../helper/jwt');
 const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
+const xlsx = require('xlsx');
+const moment = require('moment');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -33,18 +35,12 @@ exports.login = async (req, res) => {
         const accessToken = generateAccessToken(student.id);
         const refreshToken = generateRefreshToken(student.id);
 
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-        });
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Login Success',
+            user,
             accessToken,
             refreshToken,
-            user,
         });
     } catch (error) {
         console.log(error);
@@ -93,7 +89,7 @@ exports.logout = async (req, res) => {
 exports.getStudents = async (req, res) => {
     try {
         const students = await Student.findAll({
-            attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'major_id'] },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
             include: [
                 {
                     model: Major,
@@ -117,7 +113,18 @@ exports.getStudents = async (req, res) => {
 exports.getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
-        const student = await Student.findByPk(id);
+        const student = await Student.findOne({
+            where: { id },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+        });
+
         if (!student) {
             return Error.sendNotFound(res, 'Student not found');
         }
@@ -135,19 +142,25 @@ exports.getStudentById = async (req, res) => {
 
 exports.createStudent = async (req, res) => {
     try {
-        let { id, fullName, gender, phone, email, majorId, typeTraining, schoolYear } = req.body;
-        const password = await hashPassword(id);
+        let { id, fullName, gender, dateOfBirth, phone, typeTraining, clazzName, majorId, termId } =
+            req.body;
+        const password = await hashPassword('12345678');
         const student = await Student.create({
             id,
             fullName,
             username: id,
             password,
             gender,
-            email,
+            date_of_birth: dateOfBirth,
             phone,
             major_id: majorId,
             type_training: typeTraining,
-            school_year: schoolYear,
+            clazz_name: clazzName,
+        });
+
+        await StudentTerm.create({
+            student_id: id,
+            term_id: termId,
         });
 
         res.status(HTTP_STATUS.CREATED).json({
@@ -164,20 +177,19 @@ exports.createStudent = async (req, res) => {
 exports.updateStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        let { fullName, gender, phone, email, majorId, typeTraining, schoolYear } = req.body;
+        let { fullName, gender, phone, dateOfBirth, majorId, typeTraining, clazzName } = req.body;
         const student = await Student.findByPk(id);
         if (!student) {
             return Error.sendNotFound(res, 'Student not found');
         }
 
-        student.id = id;
         student.fullName = fullName;
         student.gender = gender;
+        student.date_of_birth = dateOfBirth;
         student.phone = phone;
-        student.email = email;
         student.major_id = majorId;
         student.type_training = typeTraining;
-        student.school_year = schoolYear;
+        student.clazz_name = clazzName;
 
         await student.save();
 
@@ -185,6 +197,84 @@ exports.updateStudent = async (req, res) => {
             success: true,
             message: 'Update Success',
             student,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.importStudents = async (req, res) => {
+    try {
+        const { majorId, termId } = req.body;
+        if (!req.file) {
+            return Error.sendWarning(res, 'Please upload a file');
+        }
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = xlsx.utils.sheet_to_json(sheet);
+
+        const students = [];
+        const password = await hashPassword('12345678');
+        // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Số điện thoại, Mã lớp
+        jsonData.forEach(async (student) => {
+            const id = student['Mã SV'];
+            const fullName = `${student['Họ đệm']} ${student['Tên']}`;
+            const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
+            const dateOfBirth = moment(student['Ngày sinh'], 'DD/MM/YYYY').format('YYYY-MM-DD');
+            const phone = student['Số điện thoại'];
+            const clazzName = student['Mã lớp'];
+            const username = id;
+            const major_id = majorId;
+
+            students.push({
+                id,
+                username,
+                password,
+                fullName,
+                gender,
+                dateOfBirth,
+                phone,
+                clazzName,
+                major_id,
+            });
+        });
+
+        // Create students
+        await Student.bulkCreate(students);
+
+        // Create student term
+        students.forEach(async (student) => {
+            await StudentTerm.create({
+                student_id: student.id,
+                term_id: termId,
+            });
+        });
+
+        // Create group student
+        students.forEach(async (student) => {
+            await GroupStudent.create({
+                term_id: termId,
+            });
+        });
+
+        const newStudents = await Student.findAll({
+            where: { major_id: majorId },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+        });
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Import Success',
+            students: newStudents,
         });
     } catch (error) {
         console.log(error);
@@ -205,6 +295,27 @@ exports.deleteStudent = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Delete Success',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const password = await hashPassword('12345678');
+        const student = await Student.findByPk(id);
+        if (!student) {
+            return Error.sendNotFound(res, 'Student not found');
+        }
+
+        await student.update({ password });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Reset Password Success',
         });
     } catch (error) {
         console.log(error);

@@ -36,10 +36,15 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.ENUM('MALE', 'FEMALE'),
                 allowNull: true,
             },
-            schoolYear: {
+            dateOfBirth: {
+                type: DataTypes.DATE,
+                allowNull: true,
+                field: 'date_of_birth',
+            },
+            clazzName: {
                 type: DataTypes.STRING,
                 allowNull: true,
-                field: 'school_year',
+                field: 'clazz_name',
             },
             typeTraining: {
                 type: DataTypes.ENUM('COLLEGE', 'UNIVERSITY'),
@@ -53,20 +58,11 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: true,
                 field: 'is_active',
             },
-            createdAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'created_at',
-            },
-            updatedAt: {
-                type: DataTypes.DATE,
-                defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-                field: 'updated_at',
-            },
         },
         {
             tableName: 'students',
-            timestamps: false,
+            createdAt: 'created_at',
+            updatedAt: 'updated_at',
         },
     );
 };
