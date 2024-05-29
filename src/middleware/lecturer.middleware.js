@@ -15,6 +15,7 @@ exports.protectLecturer = async (req, res, next) => {
 
         const decoded = verifyAccessToken(token);
         const lecturer = await Lecturer.findByPk(decoded.id);
+        console.log("🚀 ~ exports.protectLecturer= ~ lecturer:", lecturer)
 
         if (!lecturer) {
             return Error.sendUnauthenticated(res);
