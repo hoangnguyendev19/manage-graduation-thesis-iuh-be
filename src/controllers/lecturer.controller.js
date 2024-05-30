@@ -27,7 +27,14 @@ exports.login = async (req, res) => {
 
         const user = await Lecturer.findOne({
             where: { username },
-            attributes: { exclude: ['password', 'created_at', 'updated_at'] },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
         });
 
         const accessToken = generateAccessToken(lecturer.id);
@@ -130,6 +137,14 @@ exports.getLecturersByParams = async (req, res) => {
     try {
         let offset = (page - 1) * limit;
         const lecturers = await Lecturer.findAll({
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
             offset: offset,
             limit: parseInt(limit),
         });
@@ -157,7 +172,18 @@ exports.getLecturersByParams = async (req, res) => {
 exports.getLecturerById = async (req, res) => {
     try {
         const { id } = req.params;
-        const lecturer = await Lecturer.findByPk(id);
+        const lecturer = await Lecturer.findOne({
+            where: { id },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+        });
+
         if (!lecturer) {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
@@ -215,6 +241,7 @@ exports.updateLecturer = async (req, res) => {
         const { id } = req.params;
         const { fullName, gender, phone, email, majorId } = req.body;
         const lecturer = await Lecturer.findByPk(id);
+
         if (!lecturer) {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
@@ -227,10 +254,22 @@ exports.updateLecturer = async (req, res) => {
 
         await lecturer.save();
 
+        const newLecturer = await Lecturer.findOne({
+            where: { id },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+        });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update Success',
-            lecturer,
+            lecturer: newLecturer,
         });
     } catch (error) {
         console.log(error);
@@ -240,7 +279,7 @@ exports.updateLecturer = async (req, res) => {
 
 exports.importLecturers = async (req, res) => {
     try {
-        const { majorId, termId } = req.body;
+        const { majorId } = req.body;
         if (!req.file) {
             return Error.sendWarning(res, 'Please upload a file');
         }
@@ -251,8 +290,8 @@ exports.importLecturers = async (req, res) => {
 
         const lecturers = [];
         const password = await hashPassword('12345678');
-
-        for (const [index, lecturer] of jsonData.entries()) {
+        // columns: STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
+        jsonData.forEach(async (lecturer) => {
             const id = lecturer['Mã GV'];
             const fullName = `${lecturer['Họ và tên']}`;
             const gender = lecturer['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
@@ -271,30 +310,38 @@ exports.importLecturers = async (req, res) => {
                 email,
                 major_id,
             });
-        }
-        for (const [index, lecturerExcel] of lecturers.entries()) {
-            const currentLecturer = await Lecturer.findByPk(lecturerExcel['id']);
-            //have lecturer
-            if (!currentLecturer) {
-                const lecturer = await Lecturer.create(lecturer);
-                const lecturerTerm = { lecturer_id: lecturerExcel.id, term_id: termId };
-                await LecturerTerm.create(lecturerTerm);
-            }
-            // no have
-            else {
-                const lecturerTerm = { lecturer_id: lecturerExcel.id, term_id: termId };
-                await LecturerTerm.create(lecturerTerm);
-            }
-        }
-
-        const newLecturers = await LecturerTerm.findAll({
-            where: { term_id: termId },
         });
+
+        // Create lecturers
+        await Lecturer.bulkCreate(lecturers);
+
+        const newLecturers = await Lecturer.findAll({
+            where: { major_id: majorId },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+            offset: 0,
+            limit: 10,
+        });
+
+        let totalPage = newLecturers.length;
+
+        totalPage = _.ceil(totalPage / _.toInteger(10));
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import Success',
             lecturers: newLecturers,
+            params: {
+                page: 1,
+                limit: _.toInteger(10),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);
@@ -375,7 +422,18 @@ exports.updatePassword = async (req, res) => {
 
 exports.getMe = async (req, res) => {
     try {
-        const lecturer = req.user;
+        const lecturer = await Lecturer.findOne({
+            where: { id: req.user.id },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+        });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
@@ -389,13 +447,13 @@ exports.getMe = async (req, res) => {
 
 exports.updateMe = async (req, res) => {
     try {
-        const { fullName, email, phoneNumber } = req.body;
+        const { fullName, email, phone, gender } = req.body;
         const lecturer = req.user;
         if (!lecturer) {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
 
-        await Lecturer.update({ fullName, email, phoneNumber }, { where: { id: lecturer.id } });
+        await Lecturer.update({ fullName, email, phone, gender }, { where: { id: lecturer.id } });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

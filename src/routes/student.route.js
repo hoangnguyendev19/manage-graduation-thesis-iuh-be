@@ -5,6 +5,7 @@ const {
     refreshToken,
     logout,
     getStudents,
+    getStudentsByParams,
     getStudentById,
     createStudent,
     importStudents,
@@ -31,6 +32,8 @@ router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
 // ----------------- Admin -----------------
 router.get(APP_ROUTER.INDEX, getStudents);
+
+router.get(APP_ROUTER.PARAMS, getStudentsByParams);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createStudent);
 

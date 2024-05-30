@@ -29,7 +29,14 @@ exports.login = async (req, res) => {
 
         const user = await Student.findOne({
             where: { username },
-            attributes: { exclude: ['password'] },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
         });
 
         const accessToken = generateAccessToken(student.id);
@@ -110,6 +117,42 @@ exports.getStudents = async (req, res) => {
     }
 };
 
+exports.getStudentsByParams = async (req, res) => {
+    const { page, limit } = req.query;
+    try {
+        let offset = (page - 1) * limit;
+        const students = await Student.findAll({
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+            offset: offset,
+            limit: parseInt(limit),
+        });
+        let totalPage = students.length;
+
+        totalPage = _.ceil(totalPage / _.toInteger(limit));
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get all students by params success',
+            students,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -159,14 +202,26 @@ exports.createStudent = async (req, res) => {
         });
 
         await StudentTerm.create({
-            student_id: id,
+            student_id: student.id,
             term_id: termId,
+        });
+
+        const newStudent = await Student.findOne({
+            where: { id },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
         });
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Create Success',
-            student,
+            student: newStudent,
         });
     } catch (error) {
         console.log(error);
@@ -193,10 +248,22 @@ exports.updateStudent = async (req, res) => {
 
         await student.save();
 
+        const newStudent = await Student.findOne({
+            where: { id },
+            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            include: [
+                {
+                    model: Major,
+                    attributes: ['id', 'name'],
+                    as: 'major',
+                },
+            ],
+        });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update Success',
-            student,
+            student: newStudent,
         });
     } catch (error) {
         console.log(error);
@@ -254,6 +321,7 @@ exports.importStudents = async (req, res) => {
         // Create group student
         students.forEach(async (student) => {
             await GroupStudent.create({
+                name: `Nhóm số ${students.indexOf(student) + 1}`,
                 term_id: termId,
             });
         });
@@ -268,12 +336,23 @@ exports.importStudents = async (req, res) => {
                     as: 'major',
                 },
             ],
+            offset: 0,
+            limit: 10,
         });
+
+        let totalPage = newStudents.length;
+
+        totalPage = _.ceil(totalPage / _.toInteger(10));
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import Success',
             students: newStudents,
+            params: {
+                page: 1,
+                limit: _.toInteger(10),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);

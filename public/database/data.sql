@@ -63,17 +63,17 @@ INSERT INTO `group_lecturer_members` (`id`, `created_at`, `updated_at`, `lecture
 	(6, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 6, 3);
 
 -- Dumping data for table manage_graduation_se_iuh.group_students: ~0 rows (approximately)
-INSERT INTO `group_students` (`id`, `status`, `type_report`, `created_at`, `updated_at`, `topic_id`, `term_id`) VALUES
-	(1, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 1),
-	(2, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 2, 1),
-	(3, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3, 1),
-	(4, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 4, 1),
-	(5, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 5, 1),
-	(6, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 6, 1),
-	(7, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 7, 1),
-	(8, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 8, 1),
-	(9, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 9, 1),
-	(10, 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 10, 1);
+INSERT INTO `group_students` (`id`, `name`, `status`, `type_report`, `created_at`, `updated_at`, `topic_id`, `term_id`) VALUES
+	(1, 'Nhóm số 1', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 1),
+	(2, 'Nhóm số 2', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 2, 1),
+	(3, 'Nhóm số 3', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3, 1),
+	(4, 'Nhóm số 4', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 4, 1),
+	(5, 'Nhóm số 5', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 5, 1),
+	(6, 'Nhóm số 6', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 6, 1),
+	(7, 'Nhóm số 7', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 7, 1),
+	(8, 'Nhóm số 8', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 8, 1),
+	(9, 'Nhóm số 9', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 9, 1),
+	(10, 'Nhóm số 10', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 10, 1);
 
 -- Dumping data for table manage_graduation_se_iuh.lecturers: ~9 rows (approximately)
 INSERT INTO `lecturers` (`id`, `username`, `password`, `full_name`, `avatar`, `phone`, `email`, `gender`, `degree`, `role`, `is_admin`, `is_active`, `created_at`, `updated_at`, `major_id`) VALUES
@@ -188,17 +188,17 @@ INSERT INTO `term_details` (`id`, `name`, `start_date`, `end_date`, `created_at`
 	(30, 'PUBLIC_RESULT', '2025-08-02 00:00:00', '2025-09-01 00:00:00', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 6);
 
 -- Dumping data for table manage_graduation_se_iuh.topics: ~10 rows (approximately)
-INSERT INTO `topics` (`id`, `name`, `description`, `quantity_group_max`, `note`, `target`, `standard_output`, `require_input`, `comment`, `status`, `level`, `created_at`, `updated_at`, `lecturer_term_id`) VALUES
-	(1, 'Topic 1', 'Description 1', 2, 'Note 1', 'Target 1', 'Standard output 1', 'Require input 1', 'Comment 1', 'PENDING', 'LOW', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(2, 'Topic 2', 'Description 2', 2, 'Note 2', 'Target 2', 'Standard output 2', 'Require input 2', 'Comment 2', 'PENDING', 'MEDIUM', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(3, 'Topic 3', 'Description 3', 2, 'Note 3', 'Target 3', 'Standard output 3', 'Require input 3', 'Comment 3', 'PENDING', 'HIGH', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(4, 'Topic 4', 'Description 4', 2, 'Note 4', 'Target 4', 'Standard output 4', 'Require input 4', 'Comment 4', 'PENDING', 'LOW', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(5, 'Topic 5', 'Description 5', 2, 'Note 5', 'Target 5', 'Standard output 5', 'Require input 5', 'Comment 5', 'PENDING', 'MEDIUM', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(6, 'Topic 6', 'Description 6', 2, 'Note 6', 'Target 6', 'Standard output 6', 'Require input 6', 'Comment 6', 'PENDING', 'HIGH', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(7, 'Topic 7', 'Description 7', 2, 'Note 7', 'Target 7', 'Standard output 7', 'Require input 7', 'Comment 7', 'PENDING', 'LOW', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(8, 'Topic 8', 'Description 8', 2, 'Note 8', 'Target 8', 'Standard output 8', 'Require input 8', 'Comment 8', 'PENDING', 'MEDIUM', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(9, 'Topic 9', 'Description 9', 2, 'Note 9', 'Target 9', 'Standard output 9', 'Require input 9', 'Comment 9', 'PENDING', 'HIGH', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
-	(10, 'Topic 10', 'Description 10', 2, 'Note 10', 'Target 10', 'Standard output 10', 'Require input 10', 'Comment 10', 'PENDING', 'LOW', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1);
+INSERT INTO `topics` (`id`, `name`, `description`, `quantity_group_max`, `note`, `target`, `standard_output`, `require_input`, `status`, `created_at`, `updated_at`, `lecturer_term_id`) VALUES
+	(1, 'Topic 1', 'Description 1', 2, 'Note 1', 'Target 1', 'Standard output 1', 'Require input 1', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(2, 'Topic 2', 'Description 2', 2, 'Note 2', 'Target 2', 'Standard output 2', 'Require input 2', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(3, 'Topic 3', 'Description 3', 2, 'Note 3', 'Target 3', 'Standard output 3', 'Require input 3', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(4, 'Topic 4', 'Description 4', 2, 'Note 4', 'Target 4', 'Standard output 4', 'Require input 4', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(5, 'Topic 5', 'Description 5', 2, 'Note 5', 'Target 5', 'Standard output 5', 'Require input 5', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(6, 'Topic 6', 'Description 6', 2, 'Note 6', 'Target 6', 'Standard output 6', 'Require input 6', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(7, 'Topic 7', 'Description 7', 2, 'Note 7', 'Target 7', 'Standard output 7', 'Require input 7', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(8, 'Topic 8', 'Description 8', 2, 'Note 8', 'Target 8', 'Standard output 8', 'Require input 8', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(9, 'Topic 9', 'Description 9', 2, 'Note 9', 'Target 9', 'Standard output 9', 'Require input 9', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1),
+	(10, 'Topic 10', 'Description 10', 2, 'Note 10', 'Target 10', 'Standard output 10', 'Require input 10', 'PENDING', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1);
 
 -- Dumping data for table manage_graduation_se_iuh.transcripts: ~0 rows (approximately)
 INSERT INTO `transcripts` (`id`, `score`, `created_at`, `updated_at`, `student_term_id`, `evaluation_id`, `lecturer_term_id`) VALUES
