@@ -26,8 +26,15 @@ exports.generateRefreshToken = (id) => {
     return token;
 };
 
-exports.verifyAccessToken = (token) => {
-    return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_KEY);
+exports.verifyAccessToken = async (token) => {
+    try {
+        return { payload: jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_KEY), expired: false };
+    } catch (error) {
+        if (error.name == 'TokenExpiredError') {
+            return { payload: jwt.decode(token), expired: true };
+        }
+        throw error;
+    }
 };
 
 exports.verifyRefreshToken = (token) => {

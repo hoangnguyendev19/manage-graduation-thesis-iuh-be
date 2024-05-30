@@ -1,4 +1,4 @@
-const { Lecturer, Major } = require('../models/index');
+const { Lecturer, Major, LecturerTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -128,12 +128,12 @@ exports.getLecturers = async (req, res) => {
 exports.getLecturersByParams = async (req, res) => {
     const { page, limit } = req.query;
     try {
-        var offset = (page - 1) * limit;
+        let offset = (page - 1) * limit;
         const lecturers = await Lecturer.findAll({
             offset: offset,
             limit: parseInt(limit),
         });
-        var totalPage = lecturers.length;
+        let totalPage = lecturers.length;
 
         totalPage = _.ceil(totalPage / _.toInteger(limit));
 
@@ -251,8 +251,8 @@ exports.importLecturers = async (req, res) => {
 
         const lecturers = [];
         const password = await hashPassword('12345678');
-        // columns: STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
-        jsonData.forEach(async (lecturer) => {
+
+        for (const [index, lecturer] of jsonData.entries()) {
             const id = lecturer['Mã GV'];
             const fullName = `${lecturer['Họ và tên']}`;
             const gender = lecturer['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
@@ -271,21 +271,24 @@ exports.importLecturers = async (req, res) => {
                 email,
                 major_id,
             });
-        });
+        }
+        for (const [index, lecturerExcel] of lecturers.entries()) {
+            const currentLecturer = await Lecturer.findByPk(lecturerExcel['id']);
+            //have lecturer
+            if (!currentLecturer) {
+                const lecturer = await Lecturer.create(lecturer);
+                const lecturerTerm = { lecturer_id: lecturerExcel.id, term_id: termId };
+                await LecturerTerm.create(lecturerTerm);
+            }
+            // no have
+            else {
+                const lecturerTerm = { lecturer_id: lecturerExcel.id, term_id: termId };
+                await LecturerTerm.create(lecturerTerm);
+            }
+        }
 
-        // Create lecturers
-        await Lecturer.bulkCreate(lecturers);
-
-        const newLecturers = await Lecturer.findAll({
-            where: { major_id: majorId },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
-            include: [
-                {
-                    model: Major,
-                    attributes: ['id', 'name'],
-                    as: 'major',
-                },
-            ],
+        const newLecturers = await LecturerTerm.findAll({
+            where: { term_id: termId },
         });
 
         res.status(HTTP_STATUS.CREATED).json({

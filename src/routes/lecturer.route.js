@@ -30,6 +30,8 @@ router.delete(APP_ROUTER.LOGOUT, protectLecturer, logout);
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
 // ----------------- Admin -----------------
+router.get(APP_ROUTER.ME, protectLecturer, getMe);
+
 router.get(APP_ROUTER.INDEX, getLecturers);
 
 router.get(APP_ROUTER.PARAMS, getLecturersByParams);
@@ -53,7 +55,6 @@ router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER')
 router.put(APP_ROUTER.CHANGE_ROLE_LECTURE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
 
 // ----------------- Lecturer -----------------
-router.get(APP_ROUTER.ME, protectLecturer, getMe);
 
 router.put(APP_ROUTER.ME, protectLecturer, updateMe);
 
