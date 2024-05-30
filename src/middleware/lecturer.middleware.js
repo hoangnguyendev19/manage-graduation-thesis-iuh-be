@@ -12,11 +12,13 @@ exports.protectLecturer = async (req, res, next) => {
         if (!token) {
             return Error.sendUnauthenticated(res);
         }
+        const decoded = await verifyAccessToken(token);
 
-        const decoded = verifyAccessToken(token);
-        const lecturer = await Lecturer.findByPk(decoded.id);
-        console.log("🚀 ~ exports.protectLecturer= ~ lecturer:", lecturer)
+        if (decoded.expired) {
+            return Error.sendUnauthenticated(res);
+        }
 
+        const lecturer = await Lecturer.findByPk(decoded.payload.id);
         if (!lecturer) {
             return Error.sendUnauthenticated(res);
         }
