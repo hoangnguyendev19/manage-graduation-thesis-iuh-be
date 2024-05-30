@@ -214,7 +214,6 @@ exports.importStudents = async (req, res) => {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
-
         const students = [];
         const password = await hashPassword('12345678');
         // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Số điện thoại, Mã lớp
