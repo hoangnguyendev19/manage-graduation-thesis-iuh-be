@@ -33,8 +33,6 @@ router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 // ----------------- Admin -----------------
 router.get(APP_ROUTER.INDEX, getStudents);
 
-router.get(APP_ROUTER.PARAMS, getStudentsByParams);
-
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createStudent);
 
 router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), updateStudent);

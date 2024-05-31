@@ -77,7 +77,7 @@ INSERT INTO `group_students` (`id`, `name`, `status`, `type_report`, `created_at
 
 -- Dumping data for table manage_graduation_se_iuh.lecturers: ~9 rows (approximately)
 INSERT INTO `lecturers` (`id`, `username`, `password`, `full_name`, `avatar`, `phone`, `email`, `gender`, `degree`, `role`, `is_admin`, `is_active`, `created_at`, `updated_at`, `major_id`) VALUES
-	('20018432', '20018432', '$2b$10$mFPLV3lpxATUyl.8DFo7Ee7lK86L1J8TQByvREQUudY0Nt0hWTjga', 'Nguyễn Thị Hạnh', NULL, '0304125678', 'hanhnguyen@gmail.com', 'FEMALE', 'DOCTOR', 'HEAD_LECTURER', 0, 1, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3),
+	('20018432', '20018432', '$2b$10$mFPLV3lpxATUyl.8DFo7Ee7lK86L1J8TQByvREQUudY0Nt0hWTjga', 'Nguyễn Thị Hạnh', NULL, '0304125678', 'hanhnguyen@gmail.com', 'FEMALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3),
 	('20046432', '20046432', '$2b$10$mFPLV3lpxATUyl.8DFo7Ee7lK86L1J8TQByvREQUudY0Nt0hWTjga', 'Nguyễn Trọng Tiến', NULL, '0315125678', 'tiennguyen@gmail.com', 'MALE', 'DOCTOR', 'LECTURER', 0, 1, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3),
 	('20098321', '20098321', '$2b$10$mFPLV3lpxATUyl.8DFo7Ee7lK86L1J8TQByvREQUudY0Nt0hWTjga', 'Lê Nhật Duy', NULL, '0304125600', 'duyle@gmail.com', 'MALE', 'DOCTOR', 'HEAD_LECTURER', 1, 1, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 4),
 	('20118432', '20118432', '$2b$10$mFPLV3lpxATUyl.8DFo7Ee7lK86L1J8TQByvREQUudY0Nt0hWTjga', 'Tôn Long Phước', NULL, '0315125678', 'phuocton@gmail.com', 'MALE', 'DOCTOR', 'LECTURER', 0, 1, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3),

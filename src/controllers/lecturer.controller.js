@@ -10,6 +10,8 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const _ = require('lodash');
 const xlsx = require('xlsx');
+const { QueryTypes, where, or } = require('sequelize');
+const { sequelize } = require('../configs/connectDB');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -27,11 +29,17 @@ exports.login = async (req, res) => {
 
         const user = await Lecturer.findOne({
             where: { username },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
@@ -94,67 +102,50 @@ exports.logout = async (req, res) => {
 
 exports.getLecturers = async (req, res) => {
     try {
-        const { majorId } = req.query;
-        let lecturers = null;
+        const { termId, majorId, page, limit } = req.query;
+        let offset = (page - 1) * limit;
+        let lecturers = [];
         if (majorId) {
-            lecturers = await Lecturer.findAll({
-                where: { major_id: majorId },
-                attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
-                include: [
-                    {
-                        model: Major,
-                        attributes: ['id', 'name'],
-                        as: 'major',
-                    },
-                ],
-            });
+            lecturers = await sequelize.query(
+                `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+                FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+                WHERE m.id = :majorId AND lt.term_id = :termId
+                ORDER BY l.created_at DESC
+                LIMIT :limit OFFSET :offset`,
+                {
+                    replacements: { majorId, termId, limit: parseInt(limit), offset },
+                    type: QueryTypes.SELECT,
+                },
+            );
         } else {
-            lecturers = await Lecturer.findAll({
-                attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
-                include: [
-                    {
-                        model: Major,
-                        attributes: ['id', 'name'],
-                        as: 'major',
-                    },
-                ],
-            });
+            lecturers = await sequelize.query(
+                `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+                FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+                WHERE lt.term_id = :termId
+                ORDER BY l.created_at DESC
+                LIMIT :limit OFFSET :offset`,
+                {
+                    replacements: { termId, limit: parseInt(limit), offset },
+                    type: QueryTypes.SELECT,
+                },
+            );
         }
 
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Get Success',
-            lecturers,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.getLecturersByParams = async (req, res) => {
-    const { page, limit } = req.query;
-    try {
-        let offset = (page - 1) * limit;
-        const lecturers = await Lecturer.findAll({
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
-            include: [
-                {
-                    model: Major,
-                    attributes: ['id', 'name'],
-                    as: 'major',
-                },
-            ],
-            offset: offset,
-            limit: parseInt(limit),
-        });
         let totalPage = lecturers.length;
 
         totalPage = _.ceil(totalPage / _.toInteger(limit));
 
+        lecturers = lecturers.map((lec) => {
+            return {
+                ...lec,
+                isAdmin: Boolean(lec.isAdmin),
+                isActive: Boolean(lec.isActive),
+            };
+        });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all lecturers by params success',
+            message: 'Get all lecturers success',
             lecturers,
             params: {
                 page: _.toInteger(page),
@@ -163,7 +154,6 @@ exports.getLecturersByParams = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getLecturersByParams= ~ error:', error);
         console.log(error);
         Error.sendError(res, error);
     }
@@ -174,11 +164,17 @@ exports.getLecturerById = async (req, res) => {
         const { id } = req.params;
         const lecturer = await Lecturer.findOne({
             where: { id },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
@@ -190,7 +186,7 @@ exports.getLecturerById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get lecturer by id successfully',
             lecturer,
         });
     } catch (error) {
@@ -214,12 +210,19 @@ exports.createLecturer = async (req, res) => {
             major_id: majorId,
         });
 
-        const newLecturer = await Lecturer.findByPk(lecturer.id, {
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+        let newLecturer = await Lecturer.findOne({
+            where: { id: lecturer.id },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
@@ -227,7 +230,7 @@ exports.createLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Create lecturer successfully',
             lecturer: newLecturer,
         });
     } catch (error) {
@@ -256,11 +259,17 @@ exports.updateLecturer = async (req, res) => {
 
         const newLecturer = await Lecturer.findOne({
             where: { id },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
@@ -268,7 +277,7 @@ exports.updateLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update lecturer successfully',
             lecturer: newLecturer,
         });
     } catch (error) {
@@ -279,7 +288,7 @@ exports.updateLecturer = async (req, res) => {
 
 exports.importLecturers = async (req, res) => {
     try {
-        const { majorId } = req.body;
+        const { termId, majorId } = req.body;
         if (!req.file) {
             return Error.sendWarning(res, 'Please upload a file');
         }
@@ -315,13 +324,26 @@ exports.importLecturers = async (req, res) => {
         // Create lecturers
         await Lecturer.bulkCreate(lecturers);
 
+        // Create lecturer term
+        lecturers.forEach(async (lecturer) => {
+            await LecturerTerm.create({
+                lecturer_id: lecturer.id,
+                term_id: termId,
+            });
+        });
+
         const newLecturers = await Lecturer.findAll({
-            where: { major_id: majorId },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
@@ -335,7 +357,7 @@ exports.importLecturers = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import Success',
+            message: 'Import lecturers successfully',
             lecturers: newLecturers,
             params: {
                 page: 1,
@@ -361,7 +383,7 @@ exports.deleteLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Delete lecturer successfully',
         });
     } catch (error) {
         console.log(error);
@@ -382,7 +404,7 @@ exports.changeRole = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Change Role Success',
+            message: 'Change role successfully',
         });
     } catch (error) {
         console.log(error);
@@ -412,7 +434,7 @@ exports.updatePassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Password Success',
+            message: 'Update password successfully',
         });
     } catch (error) {
         console.log(error);
@@ -424,11 +446,17 @@ exports.getMe = async (req, res) => {
     try {
         const lecturer = await Lecturer.findOne({
             where: { id: req.user.id },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
@@ -436,7 +464,7 @@ exports.getMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get me successfully',
             lecturer,
         });
     } catch (error) {
@@ -457,7 +485,7 @@ exports.updateMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update me successfully',
         });
     } catch (error) {
         console.log(error);

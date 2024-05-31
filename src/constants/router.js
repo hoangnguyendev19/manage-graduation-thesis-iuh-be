@@ -9,7 +9,6 @@ const APP_ROUTER = {
     UPDATE_PASSWORD: '/update-password',
     ME: '/me',
     IMPORT: '/import',
-    PARAMS: '/params',
     RESET_PASSWORD: '/reset-password',
     // FORGOT_PASSWORD: '/forgot-password',
 
