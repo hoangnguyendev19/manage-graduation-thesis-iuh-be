@@ -20,7 +20,7 @@ const APP_ROUTER = {
 
     //LECTURERS:
     LECTURER: '/api/v1/lecturers',
-    PARAMS: '/params',
+
     // LECTURER_AVAILABLE_GROUP: '/available-group',
     CHANGE_ROLE_LECTURE: '/:id/role',
     // IMPORT_LECTURE: '/import-lecturer',

@@ -5,6 +5,7 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     getLecturerTerms,
     createLecturerTerm,
+    importLecturerTerms,
     updateRoleLecturerTerm,
     deleteLecturerTerm,
 } = require('../controllers/lecturerTerm.controller');
@@ -21,6 +22,8 @@ router.post(
     checkRoleLecturer('HEAD_LECTURER'),
     createLecturerTerm,
 );
+
+router.post(APP_ROUTER.IMPORT, protectLecturer, checkRoleLecturer('ADMIN'), importLecturerTerms);
 
 router.put(
     APP_ROUTER.ID,

@@ -14,7 +14,6 @@ const {
     updatePassword,
     getMe,
     updateMe,
-    getLecturersByParams,
 } = require('../controllers/lecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
@@ -34,8 +33,6 @@ router.get(APP_ROUTER.ME, protectLecturer, getMe);
 
 router.get(APP_ROUTER.INDEX, getLecturers);
 
-router.get(APP_ROUTER.PARAMS, getLecturersByParams);
-
 router.get(APP_ROUTER.ID, getLecturerById);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
@@ -45,7 +42,7 @@ router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), u
 router.post(
     APP_ROUTER.IMPORT,
     protectLecturer,
-    checkRoleLecturer('HEAD_LECTURER'),
+    checkRoleLecturer('ADMIN'),
     upload.single('file'),
     importLecturers,
 );

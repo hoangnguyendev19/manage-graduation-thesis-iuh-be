@@ -1,40 +1,61 @@
 const { GroupStudent, StudentTerm, Student, Topic } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op } = require('sequelize');
+const { QueryTypes } = require('sequelize');
+const { sequelize } = require('../configs/connectDB');
 
 exports.getGroupStudents = async (req, res) => {
     try {
         const { termId, topicId, status } = req.query;
         let groupStudents = null;
         if (termId && !topicId && !status) {
-            groupStudents = await GroupStudent.findAll({
-                where: {
-                    term_id: termId,
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                WHERE gs.term_id = :termId
+                GROUP BY gs.id`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId },
                 },
-            });
+            );
         } else if (termId && topicId && !status) {
-            groupStudents = await GroupStudent.findAll({
-                where: {
-                    term_id: termId,
-                    topic_id: topicId,
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                WHERE gs.term_id = :termId and gs.topic_id = :topicId
+                GROUP BY gs.id`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, topicId },
                 },
-            });
+            );
         } else if (termId && !topicId && status) {
-            groupStudents = await GroupStudent.findAll({
-                where: {
-                    topic_id: topicId,
-                    status: status,
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                WHERE gs.term_id = :termId and gs.status = :status
+                GROUP BY gs.id`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, status },
                 },
-            });
+            );
         } else if (termId && topicId && status) {
-            groupStudents = await GroupStudent.findAll({
-                where: {
-                    term_id: termId,
-                    topic_id: topicId,
-                    status: status,
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                WHERE gs.term_id = :termId and gs.topic_id = :topicId and gs.status = :status
+                GROUP BY gs.id`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, topicId, status },
                 },
-            });
+            );
         }
 
         res.status(HTTP_STATUS.OK).json({
@@ -51,38 +72,42 @@ exports.getGroupStudents = async (req, res) => {
 exports.getGroupStudentsByMajor = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
-        const groupStudents = await GroupStudent.findAll({
-            where: {
-                term_id: termId,
-            },
-            attributes: ['id', 'name'],
-            include: {
-                model: StudentTerm,
-                attributes: ['student_id'],
-                include: {
-                    model: Student,
-                    attributes: ['major_id'],
-                    where: {
-                        major_id: majorId,
-                    },
-                    as: 'student',
-                },
-                as: 'studentTerms',
-            },
-        });
+        // const groupStudents = await GroupStudent.findAll({
+        //     where: {
+        //         term_id: termId,
+        //     },
+        //     attributes: ['id', 'name'],
+        //     include: {
+        //         model: StudentTerm,
+        //         attributes: ['student_id'],
+        //         include: {
+        //             model: Student,
+        //             attributes: ['major_id'],
+        //             where: {
+        //                 major_id: majorId,
+        //             },
+        //             as: 'student',
+        //         },
+        //         as: 'studentTerms',
+        //     },
+        // });
 
-        const groups = groupStudents.map((group) => {
-            return {
-                id: group.id,
-                name: group.name,
-                total: group.studentTerms.length,
-            };
-        });
+        const groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN students s ON st.student_id = s.id
+            WHERE gs.term_id = :termId and s.major_id = :majorId
+            GROUP BY gs.id`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId, majorId },
+            },
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            groups,
+            groupStudents,
         });
     } catch (error) {
         console.log(error);

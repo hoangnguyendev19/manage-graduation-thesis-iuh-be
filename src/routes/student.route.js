@@ -5,6 +5,7 @@ const {
     refreshToken,
     logout,
     getStudents,
+    getStudentsByParams,
     getStudentById,
     createStudent,
     importStudents,

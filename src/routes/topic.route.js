@@ -20,9 +20,9 @@ const upload = require('../configs/uploadConfig');
 const router = express.Router();
 
 router.get(APP_ROUTER.INDEX, getTopics);
-router.get(APP_ROUTER.PARAMS, getTopicByParams);
+// router.get(APP_ROUTER.PARAMS, getTopicByParams);
 
-router.post(    
+router.post(
     APP_ROUTER.IMPORT,
     protectLecturer,
     upload.single('file'),

@@ -10,6 +10,9 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const xlsx = require('xlsx');
 const moment = require('moment');
+const _ = require('lodash');
+const { QueryTypes } = require('sequelize');
+const { sequelize } = require('../configs/connectDB');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -29,7 +32,20 @@ exports.login = async (req, res) => {
 
         const user = await Student.findOne({
             where: { username },
-            attributes: { exclude: ['password'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
+            include: [
+                {
+                    model: Major,
+                    attributes: [],
+                    as: 'major',
+                },
+            ],
         });
 
         const accessToken = generateAccessToken(student.id);
@@ -37,7 +53,7 @@ exports.login = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Login Success',
+            message: 'Login successfully',
             user,
             accessToken,
             refreshToken,
@@ -61,7 +77,7 @@ exports.refreshToken = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Refresh Token Success',
+            message: 'Refresh Token successfully',
             accessToken,
             refreshToken: newRefreshToken,
         });
@@ -76,7 +92,7 @@ exports.logout = async (req, res) => {
         removeRefreshToken(req.user.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Logout Success',
+            message: 'Logout successfully',
         });
     } catch (error) {
         console.log(error);
@@ -88,21 +104,56 @@ exports.logout = async (req, res) => {
 
 exports.getStudents = async (req, res) => {
     try {
-        const students = await Student.findAll({
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
-            include: [
+        const { termId, majorId, page, limit } = req.query;
+        let offset = (page - 1) * limit;
+
+        let students = [];
+        if (majorId) {
+            students = await sequelize.query(
+                `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+                FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
+                WHERE m.id = :majorId AND stt.term_id = :termId
+                ORDER BY st.created_at DESC
+                LIMIT :limit OFFSET :offset`,
                 {
-                    model: Major,
-                    attributes: ['id', 'name'],
-                    as: 'major',
+                    replacements: { majorId, termId, limit: parseInt(limit), offset },
+                    type: QueryTypes.SELECT,
                 },
-            ],
+            );
+        } else {
+            students = await sequelize.query(
+                `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+                FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
+                WHERE stt.term_id = :termId
+                ORDER BY st.created_at DESC
+                LIMIT :limit OFFSET :offset`,
+                {
+                    replacements: { termId, limit: parseInt(limit), offset },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        }
+
+        let totalPage = students.length;
+
+        totalPage = _.ceil(totalPage / _.toInteger(limit));
+
+        students = students.map((stu) => {
+            return {
+                ...stu,
+                isActive: Boolean(stu.isActive),
+            };
         });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get all students successfully',
             students,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);
@@ -115,11 +166,17 @@ exports.getStudentById = async (req, res) => {
         const { id } = req.params;
         const student = await Student.findOne({
             where: { id },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
@@ -131,7 +188,7 @@ exports.getStudentById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get student by id successfully',
             student,
         });
     } catch (error) {
@@ -159,14 +216,32 @@ exports.createStudent = async (req, res) => {
         });
 
         await StudentTerm.create({
-            student_id: id,
+            student_id: student.id,
             term_id: termId,
+        });
+
+        const newStudent = await Student.findOne({
+            where: { id },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
+            include: [
+                {
+                    model: Major,
+                    attributes: [],
+                    as: 'major',
+                },
+            ],
         });
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
-            student,
+            message: 'Create student successfully',
+            student: newStudent,
         });
     } catch (error) {
         console.log(error);
@@ -193,10 +268,28 @@ exports.updateStudent = async (req, res) => {
 
         await student.save();
 
+        const newStudent = await Student.findOne({
+            where: { id },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
+            include: [
+                {
+                    model: Major,
+                    attributes: [],
+                    as: 'major',
+                },
+            ],
+        });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
-            student,
+            message: 'Update student successfully',
+            student: newStudent,
         });
     } catch (error) {
         console.log(error);
@@ -254,26 +347,43 @@ exports.importStudents = async (req, res) => {
         // Create group student
         students.forEach(async (student) => {
             await GroupStudent.create({
+                name: `Nhóm số ${students.indexOf(student) + 1}`,
                 term_id: termId,
             });
         });
 
         const newStudents = await Student.findAll({
-            where: { major_id: majorId },
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
             include: [
                 {
                     model: Major,
-                    attributes: ['id', 'name'],
+                    attributes: [],
                     as: 'major',
                 },
             ],
+            offset: 0,
+            limit: 10,
         });
+
+        let totalPage = newStudents.length;
+
+        totalPage = _.ceil(totalPage / _.toInteger(10));
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import Success',
+            message: 'Import students successfully',
             students: newStudents,
+            params: {
+                page: 1,
+                limit: _.toInteger(10),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);
@@ -293,7 +403,7 @@ exports.deleteStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Delete student successfully',
         });
     } catch (error) {
         console.log(error);
@@ -314,7 +424,7 @@ exports.resetPassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Reset Password Success',
+            message: 'Reset password student successfully',
         });
     } catch (error) {
         console.log(error);
@@ -344,7 +454,7 @@ exports.updatePassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Password Success',
+            message: 'Update password student successfully',
         });
     } catch (error) {
         console.log(error);
@@ -355,7 +465,20 @@ exports.updatePassword = async (req, res) => {
 exports.getMe = async (req, res) => {
     try {
         const student = await Student.findByPk(req.user.id, {
-            attributes: { exclude: ['password'] },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
+            include: [
+                {
+                    model: Major,
+                    attributes: [],
+                    as: 'major',
+                },
+            ],
         });
 
         if (!student) {
@@ -364,7 +487,7 @@ exports.getMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get me successfully',
             user: student,
         });
     } catch (error) {
@@ -392,7 +515,7 @@ exports.updateMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update me successfully',
             user: student,
         });
     } catch (error) {
