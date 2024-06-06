@@ -10,10 +10,9 @@ module.exports = (sequelize, DataTypes) => {
             name: {
                 type: DataTypes.STRING,
                 allowNull: false,
-                // unique: true,
             },
             description: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT('long'),
                 allowNull: true,
             },
             quantityGroupMax: {
@@ -22,20 +21,20 @@ module.exports = (sequelize, DataTypes) => {
                 field: 'quantity_group_max',
             },
             note: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: true,
             },
             target: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: true,
             },
             standardOutput: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT('medium'),
                 allowNull: true,
                 field: 'standard_output',
             },
             requireInput: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT('medium'),
                 allowNull: true,
                 field: 'require_input',
             },
