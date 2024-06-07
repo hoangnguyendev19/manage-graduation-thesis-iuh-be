@@ -104,7 +104,10 @@ exports.getLecturers = async (req, res) => {
     try {
         const { termId, majorId, page, limit } = req.query;
         let offset = (page - 1) * limit;
+
         let lecturers = [];
+        let total = 0;
+
         if (majorId) {
             lecturers = await sequelize.query(
                 `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
@@ -117,6 +120,16 @@ exports.getLecturers = async (req, res) => {
                     type: QueryTypes.SELECT,
                 },
             );
+
+            total = await LecturerTerm.count({
+                where: { term_id: termId },
+                include: [
+                    {
+                        model: Lecturer,
+                        where: { major_id: majorId },
+                    },
+                ],
+            });
         } else {
             lecturers = await sequelize.query(
                 `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
@@ -129,11 +142,13 @@ exports.getLecturers = async (req, res) => {
                     type: QueryTypes.SELECT,
                 },
             );
+
+            total = await LecturerTerm.count({
+                where: { term_id: termId },
+            });
         }
 
-        let totalPage = lecturers.length;
-
-        totalPage = _.ceil(totalPage / _.toInteger(limit));
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
         lecturers = lecturers.map((lec) => {
             return {
@@ -337,36 +352,43 @@ exports.importLecturers = async (req, res) => {
             });
         });
 
-        const newLecturers = await Lecturer.findAll({
-            attributes: {
-                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
-                include: [
-                    ['major_id', 'majorId'],
-                    [sequelize.col('major.name'), 'majorName'],
-                ],
+        const page = 1;
+        const limit = 10;
+        let offset = (page - 1) * limit;
+
+        const newLecturers = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId
+            ORDER BY l.created_at DESC
+            LIMIT :limit OFFSET :offset`,
+            {
+                replacements: { termId, limit: parseInt(limit), offset },
+                type: QueryTypes.SELECT,
             },
-            include: [
-                {
-                    model: Major,
-                    attributes: [],
-                    as: 'major',
-                },
-            ],
-            offset: 0,
-            limit: 10,
+        );
+
+        const total = await LecturerTerm.count({
+            where: { term_id: termId },
         });
 
-        let totalPage = newLecturers.length;
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
-        totalPage = _.ceil(totalPage / _.toInteger(10));
+        newLecturers.map((lec) => {
+            return {
+                ...lec,
+                isAdmin: Boolean(lec.isAdmin),
+                isActive: Boolean(lec.isActive),
+            };
+        });
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import lecturers successfully',
             lecturers: newLecturers,
             params: {
-                page: 1,
-                limit: _.toInteger(10),
+                page,
+                limit,
                 totalPage,
             },
         });

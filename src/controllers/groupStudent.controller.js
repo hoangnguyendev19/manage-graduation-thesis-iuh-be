@@ -10,7 +10,7 @@ exports.getGroupStudents = async (req, res) => {
         let groupStudents = null;
         if (termId && !topicId && !status) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId
@@ -22,7 +22,7 @@ exports.getGroupStudents = async (req, res) => {
             );
         } else if (termId && topicId && !status) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId and gs.topic_id = :topicId
@@ -34,7 +34,7 @@ exports.getGroupStudents = async (req, res) => {
             );
         } else if (termId && !topicId && status) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId and gs.status = :status
@@ -46,7 +46,7 @@ exports.getGroupStudents = async (req, res) => {
             );
         } else if (termId && topicId && status) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.status, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId and gs.topic_id = :topicId and gs.status = :status
@@ -72,25 +72,6 @@ exports.getGroupStudents = async (req, res) => {
 exports.getGroupStudentsByMajor = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
-        // const groupStudents = await GroupStudent.findAll({
-        //     where: {
-        //         term_id: termId,
-        //     },
-        //     attributes: ['id', 'name'],
-        //     include: {
-        //         model: StudentTerm,
-        //         attributes: ['student_id'],
-        //         include: {
-        //             model: Student,
-        //             attributes: ['major_id'],
-        //             where: {
-        //                 major_id: majorId,
-        //             },
-        //             as: 'student',
-        //         },
-        //         as: 'studentTerms',
-        //     },
-        // });
 
         const groupStudents = await sequelize.query(
             `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
