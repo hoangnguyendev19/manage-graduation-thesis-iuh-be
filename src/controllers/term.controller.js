@@ -5,7 +5,6 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
-const moment = require('moment');
 
 exports.getTerms = async (req, res) => {
     try {
@@ -78,8 +77,7 @@ exports.getTermNow = async (req, res) => {
             LEFT JOIN term_details td3 ON t.id = td3.term_id AND td3.name = 'DISCUSSION'
             LEFT JOIN term_details td4 ON t.id = td4.term_id AND td4.name = 'REPORT'
             LEFT JOIN term_details td5 ON t.id = td5.term_id AND td5.name = 'PUBLIC_RESULT'
-            WHERE t.start_date <= NOW() AND t.end_date >= NOW()
-            ORDER BY t.start_date DESC`,
+            WHERE t.start_date <= NOW() AND t.end_date >= NOW()`,
             {
                 type: QueryTypes.SELECT,
             },
@@ -92,7 +90,127 @@ exports.getTermNow = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            term,
+            term: term[0],
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTermDetailWithChooseGroup = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const termDetail = await TermDetail.findOne({
+            where: { term_id: id, name: 'CHOOSE_GROUP' },
+            attributes: { exclude: ['created_at', 'updated_at'] },
+        });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Term Detail not found');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            termDetail,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTermDetailWithChooseTopic = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const termDetail = await TermDetail.findOne({
+            where: { term_id: id, name: 'CHOOSE_TOPIC' },
+            attributes: { exclude: ['created_at', 'updated_at'] },
+        });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Term Detail not found');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            termDetail,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTermDetailWithDiscussion = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const termDetail = await TermDetail.findOne({
+            where: { term_id: id, name: 'DISCUSSION' },
+            attributes: { exclude: ['created_at', 'updated_at'] },
+        });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Term Detail not found');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            termDetail,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTermDetailWithReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const termDetail = await TermDetail.findOne({
+            where: { term_id: id, name: 'REPORT' },
+            attributes: { exclude: ['created_at', 'updated_at'] },
+        });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Term Detail not found');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            termDetail,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTermDetailWithPublicResult = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const termDetail = await TermDetail.findOne({
+            where: { term_id: id, name: 'PUBLIC_RESULT' },
+            attributes: { exclude: ['created_at', 'updated_at'] },
+        });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Term Detail not found');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            termDetail,
         });
     } catch (error) {
         console.log(error);

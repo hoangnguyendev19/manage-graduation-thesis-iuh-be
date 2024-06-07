@@ -11,7 +11,7 @@ const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const xlsx = require('xlsx');
 const moment = require('moment');
 const _ = require('lodash');
-const { QueryTypes } = require('sequelize');
+const { QueryTypes, where } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 // ----------------- Auth -----------------
@@ -108,6 +108,8 @@ exports.getStudents = async (req, res) => {
         let offset = (page - 1) * limit;
 
         let students = [];
+        let total = 0;
+
         if (majorId) {
             students = await sequelize.query(
                 `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
@@ -120,6 +122,16 @@ exports.getStudents = async (req, res) => {
                     type: QueryTypes.SELECT,
                 },
             );
+
+            total = await StudentTerm.count({
+                where: { term_id: termId },
+                include: [
+                    {
+                        model: Student,
+                        where: { major_id: majorId },
+                    },
+                ],
+            });
         } else {
             students = await sequelize.query(
                 `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
@@ -132,11 +144,13 @@ exports.getStudents = async (req, res) => {
                     type: QueryTypes.SELECT,
                 },
             );
+
+            total = await StudentTerm.count({
+                where: { term_id: termId },
+            });
         }
 
-        let totalPage = students.length;
-
-        totalPage = _.ceil(totalPage / _.toInteger(limit));
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
         students = students.map((stu) => {
             return {
@@ -352,36 +366,42 @@ exports.importStudents = async (req, res) => {
             });
         });
 
-        const newStudents = await Student.findAll({
-            attributes: {
-                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
-                include: [
-                    ['major_id', 'majorId'],
-                    [sequelize.col('major.name'), 'majorName'],
-                ],
+        const page = 1;
+        const limit = 10;
+        let offset = (page - 1) * limit;
+
+        const newStudents = await sequelize.query(
+            `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+            FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
+            WHERE stt.term_id = :termId
+            ORDER BY st.created_at DESC
+            LIMIT :limit OFFSET :offset`,
+            {
+                replacements: { termId, limit: parseInt(limit), offset },
+                type: QueryTypes.SELECT,
             },
-            include: [
-                {
-                    model: Major,
-                    attributes: [],
-                    as: 'major',
-                },
-            ],
-            offset: 0,
-            limit: 10,
+        );
+
+        const total = await StudentTerm.count({
+            where: { term_id: termId },
         });
 
-        let totalPage = newStudents.length;
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
-        totalPage = _.ceil(totalPage / _.toInteger(10));
+        newStudents = newStudents.map((stu) => {
+            return {
+                ...stu,
+                isActive: Boolean(stu.isActive),
+            };
+        });
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import students successfully',
             students: newStudents,
             params: {
-                page: 1,
-                limit: _.toInteger(10),
+                page,
+                limit,
                 totalPage,
             },
         });
