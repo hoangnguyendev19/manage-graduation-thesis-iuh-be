@@ -63,17 +63,17 @@ INSERT INTO `group_lecturer_members` (`id`, `created_at`, `updated_at`, `lecture
 	(6, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 6, 3);
 
 -- Dumping data for table manage_graduation_se_iuh.group_students: ~0 rows (approximately)
-INSERT INTO `group_students` (`id`, `name`, `status`, `type_report`, `created_at`, `updated_at`, `topic_id`, `term_id`) VALUES
-	(1, 'Nhóm số 1', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 1),
-	(2, 'Nhóm số 2', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 2, 1),
-	(3, 'Nhóm số 3', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3, 1),
-	(4, 'Nhóm số 4', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 4, 1),
-	(5, 'Nhóm số 5', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 5, 1),
-	(6, 'Nhóm số 6', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 6, 1),
-	(7, 'Nhóm số 7', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 7, 1),
-	(8, 'Nhóm số 8', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 8, 1),
-	(9, 'Nhóm số 9', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 9, 1),
-	(10, 'Nhóm số 10', 'OPEN', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 10, 1);
+INSERT INTO `group_students` (`id`, `name`, `type_report`, `created_at`, `updated_at`, `topic_id`, `term_id`) VALUES
+	(1, 'Nhóm số 1', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 1),
+	(2, 'Nhóm số 2', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 2, 1),
+	(3, 'Nhóm số 3', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 3, 1),
+	(4, 'Nhóm số 4', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 4, 1),
+	(5, 'Nhóm số 5', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 5, 1),
+	(6, 'Nhóm số 6', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 6, 1),
+	(7, 'Nhóm số 7', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 7, 1),
+	(8, 'Nhóm số 8', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 8, 1),
+	(9, 'Nhóm số 9', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 9, 1),
+	(10, 'Nhóm số 10', 'OPEN', '2024-05-18 13:34:01', '2024-05-18 13:34:01', 10, 1);
 
 -- Dumping data for table manage_graduation_se_iuh.lecturers: ~9 rows (approximately)
 INSERT INTO `lecturers` (`id`, `username`, `password`, `full_name`, `avatar`, `phone`, `email`, `gender`, `degree`, `role`, `is_admin`, `is_active`, `created_at`, `updated_at`, `major_id`) VALUES
@@ -136,14 +136,14 @@ INSERT INTO `students` (`id`, `username`, `password`, `full_name`, `avatar`, `ph
 	('21232341', '21232341', '$2b$10$mFPLV3lpxATUyl.8DFo7Ee7lK86L1J8TQByvREQUudY0Nt0hWTjga', 'Trần Thị Yến Nhi', NULL, '0321124430', 'nhitran@gmail.com', 'FEMALE', NULL, 'DHKTPM17C', 'UNIVERSITY', 1, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 2);
 
 -- Dumping data for table manage_graduation_se_iuh.student_terms: ~7 rows (approximately)
-INSERT INTO `student_terms` (`id`, `is_admin`, `created_at`, `updated_at`, `term_id`, `group_student_id`, `student_id`) VALUES
-	(1, 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 1, '21084321'),
-	(2, 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 2, '21092341'),
-	(3, 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 3, '21062341'),
-	(4, 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 4, '21112142'),
-	(5, 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 5, '21232341'),
-	(6, 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 6, '20512341'),
-	(7, 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 7, '21021234');
+INSERT INTO `student_terms` (`id`, `status`, `is_admin`, `created_at`, `updated_at`, `term_id`, `group_student_id`, `student_id`) VALUES
+	(1, 'OPEN', 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 1, '21084321'),
+	(2, 'OPEN', 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 2, '21092341'),
+	(3, 'OPEN', 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 3, '21062341'),
+	(4, 'OPEN', 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 4, '21112142'),
+	(5, 'OPEN', 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 5, '21232341'),
+	(6, 'OPEN', 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 6, '20512341'),
+	(7, 'OPEN', 0, '2024-05-18 13:34:01', '2024-05-18 13:34:01', 1, 7, '21021234');
 
 -- Dumping data for table manage_graduation_se_iuh.terms: ~6 rows (approximately)
 INSERT INTO `terms` (`id`, `name`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES

@@ -7,6 +7,19 @@ module.exports = (sequelize, DataTypes) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
+            status: {
+                type: DataTypes.ENUM(
+                    'OPEN',
+                    'FAIL_ADVISOR',
+                    'FAIL_REVIEWER',
+                    'FAIL_SESSION_HOST',
+                    'PASS_ADVISOR',
+                    'PASS_REVIEWER',
+                    'PASS_SESSION_HOST',
+                ),
+                allowNull: false,
+                defaultValue: 'OPEN',
+            },
             isAdmin: {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false,

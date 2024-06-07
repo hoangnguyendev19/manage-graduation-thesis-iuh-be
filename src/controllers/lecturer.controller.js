@@ -197,7 +197,7 @@ exports.getLecturerById = async (req, res) => {
 
 exports.createLecturer = async (req, res) => {
     try {
-        let { id, fullName, gender, phone, email, majorId } = req.body;
+        let { id, fullName, gender, phone, email, majorId, termId } = req.body;
         const password = await hashPassword('12345678');
         const lecturer = await Lecturer.create({
             id,
@@ -208,6 +208,11 @@ exports.createLecturer = async (req, res) => {
             email,
             phone,
             major_id: majorId,
+        });
+
+        await LecturerTerm.create({
+            lecturer_id: lecturer.id,
+            term_id: termId,
         });
 
         let newLecturer = await Lecturer.findOne({
