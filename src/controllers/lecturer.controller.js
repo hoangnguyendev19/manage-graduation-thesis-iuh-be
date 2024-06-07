@@ -127,6 +127,7 @@ exports.getLecturers = async (req, res) => {
                     {
                         model: Lecturer,
                         where: { major_id: majorId },
+                        as: 'lecturer',
                     },
                 ],
             });
@@ -356,7 +357,7 @@ exports.importLecturers = async (req, res) => {
         const limit = 10;
         let offset = (page - 1) * limit;
 
-        const newLecturers = await sequelize.query(
+        let newLecturers = await sequelize.query(
             `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
             FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
             WHERE lt.term_id = :termId
@@ -374,7 +375,7 @@ exports.importLecturers = async (req, res) => {
 
         const totalPage = _.ceil(total / _.toInteger(limit));
 
-        newLecturers.map((lec) => {
+        newLecturers = newLecturers.map((lec) => {
             return {
                 ...lec,
                 isAdmin: Boolean(lec.isAdmin),

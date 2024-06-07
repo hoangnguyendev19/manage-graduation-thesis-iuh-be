@@ -129,6 +129,7 @@ exports.getStudents = async (req, res) => {
                     {
                         model: Student,
                         where: { major_id: majorId },
+                        as: 'student',
                     },
                 ],
             });
@@ -370,7 +371,7 @@ exports.importStudents = async (req, res) => {
         const limit = 10;
         let offset = (page - 1) * limit;
 
-        const newStudents = await sequelize.query(
+        let newStudents = await sequelize.query(
             `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
             FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
             WHERE stt.term_id = :termId
