@@ -446,7 +446,7 @@ const importTopic = async (req, res) => {
             } else {
                 return Error.sendWarning(
                     res,
-                    'Giảng viên của đề tài không tồn tại trong học kì này. ',
+                    `Mã Giảng viên  ${lecturer_id} của đề tài không tồn tại trong học kì này. `,
                 );
             }
         }

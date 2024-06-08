@@ -11,6 +11,11 @@ const {
     updateChooseTopicTerm,
     updateReportTerm,
     updateChooseGroupTerm,
+    getTermDetailWithChooseGroup,
+    getTermDetailWithChooseTopic,
+    getTermDetailWithDiscussion,
+    getTermDetailWithReport,
+    getTermDetailWithPublicResult,
 } = require('../controllers/term.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
@@ -23,15 +28,15 @@ router.get(APP_ROUTER.INDEX, getTerms);
 
 router.get(APP_ROUTER.ID, getTermById);
 
-// router.get(APP_ROUTER.TERM_CHOOSE_GROUP, getTermDetailWithChooseGroup);
+router.get(APP_ROUTER.TERM_CHOOSE_GROUP, getTermDetailWithChooseGroup);
 
-// router.get(APP_ROUTER.TERM_CHOOSE_TOPIC, getTermDetailWithChooseTopic);
+router.get(APP_ROUTER.TERM_CHOOSE_TOPIC, getTermDetailWithChooseTopic);
 
-// router.get(APP_ROUTER.TERM_DISCUSSION, getTermDetailWithDiscussion);
+router.get(APP_ROUTER.TERM_DISCUSSION, getTermDetailWithDiscussion);
 
-// router.get(APP_ROUTER.TERM_REPORT, getTermDetailWithReport);
+router.get(APP_ROUTER.TERM_REPORT, getTermDetailWithReport);
 
-// router.get(APP_ROUTER.TERM_PUBLIC_RESULT, getTermDetailWithPublicResult);
+router.get(APP_ROUTER.TERM_PUBLIC_RESULT, getTermDetailWithPublicResult);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createTerm);
 
