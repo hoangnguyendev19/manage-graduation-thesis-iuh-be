@@ -11,6 +11,8 @@ const {
     updateLecturer,
     importLecturers,
     deleteLecturer,
+    lockAccount,
+    unlockAccount,
     updatePassword,
     getMe,
     updateMe,
@@ -50,6 +52,10 @@ router.post(
 router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), deleteLecturer);
 
 router.put(APP_ROUTER.CHANGE_ROLE_LECTURE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
+
+router.post(APP_ROUTER.LOCK, protectLecturer, checkRoleLecturer('ADMIN'), lockAccount);
+
+router.post(APP_ROUTER.UNLOCK, protectLecturer, checkRoleLecturer('ADMIN'), unlockAccount);
 
 // ----------------- Lecturer -----------------
 

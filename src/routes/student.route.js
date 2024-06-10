@@ -5,13 +5,16 @@ const {
     refreshToken,
     logout,
     getStudents,
-    getStudentsByParams,
     getStudentById,
     createStudent,
     importStudents,
     updateStudent,
     deleteStudent,
     resetPassword,
+    lockAccount,
+    lockAccounts,
+    unlockAccount,
+    updateStatus,
     updatePassword,
     getMe,
     updateMe,
@@ -52,6 +55,19 @@ router.post(
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
     resetPassword,
+);
+
+router.post(APP_ROUTER.LOCK, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), lockAccount);
+
+router.put(APP_ROUTER.LOCK, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), lockAccounts);
+
+router.post(APP_ROUTER.UNLOCK, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), unlockAccount);
+
+router.put(
+    APP_ROUTER.STUDENT_STATUS,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    updateStatus,
 );
 
 // ----------------- Student -----------------

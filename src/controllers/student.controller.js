@@ -11,7 +11,7 @@ const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const xlsx = require('xlsx');
 const moment = require('moment');
 const _ = require('lodash');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 // ----------------- Auth -----------------
@@ -223,11 +223,11 @@ exports.createStudent = async (req, res) => {
             username: id,
             password,
             gender,
-            date_of_birth: dateOfBirth,
+            dateOfBirth,
             phone,
+            typeTraining,
+            clazzName,
             major_id: majorId,
-            type_training: typeTraining,
-            clazz_name: clazzName,
         });
 
         await StudentTerm.create({
@@ -273,15 +273,15 @@ exports.updateStudent = async (req, res) => {
             return Error.sendNotFound(res, 'Student not found');
         }
 
-        student.fullName = fullName;
-        student.gender = gender;
-        student.date_of_birth = dateOfBirth;
-        student.phone = phone;
-        student.major_id = majorId;
-        student.type_training = typeTraining;
-        student.clazz_name = clazzName;
-
-        await student.save();
+        await student.update({
+            fullName,
+            gender,
+            phone,
+            dateOfBirth,
+            typeTraining,
+            clazzName,
+            major_id: majorId,
+        });
 
         const newStudent = await Student.findOne({
             where: { id },
@@ -349,7 +349,19 @@ exports.importStudents = async (req, res) => {
         });
 
         // Create students
-        await Student.bulkCreate(students);
+        const studentListNow = await Student.findAll({
+            where: { major_id: majorId },
+            attributes: ['id'],
+        });
+
+        const studentListNowId = studentListNow.map((student) => student.id);
+
+        // I want to add students that are not in the database
+        const studentsNotInDatabase = students.filter(
+            (student) => !studentListNowId.includes(student.id.toString()),
+        );
+
+        await Student.bulkCreate(studentsNotInDatabase);
 
         // Create student term
         students.forEach(async (student) => {
@@ -446,6 +458,92 @@ exports.resetPassword = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Reset password student successfully',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.lockAccount = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const student = await Student.findByPk(id);
+        if (!student) {
+            return Error.sendNotFound(res, 'Student not found');
+        }
+
+        await student.update({ isActive: false });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lock account student successfully',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.lockAccounts = async (req, res) => {
+    try {
+        const { termId } = req.body;
+        const studentTerms = await StudentTerm.findAll({
+            where: { term_id: termId },
+        });
+
+        for (let i = 0; i < studentTerms.length; i++) {
+            const student = await Student.findByPk(studentTerms[i].student_id);
+            await student.update({ isActive: false });
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lock accounts student successfully',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.unlockAccount = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const student = await Student.findByPk(id);
+        if (!student) {
+            return Error.sendNotFound(res, 'Student not found');
+        }
+
+        await student.update({ isActive: true });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Unlock account student successfully',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const studentTerm = await StudentTerm.findOne({
+            where: { student_id: id },
+        });
+
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Student not found');
+        }
+
+        await studentTerm.update({ status });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Update status student successfully',
         });
     } catch (error) {
         console.log(error);
