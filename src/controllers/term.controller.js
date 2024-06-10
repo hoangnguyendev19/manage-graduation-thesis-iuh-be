@@ -225,6 +225,14 @@ exports.createTerm = async (req, res) => {
         // endDate have format 'YYYY-MM-DD' ?
 
         const term = await Term.create({ name, startDate, endDate });
+        await TermDetail.bulkCreate([
+            { term_id: term.id, name: 'CHOOSE_GROUP', startDate, endDate },
+            { term_id: term.id, name: 'CHOOSE_TOPIC', startDate, endDate },
+            { term_id: term.id, name: 'DISCUSSION', startDate, endDate },
+            { term_id: term.id, name: 'REPORT', startDate, endDate },
+            { term_id: term.id, name: 'PUBLIC_RESULT', startDate, endDate },
+        ]);
+
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Create Success',

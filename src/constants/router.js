@@ -11,6 +11,8 @@ const APP_ROUTER = {
     IMPORT: '/import',
     RESET_PASSWORD: '/reset-password',
     // FORGOT_PASSWORD: '/forgot-password',
+    LOCK: '/lock',
+    UNLOCK: '/unlock',
 
     // UPLOAD
     UPLOAD: '/api/v1/uploads',
@@ -30,6 +32,7 @@ const APP_ROUTER = {
 
     //STUDENTS
     STUDENT: '/api/v1/students',
+    STUDENT_STATUS: '/:id/status',
     // STUDENT_RESET_PASSWORD: '/:id/reset-password',
     // STUDENT_EXPORT: '/export-transcript',
 
@@ -59,7 +62,6 @@ const APP_ROUTER = {
     GROUP_STUDENT: '/api/v1/group-students',
     GROUP_STUDENT_BY_MAJOR: '/major',
     GROUP_STUDENT_TYPE_REPORT: '/:id/type-report',
-    GROUP_STUDENT_STATUS: '/:id/status',
     GROUP_STUDENT_ASSIGN_ADMIN: '/:id/assign-admin',
     GROUP_STUDENT_ASSIGN_TOPIC: '/:id/assign-topic',
     GROUP_STUDENT_REMOVE_MEMBER: '/:id/remove-member',

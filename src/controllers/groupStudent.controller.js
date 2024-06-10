@@ -3,65 +3,107 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+const _ = require('lodash');
 
 exports.getGroupStudents = async (req, res) => {
     try {
-        const { termId, topicId, status } = req.query;
-        let groupStudents = null;
-        if (termId && !topicId && !status) {
+        const { termId, topicId, majorId, page, limit } = req.query;
+        let offset = (page - 1) * limit;
+
+        let groupStudents = [];
+        let total = 0;
+
+        if (majorId && !topicId) {
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                WHERE gs.term_id = :termId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
+                GROUP BY gs.id
+                ORDER BY gs.created_at DESC
+                LIMIT :limit OFFSET :offset`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, majorId, limit: parseInt(limit), offset },
+                },
+            );
+
+            total = await sequelize.query(
+                `SELECT COUNT(DISTINCT gs.id) as total FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                WHERE gs.term_id = :termId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, majorId },
+                },
+            );
+
+            total = total[0].total;
+        } else if (majorId && topicId) {
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                WHERE gs.term_id = :termId and gs.topic_id = :topicId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
+                GROUP BY gs.id
+                ORDER BY gs.created_at DESC
+                LIMIT :limit OFFSET :offset`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, topicId, majorId, limit: parseInt(limit), offset },
+                },
+            );
+
+            total = await sequelize.query(
+                `SELECT COUNT(DISTINCT gs.id) as total FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                WHERE gs.term_id = :termId and gs.topic_id = :topicId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, topicId, majorId },
+                },
+            );
+
+            total = total[0].total;
+        } else if (!majorId && !topicId) {
             groupStudents = await sequelize.query(
                 `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId
-                GROUP BY gs.id`,
+                GROUP BY gs.id
+                ORDER BY gs.created_at DESC
+                LIMIT :limit OFFSET :offset`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, limit: parseInt(limit), offset },
+                },
+            );
+
+            total = await sequelize.query(
+                `SELECT COUNT(DISTINCT gs.id) as total FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                WHERE gs.term_id = :termId`,
                 {
                     type: QueryTypes.SELECT,
                     replacements: { termId },
                 },
             );
-        } else if (termId && topicId && !status) {
-            groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                LEFT JOIN topics tc ON gs.topic_id = tc.id 
-                WHERE gs.term_id = :termId and gs.topic_id = :topicId
-                GROUP BY gs.id`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, topicId },
-                },
-            );
-        } else if (termId && !topicId && status) {
-            groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                LEFT JOIN topics tc ON gs.topic_id = tc.id 
-                WHERE gs.term_id = :termId and gs.status = :status
-                GROUP BY gs.id`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, status },
-                },
-            );
-        } else if (termId && topicId && status) {
-            groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                LEFT JOIN topics tc ON gs.topic_id = tc.id 
-                WHERE gs.term_id = :termId and gs.topic_id = :topicId and gs.status = :status
-                GROUP BY gs.id`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, topicId, status },
-                },
-            );
+
+            total = total[0].total;
         }
+
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
             groupStudents,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);
@@ -103,11 +145,26 @@ exports.getGroupStudentById = async (req, res) => {
             where: {
                 id: id,
             },
+            attributes: {
+                exclude: ['term_id', 'updated_at', 'topic_id'],
+            },
+            include: {
+                model: Topic,
+                attributes: [
+                    'id',
+                    'name',
+                    'description',
+                    'target',
+                    'standard_output',
+                    'require_input',
+                ],
+                as: 'topic',
+            },
         });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get By Id Successfully',
             groupStudent,
         });
     } catch (error) {
@@ -252,29 +309,6 @@ exports.updateTypeReport = async (req, res) => {
         }
 
         groupStudent.typeReport = typeReport;
-        await groupStudent.save();
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Update Success',
-            groupStudent,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.updateStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
-        const groupStudent = await GroupStudent.findByPk(id);
-        if (!groupStudent) {
-            Error.sendNotFound(res, 'Group Student not found');
-        }
-
-        groupStudent.status = status;
         await groupStudent.save();
 
         res.status(HTTP_STATUS.OK).json({
