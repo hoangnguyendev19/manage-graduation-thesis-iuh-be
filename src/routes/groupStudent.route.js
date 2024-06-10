@@ -35,8 +35,6 @@ router.post(APP_ROUTER.INDEX, protectStudent, createGroupStudent);
 
 router.put(APP_ROUTER.GROUP_STUDENT_TYPE_REPORT, protectLecturer, updateTypeReport);
 
-router.put(APP_ROUTER.GROUP_STUDENT_STATUS, protectLecturer, updateStatus);
-
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);
 
 router.put(APP_ROUTER.GROUP_STUDENT_REMOVE_MEMBER, protectStudent, removeMemberGroupStudent);

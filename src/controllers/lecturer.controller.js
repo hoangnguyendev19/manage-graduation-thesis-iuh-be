@@ -270,13 +270,7 @@ exports.updateLecturer = async (req, res) => {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
 
-        lecturer.fullName = fullName;
-        lecturer.gender = gender;
-        lecturer.phone = phone;
-        lecturer.email = email;
-        lecturer.major_id = majorId;
-
-        await lecturer.save();
+        await lecturer.update({ fullName, gender, phone, email, major_id: majorId });
 
         const newLecturer = await Lecturer.findOne({
             where: { id },
@@ -343,7 +337,19 @@ exports.importLecturers = async (req, res) => {
         });
 
         // Create lecturers
-        await Lecturer.bulkCreate(lecturers);
+        const lecturerListNow = await Lecturer.findAll({
+            where: { major_id: majorId },
+            attributes: ['id'],
+        });
+
+        const lecturerListNowId = lecturerListNow.map((lecturer) => lecturer.id);
+
+        // I want to add students that are not in the database
+        const lecturersNotInDatabase = lecturers.filter(
+            (lecturer) => !lecturerListNowId.includes(lecturer.id.toString()),
+        );
+
+        await Lecturer.bulkCreate(lecturersNotInDatabase);
 
         // Create lecturer term
         lecturers.forEach(async (lecturer) => {
@@ -428,11 +434,51 @@ exports.changeRole = async (req, res) => {
             return Error.sendNotFound(res, 'Lecturer not found');
         }
 
-        await Lecturer.update({ role }, { where: { id } });
+        await lecturer.update({ role });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Change role successfully',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.lockAccount = async (req, res) => {
+    try {
+        const { id } = req.body;
+        let lecturer = await Lecturer.findByPk(id);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Lecturer not found');
+        }
+
+        await lecturer.update({ isActive: false });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lock account successfully',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.unlockAccount = async (req, res) => {
+    try {
+        const { id } = req.body;
+        let lecturer = await Lecturer.findByPk(id);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Lecturer not found');
+        }
+
+        await lecturer.update({ isActive: true });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Unlock account successfully',
         });
     } catch (error) {
         console.log(error);
