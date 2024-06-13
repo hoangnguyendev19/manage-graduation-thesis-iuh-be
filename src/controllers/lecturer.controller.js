@@ -65,7 +65,7 @@ exports.refreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;
         if (!refreshToken) {
-            return Error.sendBadRequest(res, 'Invalid token');
+            return Error.sendWarning(res, 'Invalid token');
         }
 
         const { id } = verifyRefreshToken(refreshToken);
