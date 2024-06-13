@@ -68,7 +68,7 @@ exports.refreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;
         if (!refreshToken) {
-            return Error.sendBadRequest(res, 'Invalid token');
+            return Error.sendWarning(res, 'Invalid token');
         }
 
         const { id } = verifyRefreshToken(refreshToken);
@@ -214,13 +214,21 @@ exports.getStudentById = async (req, res) => {
 
 exports.createStudent = async (req, res) => {
     try {
-        let { id, fullName, gender, dateOfBirth, phone, typeTraining, clazzName, majorId, termId } =
-            req.body;
+        let {
+            username,
+            fullName,
+            gender,
+            dateOfBirth,
+            phone,
+            typeTraining,
+            clazzName,
+            majorId,
+            termId,
+        } = req.body;
         const password = await hashPassword('12345678');
         const student = await Student.create({
-            id,
+            username,
             fullName,
-            username: id,
             password,
             gender,
             dateOfBirth,
@@ -351,21 +359,21 @@ exports.importStudents = async (req, res) => {
         // Create students
         const studentListNow = await Student.findAll({
             where: { major_id: majorId },
-            attributes: ['id'],
+            attributes: ['username'],
         });
 
-        const studentListNowId = studentListNow.map((student) => student.id);
+        const studentListNowUsername = studentListNow.map((student) => Number(student.username));
 
         // I want to add students that are not in the database
         const studentsNotInDatabase = students.filter(
-            (student) => !studentListNowId.includes(student.id.toString()),
+            (student) => !studentListNowUsername.includes(student.username),
         );
 
         if (studentsNotInDatabase.length === 0) {
             return Error.sendWarning(res, 'All students have been imported');
         }
 
-        await Student.bulkCreate(studentsNotInDatabase);
+        const newStudentList = await Student.bulkCreate(studentsNotInDatabase);
 
         // Create student term
         // check if student exists in the StudentTerm table
@@ -373,65 +381,82 @@ exports.importStudents = async (req, res) => {
             where: { term_id: termId },
         });
 
-        const studentTermsId = studentTerms.map((studentTerm) => studentTerm.student_id);
+        if (studentTerms.length !== 0) {
+            const studentTermsId = studentTerms.map((studentTerm) => studentTerm.student_id);
 
-        const studentsNotInStudentTerm = studentsNotInDatabase.filter(
-            (student) => !studentTermsId.includes(student.id.toString()),
-        );
+            const studentsNotInStudentTerm = newStudentList.filter(
+                (student) => !studentTermsId.includes(student.id),
+            );
 
-        studentsNotInStudentTerm.forEach(async (student) => {
-            await StudentTerm.create({
-                student_id: student.id,
-                term_id: termId,
+            studentsNotInStudentTerm.forEach(async (student) => {
+                await StudentTerm.create({
+                    student_id: student.id,
+                    term_id: termId,
+                });
             });
-        });
 
-        // Create group student
-        studentsNotInStudentTerm.forEach(async (student) => {
-            await GroupStudent.create({
-                name: `Nhóm số ${studentsNotInStudentTerm.indexOf(student) + 1}`,
-                term_id: termId,
+            // Create group student
+            studentsNotInStudentTerm.forEach(async (student) => {
+                await GroupStudent.create({
+                    name: `Nhóm số ${studentsNotInStudentTerm.indexOf(student) + 1}`,
+                    term_id: termId,
+                });
             });
-        });
+        } else {
+            newStudentList.forEach(async (student) => {
+                await StudentTerm.create({
+                    student_id: student.id,
+                    term_id: termId,
+                });
+            });
 
-        const page = 1;
-        const limit = 10;
-        let offset = (page - 1) * limit;
+            // Create group student
+            newStudentList.forEach(async (student) => {
+                await GroupStudent.create({
+                    name: `Nhóm số ${newStudentList.indexOf(student) + 1}`,
+                    term_id: termId,
+                });
+            });
+        }
 
-        let newStudents = await sequelize.query(
-            `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
-            FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
-            WHERE stt.term_id = :termId
-            ORDER BY st.created_at DESC
-            LIMIT :limit OFFSET :offset`,
-            {
-                replacements: { termId, limit: parseInt(limit), offset },
-                type: QueryTypes.SELECT,
-            },
-        );
+        // const page = 1;
+        // const limit = 10;
+        // let offset = (page - 1) * limit;
 
-        const total = await StudentTerm.count({
-            where: { term_id: termId },
-        });
+        // let newStudents = await sequelize.query(
+        //     `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+        //     FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
+        //     WHERE stt.term_id = :termId
+        //     ORDER BY st.created_at DESC
+        //     LIMIT :limit OFFSET :offset`,
+        //     {
+        //         replacements: { termId, limit: parseInt(limit), offset },
+        //         type: QueryTypes.SELECT,
+        //     },
+        // );
 
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        // const total = await StudentTerm.count({
+        //     where: { term_id: termId },
+        // });
 
-        newStudents = newStudents.map((stu) => {
-            return {
-                ...stu,
-                isActive: Boolean(stu.isActive),
-            };
-        });
+        // const totalPage = _.ceil(total / _.toInteger(limit));
+
+        // newStudents = newStudents.map((stu) => {
+        //     return {
+        //         ...stu,
+        //         isActive: Boolean(stu.isActive),
+        //     };
+        // });
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import students successfully',
-            students: newStudents,
-            params: {
-                page,
-                limit,
-                totalPage,
-            },
+            // students: newStudents,
+            // params: {
+            //     page,
+            //     limit,
+            //     totalPage,
+            // },
         });
     } catch (error) {
         console.log(error);
