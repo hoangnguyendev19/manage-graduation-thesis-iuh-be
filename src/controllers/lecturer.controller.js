@@ -383,47 +383,9 @@ exports.importLecturers = async (req, res) => {
             });
         }
 
-        // const page = 1;
-        // const limit = 10;
-        // let offset = (page - 1) * limit;
-
-        // let newLecturers = await sequelize.query(
-        //     `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
-        //     FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-        //     WHERE lt.term_id = :termId
-        //     ORDER BY l.created_at DESC
-        //     LIMIT :limit OFFSET :offset`,
-        //     {
-        //         replacements: { termId, limit: parseInt(limit), offset },
-        //         type: QueryTypes.SELECT,
-        //     },
-        // );
-
-        // console.log(newLecturers);
-
-        // const total = await LecturerTerm.count({
-        //     where: { term_id: termId },
-        // });
-
-        // const totalPage = _.ceil(total / _.toInteger(limit));
-
-        // newLecturers = newLecturers.map((lec) => {
-        //     return {
-        //         ...lec,
-        //         isAdmin: Boolean(lec.isAdmin),
-        //         isActive: Boolean(lec.isActive),
-        //     };
-        // });
-
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import lecturers successfully',
-            // lecturers: newLecturers,
-            // params: {
-            //     page,
-            //     limit,
-            //     totalPage,
-            // },
         });
     } catch (error) {
         console.log(error);
