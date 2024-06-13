@@ -328,17 +328,15 @@ exports.importStudents = async (req, res) => {
         const password = await hashPassword('12345678');
         // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Số điện thoại, Mã lớp
         jsonData.forEach(async (student) => {
-            const id = student['Mã SV'];
+            const username = student['Mã SV'];
             const fullName = `${student['Họ đệm']} ${student['Tên']}`;
             const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
             const dateOfBirth = moment(student['Ngày sinh'], 'DD/MM/YYYY').format('YYYY-MM-DD');
             const phone = student['Số điện thoại'];
             const clazzName = student['Mã lớp'];
-            const username = id;
             const major_id = majorId;
 
             students.push({
-                id,
                 username,
                 password,
                 fullName,
