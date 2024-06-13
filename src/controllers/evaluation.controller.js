@@ -1,7 +1,7 @@
 const { Evaluation } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op } = require('sequelize');
+const xlsx = require('xlsx');
 
 exports.getEvaluations = async (req, res) => {
     try {
@@ -58,6 +58,49 @@ exports.createEvaluation = async (req, res) => {
             success: true,
             message: 'Create Success',
             evaluation,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.importEvaluations = async (req, res) => {
+    try {
+        const { termId, type } = req.body;
+
+        if (!req.file) {
+            return Error.sendWarning(res, 'Please upload a file');
+        }
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0]; // get the first sheet name
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = xlsx.utils.sheet_to_json(sheet);
+
+        const evaluations = [];
+        // STT	LO	A-Failed	B-Fair	C-Accepted	D-Excellent	Max grade
+        jsonData.forEach(async (evaluation) => {
+            const name = evaluation['LO'];
+            const scoreMax = Number(evaluation['Max grade'].toString().trim());
+            const description =
+                evaluation['A-Failed'] +
+                ' ; ' +
+                evaluation['B-Fair'] +
+                ' ; ' +
+                evaluation['C-Accepted'] +
+                ' ; ' +
+                evaluation['D-Excellent'];
+            const term_id = termId;
+
+            evaluations.push({ name, scoreMax, type, description, term_id });
+        });
+
+        const createdEvaluations = await Evaluation.bulkCreate(evaluations);
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Import Success',
+            evaluations: createdEvaluations,
         });
     } catch (error) {
         console.log(error);

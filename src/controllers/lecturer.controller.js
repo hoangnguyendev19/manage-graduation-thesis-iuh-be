@@ -10,7 +10,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const _ = require('lodash');
 const xlsx = require('xlsx');
-const { QueryTypes, where, or } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 // ----------------- Auth -----------------
@@ -213,16 +213,16 @@ exports.getLecturerById = async (req, res) => {
 
 exports.createLecturer = async (req, res) => {
     try {
-        let { id, fullName, gender, phone, email, majorId, termId } = req.body;
+        let { username, fullName, gender, phone, email, role, majorId, termId } = req.body;
         const password = await hashPassword('12345678');
         const lecturer = await Lecturer.create({
-            id,
+            username,
             fullName,
-            username: id,
             password,
             gender,
             email,
             phone,
+            role,
             major_id: majorId,
         });
 
@@ -349,10 +349,25 @@ exports.importLecturers = async (req, res) => {
             (lecturer) => !lecturerListNowId.includes(lecturer.id.toString()),
         );
 
+        if (lecturersNotInDatabase.length === 0) {
+            return Error.sendWarning(res, 'All lecturers have been imported');
+        }
+
         await Lecturer.bulkCreate(lecturersNotInDatabase);
 
         // Create lecturer term
-        lecturers.forEach(async (lecturer) => {
+        // check if lecturer exists in the LecturerTerm table
+        const lecturerTerms = await LecturerTerm.findAll({
+            where: { term_id: termId },
+        });
+
+        const lecturerTermsId = lecturerTerms.map((lecturerTerm) => lecturerTerm.lecturer_id);
+
+        const lecturersNotInLecturerTerm = lecturersNotInDatabase.filter(
+            (lecturer) => !lecturerTermsId.includes(lecturer.id.toString()),
+        );
+
+        lecturersNotInLecturerTerm.forEach(async (lecturer) => {
             await LecturerTerm.create({
                 lecturer_id: lecturer.id,
                 term_id: termId,

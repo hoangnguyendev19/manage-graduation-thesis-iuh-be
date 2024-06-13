@@ -5,11 +5,11 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     getGroupStudents,
     getGroupStudentById,
+    getMembersById,
     getGroupStudentsByMajor,
     getMyGroupStudent,
     createGroupStudent,
     updateTypeReport,
-    updateStatus,
     assignAdminGroupStudent,
     removeMemberGroupStudent,
     leaveGroupStudent,
@@ -29,9 +29,16 @@ router.get(APP_ROUTER.GROUP_STUDENT_BY_MAJOR, protectStudent, getGroupStudentsBy
 
 router.get(APP_ROUTER.INDEX, getGroupStudents);
 
+router.get(APP_ROUTER.MEMBER, getMembersById);
+
 router.get(APP_ROUTER.ID, getGroupStudentById);
 
-router.post(APP_ROUTER.INDEX, protectStudent, createGroupStudent);
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    createGroupStudent,
+);
 
 router.put(APP_ROUTER.GROUP_STUDENT_TYPE_REPORT, protectLecturer, updateTypeReport);
 
