@@ -316,16 +316,14 @@ exports.importLecturers = async (req, res) => {
         const password = await hashPassword('12345678');
         // columns: STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
         jsonData.forEach(async (lecturer) => {
-            const id = lecturer['Mã GV'];
+            const username = lecturer['Mã GV'];
             const fullName = `${lecturer['Họ và tên']}`;
             const gender = lecturer['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
             const phone = lecturer['Số điện thoại'];
             const email = lecturer['Email'];
-            const username = id;
             const major_id = majorId;
 
             lecturers.push({
-                id,
                 username,
                 password,
                 fullName,
