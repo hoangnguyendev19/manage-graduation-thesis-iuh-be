@@ -59,7 +59,7 @@ exports.getTermById = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            term,
+            term: term[0],
         });
     } catch (error) {
         console.log(error);
