@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
                 field: 'score_max',
             },
             description: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT,
                 allowNull: true,
             },
             type: {

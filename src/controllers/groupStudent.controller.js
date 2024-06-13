@@ -383,6 +383,50 @@ exports.assignAdminGroupStudent = async (req, res) => {
     }
 };
 
+exports.addMemberGroupStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { studentId } = req.body;
+
+        const studentAdmin = await StudentTerm.findOne({
+            where: {
+                student_id: req.user.id,
+                group_student_id: id,
+            },
+        });
+
+        if (!studentAdmin.isAdmin) {
+            return Error.sendForbidden(res, 'You are not an admin of this group');
+        }
+
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                student_id: studentId,
+            },
+        });
+
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Student Term not found');
+        }
+
+        if (studentTerm.group_student_id) {
+            return Error.sendWarning(res, 'Student already have a group');
+        }
+
+        studentTerm.group_student_id = id;
+
+        await studentTerm.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Add Success',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.removeMemberGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
