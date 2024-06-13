@@ -6,10 +6,13 @@ const {
     getEvaluations,
     getEvaluationById,
     createEvaluation,
+    importEvaluations,
     updateEvaluation,
     deleteEvaluation,
 } = require('../controllers/evaluation.controller');
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
+const upload = require('../configs/uploadConfig');
+
 const router = express.Router();
 
 router.get(APP_ROUTER.INDEX, getEvaluations);
@@ -21,6 +24,14 @@ router.post(
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
     createEvaluation,
+);
+
+router.post(
+    APP_ROUTER.IMPORT,
+    // protectLecturer,
+    // checkRoleLecturer('HEAD_LECTURER'),
+    upload.single('file'),
+    importEvaluations,
 );
 
 router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), updateEvaluation);
