@@ -220,12 +220,15 @@ exports.createStudent = async (req, res) => {
             gender,
             dateOfBirth,
             phone,
+            email,
             typeTraining,
             clazzName,
             majorId,
             termId,
         } = req.body;
+
         const password = await hashPassword('12345678');
+
         const student = await Student.create({
             username,
             fullName,
@@ -233,6 +236,7 @@ exports.createStudent = async (req, res) => {
             gender,
             dateOfBirth,
             phone,
+            email,
             typeTraining,
             clazzName,
             major_id: majorId,
@@ -244,7 +248,7 @@ exports.createStudent = async (req, res) => {
         });
 
         const newStudent = await Student.findOne({
-            where: { id },
+            where: { id: student.id },
             attributes: {
                 exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
                 include: [
@@ -419,44 +423,9 @@ exports.importStudents = async (req, res) => {
             });
         }
 
-        // const page = 1;
-        // const limit = 10;
-        // let offset = (page - 1) * limit;
-
-        // let newStudents = await sequelize.query(
-        //     `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
-        //     FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
-        //     WHERE stt.term_id = :termId
-        //     ORDER BY st.created_at DESC
-        //     LIMIT :limit OFFSET :offset`,
-        //     {
-        //         replacements: { termId, limit: parseInt(limit), offset },
-        //         type: QueryTypes.SELECT,
-        //     },
-        // );
-
-        // const total = await StudentTerm.count({
-        //     where: { term_id: termId },
-        // });
-
-        // const totalPage = _.ceil(total / _.toInteger(limit));
-
-        // newStudents = newStudents.map((stu) => {
-        //     return {
-        //         ...stu,
-        //         isActive: Boolean(stu.isActive),
-        //     };
-        // });
-
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import students successfully',
-            // students: newStudents,
-            // params: {
-            //     page,
-            //     limit,
-            //     totalPage,
-            // },
         });
     } catch (error) {
         console.log(error);
