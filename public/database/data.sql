@@ -100,12 +100,12 @@ INSERT INTO `lecturer_terms` (`id`, `created_at`, `updated_at`, `lecturer_id`, `
 	(9, '2024-05-18 13:34:01', '2024-05-18 13:34:01', '20194321', 1);
 
 -- Dumping data for table manage_graduation_se_iuh.majors: ~5 rows (approximately)
-INSERT INTO `majors` (`id`, `name`, `created_at`, `updated_at`) VALUES
-	(1, 'Hệ thống thông tin', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
-	(2, 'Công nghệ thông tin', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
-	(3, 'Kỹ thuật phần mềm', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
-	(4, 'Khoa học máy tính', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
-	(5, 'Khoa học dữ liệu', '2024-05-18 13:34:01', '2024-05-18 13:34:01');
+INSERT INTO `majors` (`name`, `created_at`, `updated_at`) VALUES
+	('Hệ thống thông tin', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
+	('Công nghệ thông tin', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
+	('Kỹ thuật phần mềm', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
+	('Khoa học máy tính', '2024-05-18 13:34:01', '2024-05-18 13:34:01'),
+	('Khoa học dữ liệu', '2024-05-18 13:34:01', '2024-05-18 13:34:01');
 
 -- Dumping data for table manage_graduation_se_iuh.notification_lecturers: ~6 rows (approximately)
 INSERT INTO `notification_lecturers` (`id`, `message`, `is_read`, `created_at`, `updated_at`, `lecturer_id`) VALUES

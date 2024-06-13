@@ -267,7 +267,8 @@ exports.createStudent = async (req, res) => {
 exports.updateStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        let { fullName, gender, phone, dateOfBirth, majorId, typeTraining, clazzName } = req.body;
+        let { fullName, gender, phone, dateOfBirth, majorId, typeTraining, clazzName, email } =
+            req.body;
         const student = await Student.findByPk(id);
         if (!student) {
             return Error.sendNotFound(res, 'Student not found');
@@ -277,6 +278,7 @@ exports.updateStudent = async (req, res) => {
             fullName,
             gender,
             phone,
+            email,
             dateOfBirth,
             typeTraining,
             clazzName,
@@ -361,10 +363,25 @@ exports.importStudents = async (req, res) => {
             (student) => !studentListNowId.includes(student.id.toString()),
         );
 
+        if (studentsNotInDatabase.length === 0) {
+            return Error.sendWarning(res, 'All students have been imported');
+        }
+
         await Student.bulkCreate(studentsNotInDatabase);
 
         // Create student term
-        students.forEach(async (student) => {
+        // check if student exists in the StudentTerm table
+        const studentTerms = await StudentTerm.findAll({
+            where: { term_id: termId },
+        });
+
+        const studentTermsId = studentTerms.map((studentTerm) => studentTerm.student_id);
+
+        const studentsNotInStudentTerm = studentsNotInDatabase.filter(
+            (student) => !studentTermsId.includes(student.id.toString()),
+        );
+
+        studentsNotInStudentTerm.forEach(async (student) => {
             await StudentTerm.create({
                 student_id: student.id,
                 term_id: termId,
@@ -372,9 +389,9 @@ exports.importStudents = async (req, res) => {
         });
 
         // Create group student
-        students.forEach(async (student) => {
+        studentsNotInStudentTerm.forEach(async (student) => {
             await GroupStudent.create({
-                name: `Nhóm số ${students.indexOf(student) + 1}`,
+                name: `Nhóm số ${studentsNotInStudentTerm.indexOf(student) + 1}`,
                 term_id: termId,
             });
         });

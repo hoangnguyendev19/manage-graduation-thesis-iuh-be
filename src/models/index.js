@@ -1,4 +1,6 @@
 const { sequelize } = require('../configs/connectDB');
+const { DataTypes } = require('sequelize');
+
 const StudentModel = require('./student.model');
 const MajorModel = require('./major.model');
 const LecturerModel = require('./lecturer.model');
@@ -16,8 +18,6 @@ const AssignModel = require('./assign.model');
 const StudentTermModel = require('./studentTerm.model');
 const NotificationStudentModel = require('./notificationStudent.model');
 const NotificationLecturerModel = require('./notificationLecturer.model');
-
-const { DataTypes } = require('sequelize');
 
 // Models
 const Major = MajorModel(sequelize, DataTypes);

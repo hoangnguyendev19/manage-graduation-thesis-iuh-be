@@ -173,6 +173,34 @@ exports.getGroupStudentById = async (req, res) => {
     }
 };
 
+exports.getMembersById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const members = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+            attributes: ['status', 'isAdmin'],
+            include: {
+                model: Student,
+                attributes: {
+                    exclude: ['password', 'created_at', 'updated_at', 'major_id'],
+                },
+                as: 'student',
+            },
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Members Successfully',
+            members,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getMyGroupStudent = async (req, res) => {
     try {
         const { termId } = req.query;
@@ -224,74 +252,68 @@ exports.getMyGroupStudent = async (req, res) => {
 
 exports.createGroupStudent = async (req, res) => {
     try {
-        const { name, termId } = req.body;
+        const { termId, studentIds } = req.body;
 
-        const stdTerm = await StudentTerm.findOne({
+        // Check if student already have a group
+        for (let i = 0; i < studentIds.length; i++) {
+            const studentTerm = await StudentTerm.findOne({
+                where: {
+                    student_id: studentIds[i],
+                    term_id: termId,
+                },
+            });
+
+            if (studentTerm.group_student_id) {
+                return Error.sendWarning(res, 'Student already have a group');
+            }
+        }
+
+        // Get number of group student
+        const groupStudents = await GroupStudent.findAll({
             where: {
-                student_id: req.user.id,
                 term_id: termId,
             },
         });
 
-        if (stdTerm.group_student_id) {
-            return Error.sendWarning(res, 'You already have a group');
-        }
-
-        const groupStd = await GroupStudent.findOne({
-            where: {
-                name: name,
-                term_id: termId,
-            },
-        });
-
-        if (groupStd) {
-            return Error.sendWarning(res, 'Group Student already exists');
-        }
-
-        const groupStudent = await GroupStudent.create({
-            name,
+        const group = await GroupStudent.create({
+            name: `Nhóm số ${groupStudents.length + 1}`,
             term_id: termId,
         });
 
-        const studentTerm = await StudentTerm.findOne({
-            where: {
-                student_id: req.user.id,
-                term_id: termId,
-            },
-        });
-
-        studentTerm.group_student_id = groupStudent.id;
-        studentTerm.isAdmin = true;
-        await studentTerm.save();
-
-        const group = await GroupStudent.findOne({
-            where: {
-                id: groupStudent.id,
-            },
-            attributes: ['id', 'name'],
-            include: {
-                model: StudentTerm,
-                attributes: ['student_id'],
-                include: {
-                    model: Student,
-                    attributes: ['major_id'],
-                    where: {
-                        major_id: req.user.major_id,
-                    },
-                    as: 'student',
+        for (let i = 0; i < studentIds.length; i++) {
+            const studentTerm = await StudentTerm.findOne({
+                where: {
+                    student_id: studentIds[i],
+                    term_id: termId,
                 },
-                as: 'studentTerms',
+            });
+
+            studentTerm.group_student_id = group.id;
+
+            await studentTerm.save();
+
+            if (i === 0) {
+                studentTerm.isAdmin = true;
+                await studentTerm.save();
+            }
+        }
+
+        const groupStudent = await sequelize.query(
+            `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN topics tc ON gs.topic_id = tc.id
+            WHERE gs.id = :id
+            GROUP BY gs.id`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { id: group.id },
             },
-        });
+        );
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Create Success',
-            group: {
-                id: group.id,
-                name: group.name,
-                total: group.studentTerms.length,
-            },
+            groupStudent: groupStudent[0],
         });
     } catch (error) {
         console.log(error);

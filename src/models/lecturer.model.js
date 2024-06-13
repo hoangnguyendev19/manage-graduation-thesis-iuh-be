@@ -1,10 +1,14 @@
+const { v4: uuidv4 } = require('uuid');
+
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define(
         'Lecturer',
         {
             id: {
-                type: DataTypes.STRING,
+                type: DataTypes.UUID,
                 primaryKey: true,
+                allowNull: false,
+                defaultValue: () => uuidv4(),
             },
             username: {
                 type: DataTypes.STRING,
