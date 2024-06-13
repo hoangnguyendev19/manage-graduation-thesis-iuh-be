@@ -1,11 +1,14 @@
+const { v4: uuidv4 } = require('uuid');
+
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define(
         'NotificationStudent',
         {
             id: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.UUID,
                 primaryKey: true,
-                autoIncrement: true,
+                allowNull: false,
+                defaultValue: () => uuidv4(),
             },
             message: {
                 type: DataTypes.STRING,

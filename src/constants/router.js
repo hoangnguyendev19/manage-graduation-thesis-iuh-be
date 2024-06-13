@@ -13,6 +13,7 @@ const APP_ROUTER = {
     // FORGOT_PASSWORD: '/forgot-password',
     LOCK: '/lock',
     UNLOCK: '/unlock',
+    MEMBER: '/:id/member',
 
     // UPLOAD
     UPLOAD: '/api/v1/uploads',
