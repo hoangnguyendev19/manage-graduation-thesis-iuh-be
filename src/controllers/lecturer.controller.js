@@ -20,11 +20,11 @@ exports.login = async (req, res) => {
         const lecturer = await Lecturer.findOne({ where: { username } });
 
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Invalid email or password');
+            return Error.sendNotFound(res, 'Email hoặc mật khẩu không chính xác!');
         }
         const flag = await comparePassword(password, lecturer.password);
         if (!flag) {
-            return Error.sendNotFound(res, 'Invalid email or password');
+            return Error.sendNotFound(res, 'Mật khẩu không chính xác!');
         }
 
         const user = await Lecturer.findOne({
@@ -50,7 +50,7 @@ exports.login = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Login Success',
+            message: 'Login success!',
             user,
             accessToken,
             refreshToken,
@@ -65,7 +65,7 @@ exports.refreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;
         if (!refreshToken) {
-            return Error.sendWarning(res, 'Invalid token');
+            return Error.sendWarning(res, 'Token không hợp lệ!');
         }
 
         const { id } = verifyRefreshToken(refreshToken);
@@ -74,7 +74,7 @@ exports.refreshToken = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Refresh Token Success',
+            message: 'Refresh token success!',
             accessToken,
             refreshToken: newRefreshToken,
         });
@@ -90,7 +90,7 @@ exports.logout = async (req, res) => {
         removeRefreshToken(lecturer.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Logout Success',
+            message: 'Logout success!',
         });
     } catch (error) {
         console.log(error);
@@ -161,7 +161,7 @@ exports.getLecturers = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all lecturers success',
+            message: 'Get all lecturers success!',
             lecturers,
             params: {
                 page: _.toInteger(page),
@@ -197,12 +197,12 @@ exports.getLecturerById = async (req, res) => {
         });
 
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get lecturer by id successfully',
+            message: 'Get lecturer by id success!',
             lecturer,
         });
     } catch (error) {
@@ -251,7 +251,7 @@ exports.createLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create lecturer successfully',
+            message: 'Create lecturer success!',
             lecturer: newLecturer,
         });
     } catch (error) {
@@ -267,7 +267,7 @@ exports.updateLecturer = async (req, res) => {
         const lecturer = await Lecturer.findByPk(id);
 
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
         await lecturer.update({ fullName, gender, phone, email, degree, major_id: majorId });
@@ -292,7 +292,7 @@ exports.updateLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update lecturer successfully',
+            message: 'Update lecturer success!',
             lecturer: newLecturer,
         });
     } catch (error) {
@@ -305,7 +305,7 @@ exports.importLecturers = async (req, res) => {
     try {
         const { termId, majorId } = req.body;
         if (!req.file) {
-            return Error.sendWarning(res, 'Please upload a file');
+            return Error.sendWarning(res, 'Hãy chọn file để import!');
         }
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0];
@@ -334,58 +334,60 @@ exports.importLecturers = async (req, res) => {
             });
         });
 
-        // Create lecturers
-        const lecturerListNow = await Lecturer.findAll({
-            where: { major_id: majorId },
-            attributes: ['username'],
-        });
-
-        const lecturerListNowUsername = lecturerListNow.map((lecturer) =>
-            Number(lecturer.username),
-        );
-
-        // // I want to add students that are not in the database
-        const lecturersNotInDatabase = lecturers.filter(
-            (lecturer) => !lecturerListNowUsername.includes(lecturer.username),
-        );
-
-        if (lecturersNotInDatabase.length === 0) {
-            return Error.sendWarning(res, 'All lecturers have been imported');
-        }
-
-        const newLecturerList = await Lecturer.bulkCreate(lecturersNotInDatabase);
-
-        // Create lecturer term
-        // check if lecturer exists in the LecturerTerm table
         const lecturerTerms = await LecturerTerm.findAll({
             where: { term_id: termId },
         });
 
         if (lecturerTerms.length !== 0) {
-            const lecturerTermsId = lecturerTerms.map((lecturerTerm) => lecturerTerm.lecturer_id);
-
-            const lecturersNotInLecturerTerm = newLecturerList.filter((lecturer) => {
-                return !lecturerTermsId.includes(lecturer.id);
-            });
-
-            lecturersNotInLecturerTerm.forEach(async (lecturer) => {
-                await LecturerTerm.create({
-                    lecturer_id: lecturer.id,
-                    term_id: termId,
+            lecturers.forEach(async (lec) => {
+                const lecturer = await Lecturer.findOne({
+                    where: { username: lec.username },
                 });
+
+                if (!lecturer) {
+                    const newLecturer = await Lecturer.create(lec);
+                    await LecturerTerm.create({
+                        lecturer_id: newLecturer.id,
+                        term_id: termId,
+                    });
+                } else {
+                    const lecturerTerm = await LecturerTerm.findOne({
+                        where: { lecturer_id: lecturer.id, term_id: termId },
+                    });
+
+                    if (!lecturerTerm) {
+                        await LecturerTerm.create({
+                            lecturer_id: lecturer.id,
+                            term_id: termId,
+                        });
+                    }
+                }
             });
         } else {
-            newLecturerList.forEach(async (lecturer) => {
-                await LecturerTerm.create({
-                    lecturer_id: lecturer.id,
-                    term_id: termId,
+            lecturers.forEach(async (lec) => {
+                const lecturer = await Lecturer.findOne({
+                    where: { username: lec.username },
                 });
+
+                if (!lecturer) {
+                    const newLecturer = await Lecturer.create(lec);
+
+                    await LecturerTerm.create({
+                        lecturer_id: newLecturer.id,
+                        term_id: termId,
+                    });
+                } else {
+                    await LecturerTerm.create({
+                        lecturer_id: lecturer.id,
+                        term_id: termId,
+                    });
+                }
             });
         }
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import lecturers successfully',
+            message: 'Import lecturers success!',
         });
     } catch (error) {
         console.log(error);
@@ -398,14 +400,35 @@ exports.deleteLecturer = async (req, res) => {
         const { id } = req.params;
         const lecturer = await Lecturer.findByPk(id);
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
         await lecturer.destroy();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete lecturer successfully',
+            message: 'Delete lecturer success!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const password = await hashPassword('12345678');
+        const lecturer = await Lecturer.findByPk(id);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
+        }
+
+        await lecturer.update({ password });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Reset password lecturer success!',
         });
     } catch (error) {
         console.log(error);
@@ -419,14 +442,14 @@ exports.changeRole = async (req, res) => {
         const { role } = req.body;
         let lecturer = await Lecturer.findByPk(id);
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
         await lecturer.update({ role });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Change role successfully',
+            message: 'Change role success!',
         });
     } catch (error) {
         console.log(error);
@@ -439,14 +462,14 @@ exports.lockAccount = async (req, res) => {
         const { id } = req.body;
         let lecturer = await Lecturer.findByPk(id);
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
         await lecturer.update({ isActive: false });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lock account successfully',
+            message: 'Lock account success!',
         });
     } catch (error) {
         console.log(error);
@@ -459,14 +482,14 @@ exports.unlockAccount = async (req, res) => {
         const { id } = req.body;
         let lecturer = await Lecturer.findByPk(id);
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
         await lecturer.update({ isActive: true });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Unlock account successfully',
+            message: 'Unlock account success!',
         });
     } catch (error) {
         console.log(error);
@@ -480,14 +503,9 @@ exports.updatePassword = async (req, res) => {
     try {
         let { password, newPassword } = req.body;
 
-        let lecturer = req.user;
-        if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
-        }
-
-        const flag = await comparePassword(password, lecturer.password);
+        const flag = await comparePassword(password, req.user.password);
         if (!flag) {
-            return Error.sendWarning(res, 'Password not match');
+            return Error.sendWarning(res, 'Mật khẩu không chính xác!');
         }
 
         newPassword = await hashPassword(newPassword);
@@ -496,7 +514,7 @@ exports.updatePassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update password successfully',
+            message: 'Update password success!',
         });
     } catch (error) {
         console.log(error);
@@ -526,7 +544,7 @@ exports.getMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get me successfully',
+            message: 'Get me success!',
             lecturer,
         });
     } catch (error) {
@@ -538,16 +556,12 @@ exports.getMe = async (req, res) => {
 exports.updateMe = async (req, res) => {
     try {
         const { fullName, email, phone, gender } = req.body;
-        const lecturer = req.user;
-        if (!lecturer) {
-            return Error.sendNotFound(res, 'Lecturer not found');
-        }
 
-        await Lecturer.update({ fullName, email, phone, gender }, { where: { id: lecturer.id } });
+        await Lecturer.update({ fullName, email, phone, gender }, { where: { id: req.user.id } });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update me successfully',
+            message: 'Update me success!',
         });
     } catch (error) {
         console.log(error);

@@ -15,7 +15,7 @@ exports.getEvaluations = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             evaluations,
         });
     } catch (error) {
@@ -29,11 +29,11 @@ exports.getEvaluationById = async (req, res) => {
         const { id } = req.params;
         const evaluation = await Evaluation.findByPk(id);
         if (!evaluation) {
-            return Error.sendNotFound(res, 'Evaluation not found');
+            return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
         }
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             evaluation,
         });
     } catch (error) {
@@ -56,7 +56,7 @@ exports.createEvaluation = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Create success!',
             evaluation,
         });
     } catch (error) {
@@ -70,7 +70,7 @@ exports.importEvaluations = async (req, res) => {
         const { termId, type } = req.body;
 
         if (!req.file) {
-            return Error.sendWarning(res, 'Please upload a file');
+            return Error.sendWarning(res, 'Hãy chọn file để import!');
         }
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0]; // get the first sheet name
@@ -95,12 +95,11 @@ exports.importEvaluations = async (req, res) => {
             evaluations.push({ name, scoreMax, type, description, term_id });
         });
 
-        const createdEvaluations = await Evaluation.bulkCreate(evaluations);
+        await Evaluation.bulkCreate(evaluations);
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import Success',
-            evaluations: createdEvaluations,
+            message: 'Import success!',
         });
     } catch (error) {
         console.log(error);
@@ -115,7 +114,7 @@ exports.updateEvaluation = async (req, res) => {
 
         const evaluation = await Evaluation.findByPk(id);
         if (!evaluation) {
-            return Error.sendNotFound(res, 'Evaluation not found');
+            return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
         }
 
         evaluation.name = name;
@@ -126,7 +125,7 @@ exports.updateEvaluation = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update success!',
             evaluation,
         });
     } catch (error) {
@@ -140,14 +139,14 @@ exports.deleteEvaluation = async (req, res) => {
         const { id } = req.params;
         const evaluation = await Evaluation.findByPk(id);
         if (!evaluation) {
-            return Error.sendNotFound(res, 'Evaluation not found');
+            return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
         }
 
         await evaluation.destroy();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Delete success!',
         });
     } catch (error) {
         console.log(error);
