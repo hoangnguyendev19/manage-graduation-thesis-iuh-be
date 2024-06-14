@@ -24,7 +24,7 @@ exports.getTerms = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             terms,
         });
     } catch (error) {
@@ -53,12 +53,12 @@ exports.getTermById = async (req, res) => {
         );
 
         if (!term) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             term: term[0],
         });
     } catch (error) {
@@ -84,12 +84,12 @@ exports.getTermNow = async (req, res) => {
         );
 
         if (!term) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ hiện tại không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             term: term[0],
         });
     } catch (error) {
@@ -107,13 +107,9 @@ exports.getTermDetailWithChooseGroup = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
-        if (!termDetail) {
-            return Error.sendNotFound(res, 'Term Detail not found');
-        }
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             termDetail,
         });
     } catch (error) {
@@ -131,13 +127,9 @@ exports.getTermDetailWithChooseTopic = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
-        if (!termDetail) {
-            return Error.sendNotFound(res, 'Term Detail not found');
-        }
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             termDetail,
         });
     } catch (error) {
@@ -155,13 +147,9 @@ exports.getTermDetailWithDiscussion = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
-        if (!termDetail) {
-            return Error.sendNotFound(res, 'Term Detail not found');
-        }
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             termDetail,
         });
     } catch (error) {
@@ -179,13 +167,9 @@ exports.getTermDetailWithReport = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
-        if (!termDetail) {
-            return Error.sendNotFound(res, 'Term Detail not found');
-        }
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             termDetail,
         });
     } catch (error) {
@@ -203,13 +187,9 @@ exports.getTermDetailWithPublicResult = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
-        if (!termDetail) {
-            return Error.sendNotFound(res, 'Term Detail not found');
-        }
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Get success!',
             termDetail,
         });
     } catch (error) {
@@ -235,7 +215,7 @@ exports.createTerm = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Create success!',
             term,
         });
     } catch (error) {
@@ -251,13 +231,13 @@ exports.updateTerm = async (req, res) => {
 
         const term = await Term.findByPk(id);
         if (!term) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
         await term.update({ name, startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update success!',
         });
     } catch (error) {
         console.log(error);
@@ -275,13 +255,13 @@ exports.updateChooseGroupTerm = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
         if (!termDetail) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update success!',
         });
     } catch (error) {
         console.log(error);
@@ -298,14 +278,15 @@ exports.updateChooseTopicTerm = async (req, res) => {
             where: { term_id: id, name: 'CHOOSE_TOPIC' },
             attributes: { exclude: ['created_at', 'updatedAt'] },
         });
+
         if (!termDetail) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update success!',
         });
     } catch (error) {
         console.log(error);
@@ -324,13 +305,13 @@ exports.updateDiscussionTerm = async (req, res) => {
         });
 
         if (!termDetail) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update success!',
         });
     } catch (error) {
         console.log(error);
@@ -348,13 +329,13 @@ exports.updateReportTerm = async (req, res) => {
             attributes: { exclude: ['created_at', 'updatedAt'] },
         });
         if (!termDetail) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update success!',
         });
     } catch (error) {
         console.log(error);
@@ -373,13 +354,13 @@ exports.updatePublicResultTerm = async (req, res) => {
         });
 
         if (!termDetail) {
-            return Error.sendNotFound(res, 'Term not found');
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Update success!',
         });
     } catch (error) {
         console.log(error);

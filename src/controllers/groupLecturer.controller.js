@@ -1,7 +1,6 @@
 const { GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op } = require('sequelize');
 
 exports.getGroupLecturers = async (req, res) => {
     try {
