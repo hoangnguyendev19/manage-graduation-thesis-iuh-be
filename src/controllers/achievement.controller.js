@@ -1,7 +1,6 @@
 const { Achievement, StudentTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op } = require('sequelize');
 
 exports.getAchievements = async (req, res) => {
     try {
@@ -13,6 +12,7 @@ exports.getAchievements = async (req, res) => {
                 student_id: studentId,
             },
         });
+
         if (!studentTerm) {
             return Error.sendNotFound(res, 'Student Term not found');
         }

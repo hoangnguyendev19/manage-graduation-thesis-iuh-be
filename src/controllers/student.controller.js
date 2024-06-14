@@ -1,4 +1,4 @@
-const { Student, Major, StudentTerm, GroupStudent } = require('../models/index');
+const { Student, Major, StudentTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -23,11 +23,11 @@ exports.login = async (req, res) => {
         });
 
         if (!student) {
-            return Error.sendNotFound(res, 'Invalid email or password');
+            return Error.sendNotFound(res, 'Email hoặc mật khẩu không chính xác!');
         }
         const flag = await comparePassword(password, student.password);
         if (!flag) {
-            return Error.sendNotFound(res, 'Invalid email or password');
+            return Error.sendNotFound(res, 'Mật khẩu không chính xác!');
         }
 
         const user = await Student.findOne({
@@ -53,7 +53,7 @@ exports.login = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Login successfully',
+            message: 'Login success!',
             user,
             accessToken,
             refreshToken,
@@ -68,7 +68,7 @@ exports.refreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;
         if (!refreshToken) {
-            return Error.sendWarning(res, 'Invalid token');
+            return Error.sendWarning(res, 'Token không hợp lệ!');
         }
 
         const { id } = verifyRefreshToken(refreshToken);
@@ -77,7 +77,7 @@ exports.refreshToken = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Refresh Token successfully',
+            message: 'Refresh Token success!',
             accessToken,
             refreshToken: newRefreshToken,
         });
@@ -92,7 +92,7 @@ exports.logout = async (req, res) => {
         removeRefreshToken(req.user.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Logout successfully',
+            message: 'Logout success!',
         });
     } catch (error) {
         console.log(error);
@@ -162,7 +162,7 @@ exports.getStudents = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all students successfully',
+            message: 'Get all students success!',
             students,
             params: {
                 page: _.toInteger(page),
@@ -198,12 +198,12 @@ exports.getStudentById = async (req, res) => {
         });
 
         if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get student by id successfully',
+            message: 'Get student by id success!',
             student,
         });
     } catch (error) {
@@ -267,7 +267,7 @@ exports.createStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create student successfully',
+            message: 'Create student success!',
             student: newStudent,
         });
     } catch (error) {
@@ -283,7 +283,7 @@ exports.updateStudent = async (req, res) => {
             req.body;
         const student = await Student.findByPk(id);
         if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         await student.update({
@@ -317,7 +317,7 @@ exports.updateStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update student successfully',
+            message: 'Update student success!',
             student: newStudent,
         });
     } catch (error) {
@@ -330,7 +330,7 @@ exports.importStudents = async (req, res) => {
     try {
         const { majorId, termId } = req.body;
         if (!req.file) {
-            return Error.sendWarning(res, 'Please upload a file');
+            return Error.sendWarning(res, 'Hãy chọn file để import!');
         }
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0];
@@ -360,72 +360,60 @@ exports.importStudents = async (req, res) => {
             });
         });
 
-        // Create students
-        const studentListNow = await Student.findAll({
-            where: { major_id: majorId },
-            attributes: ['username'],
-        });
-
-        const studentListNowUsername = studentListNow.map((student) => Number(student.username));
-
-        // I want to add students that are not in the database
-        const studentsNotInDatabase = students.filter(
-            (student) => !studentListNowUsername.includes(student.username),
-        );
-
-        if (studentsNotInDatabase.length === 0) {
-            return Error.sendWarning(res, 'All students have been imported');
-        }
-
-        const newStudentList = await Student.bulkCreate(studentsNotInDatabase);
-
-        // Create student term
-        // check if student exists in the StudentTerm table
         const studentTerms = await StudentTerm.findAll({
             where: { term_id: termId },
         });
 
         if (studentTerms.length !== 0) {
-            const studentTermsId = studentTerms.map((studentTerm) => studentTerm.student_id);
-
-            const studentsNotInStudentTerm = newStudentList.filter(
-                (student) => !studentTermsId.includes(student.id),
-            );
-
-            studentsNotInStudentTerm.forEach(async (student) => {
-                await StudentTerm.create({
-                    student_id: student.id,
-                    term_id: termId,
+            students.forEach(async (stu) => {
+                const student = await Student.findOne({
+                    where: { username: stu.username },
                 });
-            });
 
-            // Create group student
-            studentsNotInStudentTerm.forEach(async (student) => {
-                await GroupStudent.create({
-                    name: `Nhóm số ${studentsNotInStudentTerm.indexOf(student) + 1}`,
-                    term_id: termId,
-                });
+                if (!student) {
+                    const newStudent = await Student.create(stu);
+                    await StudentTerm.create({
+                        student_id: newStudent.id,
+                        term_id: termId,
+                    });
+                } else {
+                    const studentTerm = await StudentTerm.findOne({
+                        where: { student_id: student.id, term_id: termId },
+                    });
+
+                    if (!studentTerm) {
+                        await StudentTerm.create({
+                            student_id: student.id,
+                            term_id: termId,
+                        });
+                    }
+                }
             });
         } else {
-            newStudentList.forEach(async (student) => {
-                await StudentTerm.create({
-                    student_id: student.id,
-                    term_id: termId,
+            students.forEach(async (stu) => {
+                const student = await Student.findOne({
+                    where: { username: stu.username },
                 });
-            });
 
-            // Create group student
-            newStudentList.forEach(async (student) => {
-                await GroupStudent.create({
-                    name: `Nhóm số ${newStudentList.indexOf(student) + 1}`,
-                    term_id: termId,
-                });
+                if (!student) {
+                    const newStudent = await Student.create(stu);
+
+                    await StudentTerm.create({
+                        student_id: newStudent.id,
+                        term_id: termId,
+                    });
+                } else {
+                    await StudentTerm.create({
+                        student_id: student.id,
+                        term_id: termId,
+                    });
+                }
             });
         }
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import students successfully',
+            message: 'Import students success!',
         });
     } catch (error) {
         console.log(error);
@@ -438,14 +426,14 @@ exports.deleteStudent = async (req, res) => {
         const { id } = req.params;
         const student = await Student.findByPk(id);
         if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         await student.destroy();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete student successfully',
+            message: 'Delete student success!',
         });
     } catch (error) {
         console.log(error);
@@ -459,14 +447,14 @@ exports.resetPassword = async (req, res) => {
         const password = await hashPassword('12345678');
         const student = await Student.findByPk(id);
         if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         await student.update({ password });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Reset password student successfully',
+            message: 'Reset password student success!',
         });
     } catch (error) {
         console.log(error);
@@ -479,14 +467,14 @@ exports.lockAccount = async (req, res) => {
         const { id } = req.body;
         const student = await Student.findByPk(id);
         if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         await student.update({ isActive: false });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lock account student successfully',
+            message: 'Lock account student success!',
         });
     } catch (error) {
         console.log(error);
@@ -508,7 +496,7 @@ exports.lockAccounts = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lock accounts student successfully',
+            message: 'Lock accounts student success!',
         });
     } catch (error) {
         console.log(error);
@@ -521,14 +509,14 @@ exports.unlockAccount = async (req, res) => {
         const { id } = req.body;
         const student = await Student.findByPk(id);
         if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         await student.update({ isActive: true });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Unlock account student successfully',
+            message: 'Unlock account student success!',
         });
     } catch (error) {
         console.log(error);
@@ -545,14 +533,14 @@ exports.updateStatus = async (req, res) => {
         });
 
         if (!studentTerm) {
-            return Error.sendNotFound(res, 'Student not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         await studentTerm.update({ status });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update status student successfully',
+            message: 'Update status student success!',
         });
     } catch (error) {
         console.log(error);
@@ -566,14 +554,9 @@ exports.updatePassword = async (req, res) => {
     try {
         let { password, newPassword } = req.body;
 
-        let student = await Student.findByPk(req.user.id);
-        if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
-        }
-
-        const flag = await comparePassword(password, student.password);
+        const flag = await comparePassword(password, req.user.password);
         if (!flag) {
-            return Error.sendWarning(res, 'Password not match');
+            return Error.sendWarning(res, 'Mật khẩu không chính xác!');
         }
 
         newPassword = await hashPassword(newPassword);
@@ -609,13 +592,9 @@ exports.getMe = async (req, res) => {
             ],
         });
 
-        if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
-        }
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get me successfully',
+            message: 'Get me success!',
             user: student,
         });
     } catch (error) {
@@ -627,24 +606,15 @@ exports.getMe = async (req, res) => {
 exports.updateMe = async (req, res) => {
     try {
         const { fullName, email, phoneNumber, avatarUrl, gender } = req.body;
-        const student = await Student.findOne({
-            where: { id: req.user.id },
-            attributes: { exclude: ['password'] },
-        });
 
-        if (!student) {
-            return Error.sendNotFound(res, 'Student not found');
-        }
-
-        await student.update(
+        await Student.update(
             { fullName, email, phoneNumber, gender, avatarUrl },
             { where: { id: req.user.id } },
         );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update me successfully',
-            user: student,
+            message: 'Update me success!',
         });
     } catch (error) {
         console.log(error);
