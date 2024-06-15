@@ -1,6 +1,7 @@
 const APP_ROUTER = {
     //CORE
     INDEX: '/',
+    QUERY: '/query',
     ID: '/:id',
     LOGIN: '/login',
     REGISTER: '/register',
@@ -52,6 +53,7 @@ const APP_ROUTER = {
 
     //TOPICS
     TOPIC: '/api/v1/topics',
+    TOPIC_TERM: 'api/v1/topics/:termId',
     TOPIC_STATUS: '/:id/status',
 
     //GROUP_LECTURER

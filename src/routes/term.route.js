@@ -16,11 +16,6 @@ const {
     updateChooseTopicTerm,
     updateReportTerm,
     updateChooseGroupTerm,
-    getTermDetailWithChooseGroup,
-    getTermDetailWithChooseTopic,
-    getTermDetailWithDiscussion,
-    getTermDetailWithReport,
-    getTermDetailWithPublicResult,
 } = require('../controllers/term.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');

@@ -100,6 +100,58 @@ exports.logout = async (req, res) => {
 
 // ----------------- Admin -----------------
 
+exports.searchLecturer = async (req, res) => {
+    try {
+        const { termId, limit, page, searchField, keywords } = req.query;
+        let offset = (page - 1) * limit;
+        // searchField = 'fullName' | 'username' | 'phone' | 'email';
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId   AND l.${searchField} LIKE :keywords
+            ORDER BY l.created_at DESC
+            LIMIT :limit OFFSET :offset`;
+
+        const lecturers = await sequelize.query(query, {
+            replacements: {
+                termId,
+                keywords: `%${keywords}%`,
+                limit: parseInt(limit),
+                offset,
+            },
+            type: QueryTypes.SELECT,
+        });
+        const countLec = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId   AND l.${searchField} LIKE :keywords
+            ORDER BY l.created_at DESC
+        `,
+            {
+                replacements: {
+                    termId,
+                    keywords: `%${keywords}%`,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+        const total = countLec.length;
+        const totalPage = _.ceil(total / _.toInteger(limit));
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Tìm kiếm giảng viên thành công',
+            lecturers,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.searchLecturer= ~ error:', error);
+    }
+};
+
 exports.getLecturers = async (req, res) => {
     try {
         const { termId, majorId, page, limit } = req.query;
