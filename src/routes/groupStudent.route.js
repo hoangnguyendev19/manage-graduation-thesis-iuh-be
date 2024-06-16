@@ -9,6 +9,7 @@ const {
     getGroupStudentsByMajor,
     getMyGroupStudent,
     createGroupStudent,
+    importGroupStudent,
     updateTypeReport,
     assignAdminGroupStudent,
     removeMemberGroupStudent,
@@ -38,6 +39,13 @@ router.post(
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
     createGroupStudent,
+);
+
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    importGroupStudent,
 );
 
 router.put(APP_ROUTER.GROUP_STUDENT_TYPE_REPORT, protectLecturer, updateTypeReport);
