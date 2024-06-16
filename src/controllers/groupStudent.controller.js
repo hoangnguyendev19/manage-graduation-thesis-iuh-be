@@ -329,22 +329,19 @@ exports.importGroupStudent = async (req, res) => {
     try {
         const { termId } = req.body;
 
-        const groupStudentCount = await GroupStudent.count({
+        const studentTermCount = await StudentTerm.count({
             where: {
                 term_id: termId,
             },
         });
 
         // I want to create group student list with group name is "Nhóm số 1", "Nhóm số 2", "Nhóm số 3", ... "Nhóm số n" (n is number of group student)
-        const groupStudents = [];
-        for (let i = 0; i < groupStudentCount / 2; i++) {
-            groupStudents.push({
+        for (let i = 0; i < studentTermCount / 2; i++) {
+            await GroupStudent.create({
                 name: `Nhóm số ${i + 1}`,
                 term_id: termId,
             });
         }
-
-        await GroupStudent.bulkCreate(groupStudents);
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
