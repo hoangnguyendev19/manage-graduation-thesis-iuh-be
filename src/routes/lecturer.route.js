@@ -17,6 +17,7 @@ const {
     updatePassword,
     getMe,
     updateMe,
+    searchLecturer,
 } = require('../controllers/lecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
@@ -33,6 +34,8 @@ router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
 // ----------------- Admin -----------------
 router.get(APP_ROUTER.ME, protectLecturer, getMe);
+
+router.get(APP_ROUTER.QUERY, searchLecturer);
 
 router.get(APP_ROUTER.INDEX, getLecturers);
 

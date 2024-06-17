@@ -271,16 +271,19 @@ const getTopicById = async (req, res) => {
 
 const createTopic = async (req, res) => {
     const { name, description, quantityGroupMax, target, standardOutput, requireInput } = req.body;
+    const { termId } = req.query;
+    console.log('🚀 ~ createTopic ~ termId:', termId);
     try {
         const lecturer_id = req.user.id;
 
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 lecturer_id: lecturer_id,
+                term_id: termId,
             },
         });
         if (!lecturerTerm) {
-            return Error.sendNotFound(res, 'Lecturer Term not found');
+            return Error.sendNotFound(res, 'Giảng viên không hợp lệ trong học kì này');
         }
 
         const topic = await Topic.create({
@@ -395,7 +398,7 @@ const importTopic = async (req, res) => {
     try {
         const { majorId, termId } = req.body;
         if (!req.file) {
-            return Error.sendWarning(res, 'Please upload a file');
+            return Error.sendWarning(res, 'Vui lòng chọn file tải lên');
         }
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0];
@@ -446,7 +449,7 @@ const importTopic = async (req, res) => {
             } else {
                 return Error.sendWarning(
                     res,
-                    'Giảng viên của đề tài không tồn tại trong học kì này. ',
+                    `Mã Giảng viên  ${lecturer_id} của đề tài không tồn tại trong học kì này. `,
                 );
             }
         }
