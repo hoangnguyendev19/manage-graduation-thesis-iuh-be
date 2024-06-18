@@ -4,6 +4,7 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     getGroupStudents,
+    getGroupStudentsByLecturer,
     getGroupStudentById,
     getMembersById,
     getGroupStudentsByMajor,
@@ -12,6 +13,8 @@ const {
     importGroupStudent,
     updateTypeReport,
     assignAdminGroupStudent,
+    addMemberGroupStudent,
+    deleteMemberGroupStudent,
     removeMemberGroupStudent,
     leaveGroupStudent,
     joinGroupStudent,
@@ -27,6 +30,8 @@ const router = express.Router();
 router.get(APP_ROUTER.ME, protectStudent, getMyGroupStudent);
 
 router.get(APP_ROUTER.GROUP_STUDENT_BY_MAJOR, protectStudent, getGroupStudentsByMajor);
+
+router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, protectLecturer, getGroupStudentsByLecturer);
 
 router.get(APP_ROUTER.INDEX, getGroupStudents);
 
@@ -51,6 +56,20 @@ router.post(
 router.put(APP_ROUTER.GROUP_STUDENT_TYPE_REPORT, protectLecturer, updateTypeReport);
 
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);
+
+router.put(
+    APP_ROUTER.GROUP_STUDENT_ADD_MEMBER,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    addMemberGroupStudent,
+);
+
+router.put(
+    APP_ROUTER.GROUP_STUDENT_DELETE_MEMBER,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    deleteMemberGroupStudent,
+);
 
 router.put(APP_ROUTER.GROUP_STUDENT_REMOVE_MEMBER, protectStudent, removeMemberGroupStudent);
 

@@ -111,6 +111,34 @@ exports.getGroupStudents = async (req, res) => {
     }
 };
 
+exports.getGroupStudentsByLecturer = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        const groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name, gs.type_report as typeReport, tc.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
+            LEFT JOIN topics tc ON gs.topic_id = tc.id
+            LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            WHERE gs.term_id = :termId and lt.lecturer_id = :lecturerId
+            GROUP BY gs.id`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId, lecturerId: req.user.id },
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get all success!',
+            groupStudents,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getGroupStudentsByMajor = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
@@ -180,24 +208,43 @@ exports.getGroupStudentById = async (req, res) => {
 exports.getMembersById = async (req, res) => {
     try {
         const { id } = req.params;
-        const members = await StudentTerm.findAll({
+
+        let members = await StudentTerm.findAll({
             where: {
                 group_student_id: id,
             },
-            attributes: ['status', 'isAdmin'],
+            attributes: ['id', 'status', 'isAdmin'],
             include: {
                 model: Student,
-                attributes: {
-                    exclude: ['password', 'created_at', 'updated_at', 'major_id'],
-                },
+                attributes: ['id', 'username', 'fullName', 'avatar', 'clazzName'],
                 as: 'student',
             },
         });
 
+        const membersWithTranscripts = await Promise.all(
+            members.map(async (member) => {
+                const transcripts = await sequelize.query(
+                    `SELECT e.type, AVG(score) as avgScore FROM transcripts t
+                    LEFT JOIN evaluations e ON t.evaluation_id = e.id
+                    WHERE student_term_id = :studentTermId
+                    GROUP BY e.type`,
+                    {
+                        type: QueryTypes.SELECT,
+                        replacements: { studentTermId: member.id },
+                    },
+                );
+
+                return {
+                    ...member.toJSON(),
+                    transcripts,
+                };
+            }),
+        );
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get members success!',
-            members,
+            members: membersWithTranscripts,
         });
     } catch (error) {
         console.log(error);
@@ -267,7 +314,10 @@ exports.createGroupStudent = async (req, res) => {
                 },
             });
 
-            if (studentTerm.group_student_id) {
+            if (!studentTerm)
+                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+
+            if (studentTerm.group_student_id !== null) {
                 return Error.sendWarning(res, 'Sinh viên đã có nhóm rồi!');
             }
         }
@@ -335,8 +385,9 @@ exports.importGroupStudent = async (req, res) => {
             },
         });
 
-        // I want to create group student list with group name is "Nhóm số 1", "Nhóm số 2", "Nhóm số 3", ... "Nhóm số n" (n is number of group student)
-        for (let i = 0; i < studentTermCount / 2; i++) {
+        const numberOfGroups = Math.ceil(studentTermCount / 2);
+
+        for (let i = 0; i < numberOfGroups; i++) {
             await GroupStudent.create({
                 name: `Nhóm số ${i + 1}`,
                 term_id: termId,
@@ -414,27 +465,17 @@ exports.assignAdminGroupStudent = async (req, res) => {
 exports.addMemberGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { studentId } = req.body;
-
-        const studentAdmin = await StudentTerm.findOne({
-            where: {
-                student_id: req.user.id,
-                group_student_id: id,
-            },
-        });
-
-        if (!studentAdmin.isAdmin) {
-            return Error.sendForbidden(res, 'Bạn không phải là admin của nhóm sinh viên!');
-        }
+        const { studentId, termId } = req.body;
 
         const studentTerm = await StudentTerm.findOne({
             where: {
                 student_id: studentId,
+                term_id: termId,
             },
         });
 
         if (!studentTerm) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
         }
 
         if (studentTerm.group_student_id) {
@@ -447,7 +488,37 @@ exports.addMemberGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Add success!',
+            message: 'Add member success!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.deleteMemberGroupStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { studentId, termId } = req.body;
+
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                student_id: studentId,
+                term_id: termId,
+            },
+        });
+
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+        }
+
+        studentTerm.group_student_id = null;
+
+        await studentTerm.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Delete member success!',
         });
     } catch (error) {
         console.log(error);
