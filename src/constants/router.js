@@ -63,10 +63,13 @@ const APP_ROUTER = {
 
     //GROUP_STUDENT
     GROUP_STUDENT: '/api/v1/group-students',
+    GROUP_STUDENT_BY_LECTURER: '/lecturer',
     GROUP_STUDENT_BY_MAJOR: '/major',
     GROUP_STUDENT_TYPE_REPORT: '/:id/type-report',
     GROUP_STUDENT_ASSIGN_ADMIN: '/:id/assign-admin',
     GROUP_STUDENT_ASSIGN_TOPIC: '/:id/assign-topic',
+    GROUP_STUDENT_ADD_MEMBER: '/:id/add-member',
+    GROUP_STUDENT_DELETE_MEMBER: '/:id/delete-member',
     GROUP_STUDENT_REMOVE_MEMBER: '/:id/remove-member',
     GROUP_STUDENT_LEAVE_GROUP: '/:id/leave-group',
     GROUP_STUDENT_JOIN_GROUP: '/:id/join-group',
