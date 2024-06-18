@@ -8,7 +8,6 @@ const {
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op } = require('sequelize');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
     try {
