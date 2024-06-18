@@ -411,7 +411,7 @@ const importTopic = async (req, res) => {
 
         for (const [index, topic] of jsonData.entries()) {
             const id = index + quantityTopicInDb + 1;
-            const lecturer_id = topic['Mã giảng viên'];
+            const username = topic['Mã giảng viên'];
             const name = topic['Tên đề tài'];
             const target = topic['MỤC TIÊU ĐỀ TÀI'];
             const note = topic['DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG'];
@@ -420,13 +420,20 @@ const importTopic = async (req, res) => {
             const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'];
             const major_id = majorId;
 
-            if (!lecturer_id) {
+            console.log('🚀 ~ importTopic ~ username:', username);
+
+            if (!username) {
                 return Error.sendWarning(res, 'Mã giảng viên không được bỏ trống');
             }
-
+            const oldLecturer = await Lecturer.findOne({
+                where: {
+                    username: username,
+                },
+            });
+            console.log("🚀 ~ importTopic ~ oldLecturer:", oldLecturer)
             const isExistLecturer = await LecturerTerm.findOne({
                 where: {
-                    lecturer_id: lecturer_id,
+                    lecturer_id: oldLecturer.id,
                     term_id: termId,
                 },
             });
