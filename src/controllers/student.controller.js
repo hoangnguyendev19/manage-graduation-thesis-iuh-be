@@ -527,13 +527,16 @@ exports.unlockAccount = async (req, res) => {
 exports.updateStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { termId, status } = req.body;
         const studentTerm = await StudentTerm.findOne({
-            where: { student_id: id },
+            where: {
+                term_id: termId,
+                student_id: id,
+            },
         });
 
         if (!studentTerm) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
         }
 
         await studentTerm.update({ status });

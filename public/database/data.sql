@@ -14,57 +14,9 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-
--- Dumping database structure for manage_graduation_se_iuh
-CREATE DATABASE IF NOT EXISTS `manage_graduation_se_iuh` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
-USE `manage_graduation_se_iuh`;
-
--- Dumping structure for table manage_graduation_se_iuh.achievements
-CREATE TABLE IF NOT EXISTS `achievements` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `bonus_score` int(11) NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `student_term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `student_term_id` (`student_term_id`),
-  CONSTRAINT `achievements_ibfk_1` FOREIGN KEY (`student_term_id`) REFERENCES `student_terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.achievements: ~0 rows (approximately)
 
--- Dumping structure for table manage_graduation_se_iuh.assigns
-CREATE TABLE IF NOT EXISTS `assigns` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `type_evaluation` enum('ADVISOR','REVIEWER','SESSION_HOST') NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `group_lecturer_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `group_student_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `group_lecturer_id` (`group_lecturer_id`),
-  KEY `group_student_id` (`group_student_id`),
-  CONSTRAINT `assigns_ibfk_1` FOREIGN KEY (`group_lecturer_id`) REFERENCES `group_lecturers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `assigns_ibfk_2` FOREIGN KEY (`group_student_id`) REFERENCES `group_students` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.assigns: ~0 rows (approximately)
-
--- Dumping structure for table manage_graduation_se_iuh.evaluations
-CREATE TABLE IF NOT EXISTS `evaluations` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `score_max` int(11) NOT NULL,
-  `description` text DEFAULT NULL,
-  `type` enum('ADVISOR','REVIEWER','SESSION_HOST') DEFAULT 'REVIEWER',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `term_id` (`term_id`),
-  CONSTRAINT `evaluations_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table manage_graduation_se_iuh.evaluations: ~55 rows (approximately)
 INSERT INTO `evaluations` (`id`, `name`, `score_max`, `description`, `type`, `created_at`, `updated_at`, `term_id`) VALUES
@@ -124,52 +76,9 @@ INSERT INTO `evaluations` (`id`, `name`, `score_max`, `description`, `type`, `cr
 	('f6c2ed25-73b1-45c5-b479-684f6477cd83', 'Analyze and model the requirements of the project.', 20, '[0 - 4) - Unable to identify and analyze basic functional requirements of the system to be built in the project.\r\n- Do not model the current status and operations included in the requirements of the topic to be implemented. ; [4 - 10) - Identify and analyze up to 30% of the basic functional requirements of the system to be built in the project. ; [10 - 16) - Identify and analyze up to 60% of the basic functional requirements of the system to be built in the project.\r\n- Identify and analyze up to 60% of the main business processes of the system that need to be built in the project.\r\n- Model the basic functional requirements and main operations identified in the system to be built in the project. ; [16 - 20] - Identify and analyze over 60% of the basic functional requirements of the system to be built in the project.\r\n- Identify and analyze over 60% of the main business processes of the system that need to be built in the project.\r\n- Model the basic functional requirements and main operations identified in the system to be built in the project.', 'ADVISOR', '2024-06-13 16:08:55', '2024-06-13 16:08:55', '5769a425-b10b-4892-a839-b9336dc8aabb'),
 	('f84f0699-45c2-460f-9506-6b3791175839', 'Evaluate the implemented results.', 10, '[0 - 2) - Failure to design and execute tests. ; [2 - 5) - Create incorrect test cases tables or do not test. ; [5 - 8) - Create a table of test cases for at least 3 main functions of the program.\r\n- Execute test cases. ; [8 - 10] - Create test cases for a business process.', 'SESSION_HOST', '2024-06-14 19:56:02', '2024-06-14 19:56:02', '7d98a855-d805-4122-8649-a6ebab007c86');
 
--- Dumping structure for table manage_graduation_se_iuh.group_lecturers
-CREATE TABLE IF NOT EXISTS `group_lecturers` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `type` enum('ADVISOR','REVIEWER','SESSION_HOST') DEFAULT 'REVIEWER',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `term_id` (`term_id`),
-  CONSTRAINT `group_lecturers_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.group_lecturers: ~0 rows (approximately)
 
--- Dumping structure for table manage_graduation_se_iuh.group_lecturer_members
-CREATE TABLE IF NOT EXISTS `group_lecturer_members` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `lecturer_term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `group_lecturer_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `lecturer_term_id` (`lecturer_term_id`),
-  KEY `group_lecturer_id` (`group_lecturer_id`),
-  CONSTRAINT `group_lecturer_members_ibfk_1` FOREIGN KEY (`lecturer_term_id`) REFERENCES `lecturer_terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `group_lecturer_members_ibfk_2` FOREIGN KEY (`group_lecturer_id`) REFERENCES `group_lecturers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.group_lecturer_members: ~0 rows (approximately)
-
--- Dumping structure for table manage_graduation_se_iuh.group_students
-CREATE TABLE IF NOT EXISTS `group_students` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `type_report` enum('OPEN','POSTER','SESSION_HOST') NOT NULL DEFAULT 'OPEN',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `topic_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `topic_id` (`topic_id`),
-  KEY `term_id` (`term_id`),
-  CONSTRAINT `group_students_ibfk_1` FOREIGN KEY (`topic_id`) REFERENCES `topics` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `group_students_ibfk_2` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table manage_graduation_se_iuh.group_students: ~99 rows (approximately)
 INSERT INTO `group_students` (`id`, `name`, `type_report`, `created_at`, `updated_at`, `topic_id`, `term_id`) VALUES
@@ -213,6 +122,7 @@ INSERT INTO `group_students` (`id`, `name`, `type_report`, `created_at`, `update
 	('5e6b6188-791d-4814-b1a3-81fc6ee64a92', 'Nhóm số 15', 'OPEN', '2024-06-16 21:49:36', '2024-06-16 21:49:36', NULL, 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9'),
 	('5e7df16d-dd5a-4a64-b6c2-6c5911bb5db3', 'Nhóm số 4', 'OPEN', '2024-06-17 22:33:25', '2024-06-17 22:33:25', NULL, '7d98a855-d805-4122-8649-a6ebab007c86'),
 	('62d5eb8d-6647-4ed9-9c20-d3582689e26e', 'Nhóm số 20', 'OPEN', '2024-06-17 22:33:25', '2024-06-17 22:33:25', NULL, '7d98a855-d805-4122-8649-a6ebab007c86'),
+	('63ec1548-dfbb-4076-ae15-73e5bce8684f', 'Nhóm số 25', 'OPEN', '2024-06-18 14:05:16', '2024-06-18 14:05:16', NULL, 'f40bd6b8-d2a2-4477-9a06-f63801df53aa'),
 	('642d94a3-357e-4026-ae0a-04a01a973879', 'Nhóm số 6', 'OPEN', '2024-06-16 21:49:36', '2024-06-16 21:49:36', NULL, 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9'),
 	('676930c8-7087-480e-8dd8-8ed16902c394', 'Nhóm số 2', 'OPEN', '2024-06-16 21:49:36', '2024-06-16 21:49:36', NULL, 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9'),
 	('69850186-05d9-489f-97fb-1990a1f4ce8e', 'Nhóm số 21', 'OPEN', '2024-06-16 19:05:49', '2024-06-16 19:05:49', NULL, '5769a425-b10b-4892-a839-b9336dc8aabb'),
@@ -273,29 +183,6 @@ INSERT INTO `group_students` (`id`, `name`, `type_report`, `created_at`, `update
 	('f9c5248d-8f84-4e31-b60a-3b0cdbe81273', 'Nhóm số 19', 'OPEN', '2024-06-16 19:04:23', '2024-06-16 19:04:23', NULL, 'f40bd6b8-d2a2-4477-9a06-f63801df53aa'),
 	('f9c834fb-de7b-4b02-b29d-8c2ece874269', 'Nhóm số 8', 'OPEN', '2024-06-16 21:49:36', '2024-06-16 21:49:36', NULL, 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9');
 
--- Dumping structure for table manage_graduation_se_iuh.lecturers
-CREATE TABLE IF NOT EXISTS `lecturers` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `username` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `full_name` varchar(255) NOT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `phone` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `gender` enum('MALE','FEMALE') DEFAULT NULL,
-  `degree` enum('BACHELOR','MASTER','DOCTOR') DEFAULT 'MASTER',
-  `role` enum('HEAD_LECTURER','LECTURER','SUB_HEAD_LECTURER') DEFAULT 'LECTURER',
-  `is_admin` tinyint(1) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `major_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`),
-  KEY `major_id` (`major_id`),
-  CONSTRAINT `lecturers_ibfk_1` FOREIGN KEY (`major_id`) REFERENCES `majors` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.lecturers: ~20 rows (approximately)
 INSERT INTO `lecturers` (`id`, `username`, `password`, `full_name`, `avatar`, `phone`, `email`, `gender`, `degree`, `role`, `is_admin`, `is_active`, `created_at`, `updated_at`, `major_id`) VALUES
 	('1200c265-b5c4-4b18-9faa-0dd968bdcd8b', '20011239', '$2b$10$e44iIUDIkp1g3zBvK1CXQ.obn6F5IeRKVPKVSFYX81GNCX84RwyR2', 'Châu Thị Bảo Hà', NULL, '0918153584', 'chauthibaoha@gmail.com', 'FEMALE', 'MASTER', 'LECTURER', 0, 1, '2024-06-13 16:01:56', '2024-06-13 16:01:56', 'e4fe02cb-f2b0-4afa-885d-d1b93130d350'),
@@ -319,21 +206,7 @@ INSERT INTO `lecturers` (`id`, `username`, `password`, `full_name`, `avatar`, `p
 	('f54cba16-ffca-48a7-898b-586ee5f883a1', '20001254', '$2b$10$9gZz40236BLdC34h027hV.FB//lK9mEPnNglWkTebeVDDj7B3jq2q', 'Đặng Văn Thuậ', NULL, '0928182301', 'thuanDang@gmail.com', 'FEMALE', 'MASTER', 'LECTURER', 0, 1, '2024-06-15 23:46:19', '2024-06-16 20:59:21', 'e4fe02cb-f2b0-4afa-885d-d1b93130d350'),
 	('fe50c05f-4089-4802-a241-c4d9b1a8de8a', '20011243', '$2b$10$e44iIUDIkp1g3zBvK1CXQ.obn6F5IeRKVPKVSFYX81GNCX84RwyR2', 'Trần Thị Anh Thi', NULL, '0985787825', 'tranthianhthi@iuh.edu.vn', 'FEMALE', 'MASTER', 'LECTURER', 0, 1, '2024-06-13 16:01:56', '2024-06-13 16:01:56', 'e4fe02cb-f2b0-4afa-885d-d1b93130d350');
 
--- Dumping structure for table manage_graduation_se_iuh.lecturer_terms
-CREATE TABLE IF NOT EXISTS `lecturer_terms` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `lecturer_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `lecturer_id` (`lecturer_id`),
-  KEY `term_id` (`term_id`),
-  CONSTRAINT `lecturer_terms_ibfk_1` FOREIGN KEY (`lecturer_id`) REFERENCES `lecturers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `lecturer_terms_ibfk_2` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table manage_graduation_se_iuh.lecturer_terms: ~0 rows (approximately)
+-- Dumping data for table manage_graduation_se_iuh.lecturer_terms: ~60 rows (approximately)
 INSERT INTO `lecturer_terms` (`id`, `created_at`, `updated_at`, `lecturer_id`, `term_id`) VALUES
 	('05476cda-b1ba-441f-9cb2-1b784de08da0', '2024-06-17 20:58:13', '2024-06-17 20:58:13', '1717ab3f-d985-4055-8ebc-c0722659e1a2', '5769a425-b10b-4892-a839-b9336dc8aabb'),
 	('05a2f8a0-cadc-4861-9f89-a7466eb8378d', '2024-06-16 21:39:58', '2024-06-16 21:39:58', '649b9d6b-09e0-4b55-80bc-535f23cb8f21', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa'),
@@ -396,16 +269,7 @@ INSERT INTO `lecturer_terms` (`id`, `created_at`, `updated_at`, `lecturer_id`, `
 	('fb9736e3-e862-4955-8084-81313895d9c7', '2024-06-16 21:39:58', '2024-06-16 21:39:58', 'a39cc5f4-4053-4d25-9c64-8483465013fa', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa'),
 	('ffabb475-52a7-489f-a955-94a39d4cad4e', '2024-06-16 21:39:58', '2024-06-16 21:39:58', 'b5e09818-7337-4187-bb07-24ce63d039d2', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa');
 
--- Dumping structure for table manage_graduation_se_iuh.majors
-CREATE TABLE IF NOT EXISTS `majors` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table manage_graduation_se_iuh.majors: ~0 rows (approximately)
+-- Dumping data for table manage_graduation_se_iuh.majors: ~5 rows (approximately)
 INSERT INTO `majors` (`id`, `name`, `created_at`, `updated_at`) VALUES
 	('2d1961b7-3ee4-48af-8de9-6eb83d3a235c', 'Hệ thống thông tin', '2024-06-12 16:26:31', '2024-06-12 16:26:31'),
 	('67530b71-04c2-4178-b85a-bbe54d436bec', 'Công nghệ thông tin', '2024-06-12 16:26:44', '2024-06-12 16:26:44'),
@@ -413,58 +277,9 @@ INSERT INTO `majors` (`id`, `name`, `created_at`, `updated_at`) VALUES
 	('e4fe02cb-f2b0-4afa-885d-d1b93130d350', 'Kỹ thuật phần mềm', '2024-06-12 16:26:50', '2024-06-12 16:26:50'),
 	('fd81793a-2a0a-494d-8d08-d8faf95db82c', 'Khoa học dữ liệu', '2024-06-12 16:27:19', '2024-06-12 16:27:19');
 
--- Dumping structure for table manage_graduation_se_iuh.notification_lecturers
-CREATE TABLE IF NOT EXISTS `notification_lecturers` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `message` varchar(255) NOT NULL,
-  `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `lecturer_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `lecturer_id` (`lecturer_id`),
-  CONSTRAINT `notification_lecturers_ibfk_1` FOREIGN KEY (`lecturer_id`) REFERENCES `lecturers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.notification_lecturers: ~0 rows (approximately)
 
--- Dumping structure for table manage_graduation_se_iuh.notification_students
-CREATE TABLE IF NOT EXISTS `notification_students` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `message` varchar(255) NOT NULL,
-  `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `student_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `student_id` (`student_id`),
-  CONSTRAINT `notification_students_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.notification_students: ~0 rows (approximately)
-
--- Dumping structure for table manage_graduation_se_iuh.students
-CREATE TABLE IF NOT EXISTS `students` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `username` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `full_name` varchar(255) NOT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `phone` varchar(255) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL,
-  `gender` enum('MALE','FEMALE') DEFAULT NULL,
-  `date_of_birth` datetime DEFAULT NULL,
-  `clazz_name` varchar(255) DEFAULT NULL,
-  `type_training` enum('COLLEGE','UNIVERSITY') NOT NULL DEFAULT 'UNIVERSITY',
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `major_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`),
-  KEY `major_id` (`major_id`),
-  CONSTRAINT `students_ibfk_1` FOREIGN KEY (`major_id`) REFERENCES `majors` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table manage_graduation_se_iuh.students: ~50 rows (approximately)
 INSERT INTO `students` (`id`, `username`, `password`, `full_name`, `avatar`, `phone`, `email`, `gender`, `date_of_birth`, `clazz_name`, `type_training`, `is_active`, `created_at`, `updated_at`, `major_id`) VALUES
@@ -519,26 +334,7 @@ INSERT INTO `students` (`id`, `username`, `password`, `full_name`, `avatar`, `ph
 	('fd61987f-7091-44e2-bb15-3a07c26ceab6', '19435491', '$2b$10$KW0VMOkdWMOtzzhkEyZb3.VGwM0vZB9qUnRol6mNI41XArtN8bLOm', 'Hoàng Tiến Mạnh Đức', NULL, '0334548131', NULL, 'MALE', '2001-05-12 07:00:00', 'DHKTPM15A', 'UNIVERSITY', 1, '2024-06-13 16:11:02', '2024-06-13 16:11:02', 'e4fe02cb-f2b0-4afa-885d-d1b93130d350'),
 	('fdd16288-e542-4e91-9049-61e183b264ac', '19520101', '$2b$10$KW0VMOkdWMOtzzhkEyZb3.VGwM0vZB9qUnRol6mNI41XArtN8bLOm', 'Lê Xuân Hòa', NULL, '0356415806', NULL, 'MALE', '2001-01-16 07:00:00', 'DHKTPM15B', 'UNIVERSITY', 1, '2024-06-13 16:11:02', '2024-06-13 16:11:02', 'e4fe02cb-f2b0-4afa-885d-d1b93130d350');
 
--- Dumping structure for table manage_graduation_se_iuh.student_terms
-CREATE TABLE IF NOT EXISTS `student_terms` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `status` enum('OPEN','FAIL_ADVISOR','FAIL_REVIEWER','FAIL_SESSION_HOST','PASS_ADVISOR','PASS_REVIEWER','PASS_SESSION_HOST') NOT NULL DEFAULT 'OPEN',
-  `is_admin` tinyint(1) DEFAULT 0,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `group_student_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `student_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `term_id` (`term_id`),
-  KEY `group_student_id` (`group_student_id`),
-  KEY `student_id` (`student_id`),
-  CONSTRAINT `student_terms_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `student_terms_ibfk_2` FOREIGN KEY (`group_student_id`) REFERENCES `group_students` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `student_terms_ibfk_3` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table manage_graduation_se_iuh.student_terms: ~0 rows (approximately)
+-- Dumping data for table manage_graduation_se_iuh.student_terms: ~245 rows (approximately)
 INSERT INTO `student_terms` (`id`, `status`, `is_admin`, `created_at`, `updated_at`, `term_id`, `group_student_id`, `student_id`) VALUES
 	('00c31dc6-7893-4667-b496-145d820c7bef', 'OPEN', 0, '2024-06-14 22:23:15', '2024-06-14 22:23:15', 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9', NULL, '7b5f09af-63b9-4170-995b-0b8106ec9535'),
 	('036f4369-65c5-4722-acbe-377a6982ff56', 'OPEN', 0, '2024-06-14 22:20:50', '2024-06-14 22:20:50', '7d98a855-d805-4122-8649-a6ebab007c86', '046a6a93-b56c-4120-b41a-72679bfe6c70', 'e8cbe748-36ab-457f-96f2-0ac31b79e660'),
@@ -678,7 +474,7 @@ INSERT INTO `student_terms` (`id`, `status`, `is_admin`, `created_at`, `updated_
 	('9045ea5b-b5a5-48f7-82c2-c8d46be3f557', 'OPEN', 0, '2024-06-14 22:23:15', '2024-06-14 22:23:15', 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9', NULL, '04ff99c4-92ec-4644-a966-d74a826eb2e7'),
 	('908ae6a6-a70c-4d91-a7ce-24be354a6ae1', 'OPEN', 0, '2024-06-14 22:23:15', '2024-06-14 22:23:15', 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9', NULL, 'fa85383e-4409-4b9b-bbdb-29994a16c8af'),
 	('91428012-c46f-4707-9b61-eb374274f92f', 'OPEN', 0, '2024-06-16 19:04:10', '2024-06-16 19:04:10', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', NULL, 'dd60fd7b-b486-460b-b5cf-358c57836f5b'),
-	('915a8409-b4fa-4181-be9a-6761b264f683', 'OPEN', 0, '2024-06-13 16:11:02', '2024-06-13 16:11:02', '5769a425-b10b-4892-a839-b9336dc8aabb', NULL, '0903b06f-8ab3-4d9e-81ff-e6e3d136789a'),
+	('915a8409-b4fa-4181-be9a-6761b264f683', 'OPEN', 0, '2024-06-13 16:11:02', '2024-06-18 15:15:17', '5769a425-b10b-4892-a839-b9336dc8aabb', NULL, '0903b06f-8ab3-4d9e-81ff-e6e3d136789a'),
 	('92d6b834-68ab-4710-bd40-feff0e5d3620', 'OPEN', 0, '2024-06-13 16:11:02', '2024-06-13 16:11:02', '5769a425-b10b-4892-a839-b9336dc8aabb', NULL, 'ab675d06-5aa2-46f7-aa9a-cd7425bd5920'),
 	('930a260b-ebc6-41da-a9c4-2764952a2b81', 'OPEN', 0, '2024-06-14 22:20:50', '2024-06-14 22:20:50', '7d98a855-d805-4122-8649-a6ebab007c86', NULL, '684fa933-d59a-465f-838e-7fb1c64432fb'),
 	('948f1e92-494e-464a-ac96-4b0047016428', 'OPEN', 0, '2024-06-13 16:11:02', '2024-06-13 16:11:02', '5769a425-b10b-4892-a839-b9336dc8aabb', NULL, '8460be43-7a74-44c3-b294-21ba94c9bff5'),
@@ -695,7 +491,7 @@ INSERT INTO `student_terms` (`id`, `status`, `is_admin`, `created_at`, `updated_
 	('9b8c625e-5e02-4b14-8dd0-9516054fb604', 'OPEN', 0, '2024-06-16 19:04:10', '2024-06-16 19:04:10', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', NULL, 'd93700f0-97db-48ac-a283-82145a9e4e8b'),
 	('9c0755ab-d464-45f3-814a-f55656cb1625', 'OPEN', 0, '2024-06-14 22:23:15', '2024-06-14 22:23:15', 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9', NULL, '8e06e316-ced9-40be-814c-5f21407aac6b'),
 	('a0f7f3b1-5bb5-47e1-a9a4-84c822c8ae69', 'OPEN', 0, '2024-06-16 19:04:10', '2024-06-16 19:04:10', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', NULL, 'e8cbe748-36ab-457f-96f2-0ac31b79e660'),
-	('a1ba836c-f880-4275-a85a-c665742aa489', 'OPEN', 0, '2024-06-16 19:04:10', '2024-06-16 19:04:10', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', NULL, '004cd1df-88a2-47da-9198-56bb130bb42b'),
+	('a1ba836c-f880-4275-a85a-c665742aa489', 'OPEN', 1, '2024-06-16 19:04:10', '2024-06-18 14:05:16', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', '63ec1548-dfbb-4076-ae15-73e5bce8684f', '004cd1df-88a2-47da-9198-56bb130bb42b'),
 	('a2308a3c-50f9-4107-9e73-ba454a76b995', 'OPEN', 0, '2024-06-13 16:11:02', '2024-06-13 16:11:02', '5769a425-b10b-4892-a839-b9336dc8aabb', NULL, '4ddacbff-5420-43d0-a2e8-3704ebfd5036'),
 	('a2c89446-3647-426f-9b88-d6314592ff9b', 'OPEN', 0, '2024-06-14 22:20:50', '2024-06-14 22:20:50', '7d98a855-d805-4122-8649-a6ebab007c86', NULL, '8784afff-7308-4420-b8e3-c5e6dcf5c8d9'),
 	('a3417a26-fd8f-4207-a28e-6bb265224005', 'OPEN', 0, '2024-06-14 22:20:50', '2024-06-14 22:20:50', '7d98a855-d805-4122-8649-a6ebab007c86', NULL, '1be9e6d3-854b-4b76-92c1-9197018a3a4f'),
@@ -770,7 +566,7 @@ INSERT INTO `student_terms` (`id`, `status`, `is_admin`, `created_at`, `updated_
 	('f54db821-e311-48d1-a82f-292e64fd77e4', 'OPEN', 0, '2024-06-14 22:20:50', '2024-06-14 22:20:50', '7d98a855-d805-4122-8649-a6ebab007c86', NULL, '17c1885c-d039-431b-9289-3df16312947a'),
 	('f55be70d-1509-413b-819f-e69ee55ffeb8', 'OPEN', 0, '2024-06-14 22:23:15', '2024-06-14 22:23:15', 'dbd340ed-57db-47f1-abad-8e0ad4c9c1f9', NULL, '4679f35a-3143-45af-84ea-d53bb266efdb'),
 	('f6cc6831-d03e-4161-ade1-f179a3139538', 'OPEN', 0, '2024-06-14 22:22:51', '2024-06-14 22:22:51', '4e385168-5e79-42a1-8de5-a07f58e7c2a2', NULL, '60810b65-cad6-4bab-bde0-20c3eb3d348d'),
-	('f740936f-5728-4188-bd12-6102b4833695', 'OPEN', 0, '2024-06-16 19:04:10', '2024-06-16 19:04:10', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', NULL, '04ff99c4-92ec-4644-a966-d74a826eb2e7'),
+	('f740936f-5728-4188-bd12-6102b4833695', 'OPEN', 0, '2024-06-16 19:04:10', '2024-06-18 14:05:16', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', '63ec1548-dfbb-4076-ae15-73e5bce8684f', '04ff99c4-92ec-4644-a966-d74a826eb2e7'),
 	('f78f9458-c8d4-43de-a1ab-0a493113dfd6', 'OPEN', 0, '2024-06-14 22:20:50', '2024-06-14 22:20:50', '7d98a855-d805-4122-8649-a6ebab007c86', NULL, 'd99462b3-13c4-41d4-9d2e-a7ead5aac437'),
 	('f86ffc02-7512-45cb-95be-5d37d2de792a', 'OPEN', 0, '2024-06-14 22:22:51', '2024-06-14 22:22:51', '4e385168-5e79-42a1-8de5-a07f58e7c2a2', NULL, '2272d3b2-9d06-4271-93da-94b96919772d'),
 	('f8870a77-3169-44c1-b80d-a84a83f1aad6', 'OPEN', 0, '2024-06-14 22:20:50', '2024-06-14 22:20:50', '7d98a855-d805-4122-8649-a6ebab007c86', NULL, 'a58e8928-9916-4df1-801f-45a2516844a5'),
@@ -786,17 +582,6 @@ INSERT INTO `student_terms` (`id`, `status`, `is_admin`, `created_at`, `updated_
 	('ff78ad94-489a-453f-aa95-0388e0f91f52', 'OPEN', 0, '2024-06-13 16:11:02', '2024-06-13 16:11:02', '5769a425-b10b-4892-a839-b9336dc8aabb', NULL, '2a345faf-510c-449d-b6f6-68f0eee15ca7'),
 	('ffcb057d-a835-4460-ab9f-5ea2c2145132', 'OPEN', 0, '2024-06-16 19:04:10', '2024-06-16 19:04:10', 'f40bd6b8-d2a2-4477-9a06-f63801df53aa', NULL, 'd4dd648b-268f-4fbf-8ec4-8ce0fe7cd2e6');
 
--- Dumping structure for table manage_graduation_se_iuh.terms
-CREATE TABLE IF NOT EXISTS `terms` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `start_date` datetime NOT NULL,
-  `end_date` datetime NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- Dumping data for table manage_graduation_se_iuh.terms: ~6 rows (approximately)
 INSERT INTO `terms` (`id`, `name`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES
 	('36add2b6-6e88-4283-8c22-d79fef5af002', 'HK3_2024-2025', '2025-06-02 07:00:00', '2025-08-01 07:00:00', '2024-06-12 16:45:12', '2024-06-12 16:45:12'),
@@ -805,20 +590,6 @@ INSERT INTO `terms` (`id`, `name`, `start_date`, `end_date`, `created_at`, `upda
 	('7d98a855-d805-4122-8649-a6ebab007c86', 'HK1_2024-2025', '2024-08-02 07:00:00', '2025-12-22 07:00:00', '2024-06-12 16:43:56', '2024-06-12 16:43:56'),
 	('dbd340ed-57db-47f1-abad-8e0ad4c9c1f9', 'HK2_2023-2024', '2024-01-02 07:00:00', '2024-05-01 07:00:00', '2024-06-12 16:42:53', '2024-06-12 16:42:53'),
 	('f40bd6b8-d2a2-4477-9a06-f63801df53aa', 'HK3_2023-2024', '2024-06-02 07:00:00', '2024-08-01 07:00:00', '2024-06-12 16:43:22', '2024-06-12 16:43:22');
-
--- Dumping structure for table manage_graduation_se_iuh.term_details
-CREATE TABLE IF NOT EXISTS `term_details` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` enum('CHOOSE_GROUP','CHOOSE_TOPIC','DISCUSSION','REPORT','PUBLIC_RESULT') NOT NULL,
-  `start_date` datetime NOT NULL,
-  `end_date` datetime NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `term_id` (`term_id`),
-  CONSTRAINT `term_details_ibfk_1` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table manage_graduation_se_iuh.term_details: ~30 rows (approximately)
 INSERT INTO `term_details` (`id`, `name`, `start_date`, `end_date`, `created_at`, `updated_at`, `term_id`) VALUES
@@ -853,26 +624,7 @@ INSERT INTO `term_details` (`id`, `name`, `start_date`, `end_date`, `created_at`
 	('eaa05283-d630-48e8-a658-de104adb33ee', 'PUBLIC_RESULT', '2023-09-01 07:00:00', '2024-01-01 07:00:00', '2024-06-12 16:42:19', '2024-06-12 16:42:19', '4e385168-5e79-42a1-8de5-a07f58e7c2a2'),
 	('fd5f1622-cbaa-4f62-aff5-420d45bb0272', 'PUBLIC_RESULT', '2025-06-02 07:00:00', '2025-08-01 07:00:00', '2024-06-12 16:45:12', '2024-06-12 16:45:12', '36add2b6-6e88-4283-8c22-d79fef5af002');
 
--- Dumping structure for table manage_graduation_se_iuh.topics
-CREATE TABLE IF NOT EXISTS `topics` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` longtext DEFAULT NULL,
-  `quantity_group_max` int(11) NOT NULL,
-  `note` text DEFAULT NULL,
-  `target` text DEFAULT NULL,
-  `standard_output` mediumtext DEFAULT NULL,
-  `require_input` mediumtext DEFAULT NULL,
-  `status` enum('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `lecturer_term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `lecturer_term_id` (`lecturer_term_id`),
-  CONSTRAINT `topics_ibfk_1` FOREIGN KEY (`lecturer_term_id`) REFERENCES `lecturer_terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table manage_graduation_se_iuh.topics: ~0 rows (approximately)
+-- Dumping data for table manage_graduation_se_iuh.topics: ~21 rows (approximately)
 INSERT INTO `topics` (`id`, `name`, `description`, `quantity_group_max`, `note`, `target`, `standard_output`, `require_input`, `status`, `created_at`, `updated_at`, `lecturer_term_id`) VALUES
 	('1', 'Tìm hiểu công nghệ WPF và ứng dụng xây dựng game ghép hình cho trẻ em', '- Tìm hiểu cách thức lập trình với WPF. \r\n - Tìm hiểu các control, các layout.\r\n - Tìm hiểu style, template.\r\n - Tìm hiểu đồ họa 2D, 3D.\r\n - Tìm hiểu khả năng tạo hiệu ứng, âm thanh, hình ảnh, hoạt họa của WPF.\r\n - Mô tả rõ ràng yêu cầu của game ghép hình cho trẻ em, phân tích, thiết kế, cài đặt game.\r\n Tham khảo:\r\n https://www.youtube.com/watch?v=NJs96fs56Ho\r\n https://www.youtube.com/watch?v=gy5qxtsvzxE\r\n https://www.youtube.com/watch?v=vTXPPozt6ao\r\n https://www.youtube.com/watch?v=W40CCYU4ZBM\r\n https://9mobi.vn/game-xep-hinh-cho-be-tren-ios-706n.aspx', 5, 'Game ghép hình cho trẻ em', '- Hiểu được cách thức lập trình với WPF.\r\n - Vận dụng được năng lực lập trình C# để xây dựng sản phẩm theo tiêu chuẩn công nghiệp.', 'A.Sinh viên tham gia đề tài\r\n1) Nắm vững kiến thức, kỹ năng lập trình C#.\r\n2) Có kiến thức, kỹ năng triển khai dự án phần mềm đầy đủ qui trình từ Requirement => Design => Coding => Unit Testing.\r\n3) Có năng lực đầy đủ về lập kế hoạch, theo dõi tiến độ, phân tích các vấn đề phát sinh trong quá trình thực hiện dự án.\r\nB.Sản phẩm\r\n1) Tài liệu mô tả yêu cầu.\r\n2) Tài liệu mô tả thiết kế.\r\n3) Tài liệu mô tả thiết kế chi tiết cho chức năng chính.\r\n4) Mã nguồn (được lưu vết định kỳ trên hệ thống quản lý phiên bản như SubVersion hoặc Git; mã nguồn trình bày rõ ràng, dễ hiểu theo tiêu chuẩn đã được thống nhất).\r\n5) Tài liệu mô tả tình huống test và kết quả test cho chức năng chính của dự án.\r\n6) Tài liệu mô tả cách biên dịch, đóng gói và hướng dẫn nâng cấp mã nguồn cho dự án.', '- Đam mê nghiên cứu công nghệ, lập trình.\r\n - Có kiến thức lập trình C#.\r\n - Có tinh thần học hỏi và mong muốn làm sản phẩm theo quy trình công nghiệp: tuân thủ tiêu chuẩn khi viết mã nguồn, có hoạt động đảm bảo chất lượng mã nguồn.\r\n - Có khả năng viết mô tả yêu cầu ứng dụng.', 'APPROVED', '2024-06-16 21:48:31', '2024-06-16 22:18:28', 'b490a193-709d-4579-b6e0-fc5bfcdb9274'),
 	('10', 'Quản lý khách sạn ', 'Chương trình giúp người quản lý quản lý được nhân viên, quản lý việc đặt trả phòng của khách... và khách hàng đặt được phòng.', 5, 'Áp dụng được vào thực tế', '- Giúp người quản lý, quản lý được khách sạn\r\n- Giúp khách hàng xem thông tin về phòng, đặt phòng...\r\n', 'A. Sinh viên tham gia đề tài\r\n1) Nắm vững kiến thức, kỹ năng lập trình C/C++ hoặc Java\r\n2) Có kiến thức, kỹ năng triển khai dự án phần mềm đầy đủ qui trình từ Requirement => Design => Coding => Unit Testing\r\n3) Có năng lực đầy đủ về Lập kế hoạch, theo dõi tiến độ, phân tích các vấn đề phát sinh trong quá trình thực hiện dự án.\r\n4) Đọc tài liệu tiếng Anh, tìm kiếm tài liệu, Kỹ năng viết báo cáo, tài liệu thuyết trình\r\n5) Có thể thu thập, phân tích được hành vi người dùng trong quá trình thực hiện dự án.\r\nB. Sản phẩm\r\n1) Có tài liệu mô tả Yêu cầu dự án.\r\n2) Có tài liệu mô tả Thiết kế kiến trúc của dự án.\r\n3) Có tài liệu mô tả Thiết kế chi tiết cho chức năng chính của dự án.\r\n4)  Có tài liệu mô tả tình huống test và kết quả test cho chức năng chính của dự án.\r\n5) Có tài liệu mô tả cách biên dịch, đóng gói và hướng dẫn nâng cấp mã nguồn cho dự án.\r\n\r\n', ' Có kiến thức về quản lý, báo cáo Crystal report.\r\n- Kỹ năng phân tích thiết kế, lập trình tốt.\r\n- Cần cù, chiu khó.\r\n- Có tinh thần ham học hỏi, cầu tiến.', 'APPROVED', '2024-06-16 21:48:31', '2024-06-16 22:18:30', '6dbda89d-b4cc-42a9-991f-a1f013fe67bc'),
@@ -895,24 +647,6 @@ INSERT INTO `topics` (`id`, `name`, `description`, `quantity_group_max`, `note`,
 	('7', 'Xây dựng App đặt đồ uống qua Mobile (Android) cho quán cà phê CHB. Backend C# ASP.NET MVC hoặc PHP', '- Tìm hiểu nghiệp vụ hoạt động của Coffe Shop.\r\n- Nghiên cứu công nghệ lập trình Java Mobile kết hợp ASP.NET MVC hoặc PHP phía backend.\r\n- Phát triển các module: - Đặt món\r\n                                       - Thu nhận yêu cầu của Tiếp tân\r\n                                       - Bộ phận Bếp xử lý đơn và trả kết quả.\r\n                                       - Thống kê doanh thu\r\n(Và một số module phụ để phục vụ các chức năng chính trên như: loại đồ uống v.v.)', 5, '- Triển khai được App ứng dụng cho một quán Cà phê cụ thể.', '- Lập trình được trên HDH Android.\r\n- Giúp cho Sinh viên cập nhật những kiến thực về Thương mại Online.\r\n- Triển khai được một App bán hàng.\r\n- Giúp cho một Đơn vị nhỏ có thể phân phối Sản phẩm của mình qua Mobile', 'A.Sinh viên tham gia đề tài\r\n1) Nắm vững kiến thức, kỹ năng lập trình  Java\r\n2) Có kiến thức, kỹ năng triển khai dự án phần mềm đầy đủ qui trình từ Requirement => Design => Coding => Unit Testing\r\n3) Có kỹ năng lập trình sử dụng thư viện ngoài.\r\nB.Sản phẩm\r\n1) Có tài liệu mô tả Yêu cầu dự án.\r\n2) Có tài liệu mô tả Thiết kế chi tiết cho chức năng chính của dự án.\r\n3) Có mã nguồn được lưu vết (tracking) định kỳ trên hệ thống quản lý phiên bản (version control) như Subversion hoặc Git; Mã nguồn trình bày rõ ràng.\r\n4) Có tài liệu mô tả tình huống test và kết quả test cho chức năng chính của dự án.\r\n5) Có tài liệu mô tả cách biên dịch, đóng gói và hướng dẫn nâng cấp mã nguồn cho dự án.', '- Đam mê nghiên cứu công nghệ.\r\n- Kiến thức lập trình Java Mobile.\r\n- Có kiến thức cơ bản về Git để quản lý mã nguồn theo phiên bản.\r\n- Có tinh thần học hỏi và mong muốn làm sản phẩm.', 'PENDING', '2024-06-16 21:48:31', '2024-06-16 21:48:31', '9a3b98a9-5c32-4ad1-a83f-ccd187473e43'),
 	('8', 'Xây dựng Website học tập online', '- Giúp người học ở tại nhà nhưng vẫn tham gia các lớp học.\r\n- Tiết kiệm được không gian và thời gian không phải tập trung\r\nđến trường.', 5, 'Hiện thực và triển khai được các lớp học online', '- Xây dựng website học trực tuyến:\r\n-Giúp người dùng tham gia các lớp học phù hợp;\r\n-có thể chọn: \r\n+Phòng học, giờ học, tài liệu được cung cấp Website\r\n', 'Chức năng Website: Khi người học hoàn thành các kiến thức đã học trên các lớp học online\r\n sẽ được đánh giá và cấp bằng dựa trên dữ liệu của các lớp học website\r\nKỹ năng đạt được khi Sinh viên thực hiện đề tài:\r\n- Phân tích thiết kế hệ thống.\r\n- Nắm vững kiến thức Html, Css,....\r\n- Có kiến thức, kỹ năng triển khai dự án theo qui trình chặt chẽ \r\n- Biết lập kế hoạt và triển khai dự án, theo dõi tiến độ, phân tích các vấn đề phát sinh trong quá trình thực hiện dự án.\r\n - Hoàn thành dự án trên cơ sở phân tích yêu cầu của người dùng và kiểm thử chặt chẽ. \r\nKết quả Sản phẩm:\r\n - Xây dựng được Website theo yêu cầu, tài liệu  thiết kế kiến trúc của dự án.\r\n - Triển khai cài đặt ứng dụng trên internet ', 'Nguời quản trị khởi tạo tài khoản cho người dùng, Tài khoản giáo viên được tham gia giảng dạy trên lớp học. Người học đăng ký vào các khóa học, lớp học', 'PENDING', '2024-06-16 21:48:31', '2024-06-16 21:48:31', '092a481f-1b0a-4766-ab05-627337cf3317'),
 	('9', 'Xây dựng Website buôn bán online', '-"- Giúp người dùng ở tại nhà nhưng vẫn mua bán được các sản phẩm trên gian hàng.\r\n- Tiết kiệm được không gian và thời gian không phải tập trung\r\nđến chợ và siêu thị"', 5, 'Hiện thực và triển khai được các gian hàng online', ' - Xây dựng website bán hàng trực tuyến:\r\n-Giúp người dùng tham bán và mua hàng online ;\r\n-có thể chọn: \r\n+Gian hàng, thương hiệu sản phẩm, được cung cấp Website\r\n', 'Chức năng Website: người dùng có thể mua hoặc đăng ký bán các mặt hàng trên gian hàng trên web.\r\n Hệ thống phân tích tự động khuyến khích khách hàng chọn mua những sản phẩm cần thiết phù hợp: mặt hàng giảm giá nhiều nhất, mua nhiều nhất, giao dịch thường xuyên, giao dịch thành viên....\r\nSinh viên thực hiện đề tài:\r\n- Phân tích thiết kế hệ thống.\r\n- Nắm vững kiến thức Html, Css,...\r\n- Có kiến thức, kỹ năng triển khai dự án theo qui trình chặt chẽ \r\n- Biết lập kế hoạt và triển khai dự án, theo dõi tiến độ, phân tích các vấn đề phát sinh trong quá trình thực hiện dự án.\r\n - Hoàn thành dự án trên cơ sở phân tích yêu cầu của người dùng và kiểm thử chặt chẽ. \r\nKết quả Sản phẩm:\r\n - Xây dựng được Website theo yêu cầu, tài liệu  thiết kế kiến trúc của dự án.\r\n - Triển khai cài đặt ứng dụng trên internet \r\n ', 'Người quản trị khởi tạo và cung cấp tài khoản cho\r\nCác hộ kinh doanh theo các gian hàng online. \r\nĐược phân quyền theo các chức năng cập nhật thêm xóa sửa các mặt hàng trên gian hàng\r\nKhác mua hàng có thể đăng ký thành viên qua hệ thống, người mua hàng được chọn các mặt hàng và thanh toán tiền khi đồng ý.', 'APPROVED', '2024-06-16 21:48:31', '2024-06-16 22:59:26', '092a481f-1b0a-4766-ab05-627337cf3317');
-
--- Dumping structure for table manage_graduation_se_iuh.transcripts
-CREATE TABLE IF NOT EXISTS `transcripts` (
-  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `score` int(11) DEFAULT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `student_term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `evaluation_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  `lecturer_term_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `student_term_id` (`student_term_id`),
-  KEY `evaluation_id` (`evaluation_id`),
-  KEY `lecturer_term_id` (`lecturer_term_id`),
-  CONSTRAINT `transcripts_ibfk_1` FOREIGN KEY (`student_term_id`) REFERENCES `student_terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `transcripts_ibfk_2` FOREIGN KEY (`evaluation_id`) REFERENCES `evaluations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `transcripts_ibfk_3` FOREIGN KEY (`lecturer_term_id`) REFERENCES `lecturer_terms` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table manage_graduation_se_iuh.transcripts: ~0 rows (approximately)
 

@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: () => uuidv4(),
             },
             score: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.FLOAT,
                 allowNull: true,
             },
         },
