@@ -10,11 +10,14 @@ const {
     deleteGroupLecturer,
     addLecturerToGroupLecturer,
     removeLecturerFromGroupLecturer,
+    getLecturerNoGroupByType,
 } = require('../controllers/groupLecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 
 const router = express.Router();
+
+router.get(APP_ROUTER.GROUP_LECTURER_NO_GROUP, getLecturerNoGroupByType);
 
 router.get(APP_ROUTER.INDEX, getGroupLecturers);
 

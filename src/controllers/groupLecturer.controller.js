@@ -1,7 +1,36 @@
 const { GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
+const { sequelize } = require('../configs/connectDB');
+const { QueryTypes } = require('sequelize');
 
+exports.getLecturerNoGroupByType = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const { type } = req.params;
+        const subQuery = `SELECT lt.id FROM lecturer_terms lt LEFT JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id LEFT JOIN  group_lecturers gl ON gl.id  = glm.group_lecturer_id WHERE gl.type = '${type.toUpperCase()}' `;
+        
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId    
+             FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId AND lt.id NOT IN (${subQuery})`;
+
+        const lecturerTerm = await sequelize.query(query, {
+            replacements: {
+                termId,
+            },
+            type: QueryTypes.SELECT,
+        });
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            lecturers: lecturerTerm,
+            totalRows: lecturerTerm.length,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
 exports.getGroupLecturers = async (req, res) => {
     try {
         const { termId, type } = req.query;

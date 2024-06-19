@@ -60,6 +60,7 @@ const APP_ROUTER = {
     GROUP_LECTURER: '/api/v1/group-lecturers',
     GROUP_LECTURER_ADD_MEMBER: '/:id/add-member',
     GROUP_LECTURER_REMOVE_MEMBER: '/:id/remove-member',
+    GROUP_LECTURER_NO_GROUP: '/no-group/:type',
 
     //GROUP_STUDENT
     GROUP_STUDENT: '/api/v1/group-students',
