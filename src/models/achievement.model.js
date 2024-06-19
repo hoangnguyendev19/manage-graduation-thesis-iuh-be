@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
             },
             bonusScore: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.FLOAT,
                 allowNull: false,
                 field: 'bonus_score',
             },
