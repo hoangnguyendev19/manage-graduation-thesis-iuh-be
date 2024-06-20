@@ -8,7 +8,6 @@ exports.importLecturerTerms = async (req, res) => {
         const { termId } = req.body;
 
         const lecturers = await Lecturer.findAll();
-
         await LecturerTerm.bulkCreate(
             lecturers.map((lecturer) => ({
                 term_id: termId,
@@ -32,7 +31,6 @@ exports.importLecturerTerms = async (req, res) => {
         let totalPage = newLecturers.length;
 
         totalPage = _.ceil(totalPage / _.toInteger(10));
-
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import Success',
