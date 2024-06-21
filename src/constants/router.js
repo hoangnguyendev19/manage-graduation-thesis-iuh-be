@@ -94,7 +94,9 @@ const APP_ROUTER = {
     // GENERATE_EVALUATION: '/pdf/download',
 
     //ASSIGNS
-    ASSIGN: '/assigns',
+    ASSIGN: '/api/v1/assigns',
+    ASSIGN_BY_TYPE: '/:type',
+
     ASSIGN_BY_ID: '/:id',
     ASSIGN_BY_LECTURER_ID: '/lecturers/:lecturer_id',
 
