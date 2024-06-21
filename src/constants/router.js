@@ -95,10 +95,11 @@ const APP_ROUTER = {
 
     //ASSIGNS
     ASSIGN: '/api/v1/assigns',
-    ASSIGN_BY_TYPE: '/:type',
+    ASSIGN_BY_TYPE: '/type-evaluation/:type',
+    GROUP_STUDENT_NO_ASSIGN_BY_TYPE: '/type-evaluation/:type/group-student/no-assign',
 
     ASSIGN_BY_ID: '/:id',
-    ASSIGN_BY_LECTURER_ID: '/lecturers/:lecturer_id',
+    ASSIGN_BY_TYPE_AND_LECTURER_ID: '/type-evaluation/:type/lecturers/:lecturerId',
 
     //ACHIEVEMENT
     ACHIEVEMENT: '/api/v1/achievements',

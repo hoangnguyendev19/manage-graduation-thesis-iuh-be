@@ -54,7 +54,6 @@ exports.getGroupLecturers = async (req, res) => {
                 },
             });
         }
-
         groupLecturers = await GroupLecturer.findAll({
             where: {
                 term_id: termId,
@@ -112,7 +111,7 @@ exports.getGroupLecturerById = async (req, res) => {
 exports.createGroupLecturerByType = async (req, res) => {
     try {
         const { type } = req.params;
-        const { termId } = req.body;
+        const { termId, lecturers } = req.body;
 
         const countGr = (await GroupLecturer.count()) + 1;
         const name = checkTypeGroup(type.toUpperCase()) + countGr;
@@ -121,6 +120,20 @@ exports.createGroupLecturerByType = async (req, res) => {
             name: name,
             term_id: termId,
             type: type.toUpperCase(),
+        });
+
+        lecturers.forEach(async (lecId) => {
+            const lecturerTerm = await LecturerTerm.findOne({
+                where: {
+                    lecturer_id: lecId,
+                    term_id: groupLecturer.term_id,
+                },
+            });
+
+            GroupLecturerMember.create({
+                group_lecturer_id: groupLecturer.id,
+                lecturer_term_id: lecturerTerm.id,
+            });
         });
 
         res.status(HTTP_STATUS.CREATED).json({
