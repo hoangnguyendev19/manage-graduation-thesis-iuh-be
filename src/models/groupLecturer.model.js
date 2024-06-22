@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
             },
             type: {
-                type: DataTypes.ENUM('ADVISOR', 'REVIEWER', 'SESSION_HOST'),
+                type: DataTypes.ENUM('REVIEWER', 'REPORT_POSTER', 'REPORT_COUNCIL'),
                 allowNull: true,
                 defaultValue: 'REVIEWER',
             },

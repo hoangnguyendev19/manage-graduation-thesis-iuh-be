@@ -14,12 +14,6 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            typeReport: {
-                type: DataTypes.ENUM('OPEN', 'POSTER', 'SESSION_HOST'),
-                allowNull: false,
-                defaultValue: 'OPEN',
-                field: 'type_report',
-            },
         },
         {
             tableName: 'group_students',

@@ -53,8 +53,6 @@ router.post(
     importGroupStudent,
 );
 
-router.put(APP_ROUTER.GROUP_STUDENT_TYPE_REPORT, protectLecturer, updateTypeReport);
-
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);
 
 router.put(

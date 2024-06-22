@@ -13,7 +13,7 @@ const { protectStudent } = require('../middleware/student.middleware');
 
 const router = express.Router();
 
-router.get(APP_ROUTER.INDEX, protectStudent, getTranscriptByTypeEvaluation);
+router.get(APP_ROUTER.INDEX, getTranscriptByTypeEvaluation);
 
 router.get(APP_ROUTER.TRANSCRIPT_BY_SUMMARY, protectStudent, getTranscriptSummary);
 
