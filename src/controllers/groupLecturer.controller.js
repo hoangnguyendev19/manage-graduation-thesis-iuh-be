@@ -66,6 +66,7 @@ exports.getGroupLecturers = async (req, res) => {
             success: true,
             message: 'Get Success',
             groupLecturers,
+            totalRows: groupLecturers.length,
         });
     } catch (error) {
         console.log(error);
@@ -105,24 +106,6 @@ exports.getGroupLecturerById = async (req, res) => {
     } catch (error) {
         console.log('🚀 ~ exports.getMemberFromGroupLecturer= ~ error:', error);
         Error.sendError(res, error);
-    }
-};
-
-exports.getGroupLecturer = async (req, res) => {
-    try {
-        const { termId } = req.body;
-        const groupLecturer = await GroupLecturer.findAll({
-            where: {
-                term_id: termId,
-            },
-        });
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Get Success',
-            groupLecturer,
-        });
-    } catch (error) {
-        console.log('🚀 ~ exports.getGroupLecturerByType= ~ error:', error);
     }
 };
 
@@ -198,11 +181,11 @@ exports.getMemberFromGroupLecturer = async (req, res) => {
         const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.email, l.gender, l.degree, l.role, l.is_active, l.major_id 
         FROM lecturers l JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
         ON glm.group_lecturer_id = gl.id 
-        WHERE gl.id = :id;
+        WHERE gl.id = :id and l.id = :lecturer;
         `;
-        const groupLecturerMembers = sequelize.query(query, {
+        const groupLecturerMembers = await sequelize.query(query, {
             type: QueryTypes.SELECT,
-            params: {
+            replacements: {
                 id,
             },
         });
@@ -212,38 +195,42 @@ exports.getMemberFromGroupLecturer = async (req, res) => {
             groupLecturerMembers: {
                 groupLecturerId: oldGr.id,
                 termId: oldGr.term_id,
-                ...groupLecturerMembers,
+                ...groupLecturerMembers[0],
             },
         });
     } catch (error) {
         console.log('🚀 ~ exports.getMemberFromGroupLecturer= ~ error:', error);
+        Error.sendError(res, error);
     }
 };
 exports.removeLecturerFromGroupLecturer = async (req, res) => {
     try {
         const { id } = req.params;
         const { lecturerId } = req.body;
+
+        const groupLecturer = await GroupLecturer.findByPk(id);
+
+        if (!groupLecturer) {
+            return Error.sendNotFound(res, 'Nhóm giảng viên không hợp lệ');
+        }
+
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 lecturer_id: lecturerId,
+                term_id: groupLecturer.term_id,
             },
         });
         if (!lecturerTerm) {
             return Error.sendNotFound(res, 'Không tồn tại giảng viên trong học kì này');
         }
-
-        const groupLecturerMember = await GroupLecturerMember.findOne({
+        const member = await GroupLecturerMember.findOne({
             where: {
                 group_lecturer_id: id,
                 lecturer_term_id: lecturerTerm.id,
             },
         });
 
-        if (!groupLecturerMember) {
-            return Error.sendNotFound(res, 'Nhóm giảng viên không hợp lệ');
-        }
-
-        await groupLecturerMember.destroy();
+        await member.destroy();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
