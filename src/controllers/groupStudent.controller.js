@@ -15,7 +15,7 @@ exports.getGroupStudents = async (req, res) => {
 
         if (majorId && !topicId) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
@@ -41,7 +41,7 @@ exports.getGroupStudents = async (req, res) => {
             total = total[0].total;
         } else if (majorId && topicId) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId and gs.topic_id = :topicId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
@@ -67,7 +67,7 @@ exports.getGroupStudents = async (req, res) => {
             total = total[0].total;
         } else if (!majorId && !topicId) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId
@@ -116,7 +116,7 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
         const { termId } = req.query;
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.type_report as typeReport, tc.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
+            `SELECT gs.id, gs.name, tc.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
@@ -284,7 +284,7 @@ exports.getMyGroupStudent = async (req, res) => {
             where: {
                 id: studentTerm.group_student_id,
             },
-            attributes: ['id', 'name', 'typeReport', 'status', 'topic_id'],
+            attributes: ['id', 'name', 'status', 'topic_id'],
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -353,7 +353,7 @@ exports.createGroupStudent = async (req, res) => {
         }
 
         const groupStudent = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.type_report as typeReport, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs
+            `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             WHERE gs.id = :id
@@ -397,29 +397,6 @@ exports.importGroupStudent = async (req, res) => {
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import success!',
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.updateTypeReport = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { typeReport } = req.body;
-        const groupStudent = await GroupStudent.findByPk(id);
-        if (!groupStudent) {
-            Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
-        }
-
-        groupStudent.typeReport = typeReport;
-        await groupStudent.save();
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Update success!',
-            groupStudent,
         });
     } catch (error) {
         console.log(error);

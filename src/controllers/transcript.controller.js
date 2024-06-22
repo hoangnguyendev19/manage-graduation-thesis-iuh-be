@@ -8,11 +8,11 @@ const {
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
+const { sequelize } = require('../configs/connectDB');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
     try {
-        const { termId, type } = req.query;
-        const studentId = req.user.id;
+        const { termId, type, studentId } = req.query;
 
         const studentTerm = await StudentTerm.findOne({
             where: {
@@ -22,57 +22,30 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
         });
 
         if (!studentTerm) {
-            return Error.sendNotFound(res, 'Student term not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
         }
 
-        const evaluation = await Evaluation.findOne({
-            where: {
-                type,
-                term_id: termId,
-            },
-        });
-
-        if (!evaluation) {
-            return Error.sendNotFound(res, 'Evaluation not found');
-        }
-
-        const transcripts = await Transcript.findAll({
-            where: {
-                student_term_id: studentTerm.id,
-                evaluation_id: evaluation.id,
-            },
-            attributes: ['id', 'score'],
-            include: [
-                {
-                    model: LecturerTerm,
-                    attributes: ['id'],
-                    include: [
-                        {
-                            model: Lecturer,
-                            attributes: ['fullName'],
-                            as: 'lecturer',
-                        },
-                    ],
-                    as: 'lecturerTerm',
+        const transcripts = await sequelize.query(
+            `SELECT t.id, avg(t.score) as avgScore, e.type, l.full_name as lecturerName
+            FROM transcripts t
+            INNER JOIN evaluations e ON t.evaluation_id = e.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE t.student_term_id = :studentTermId AND e.type = :type
+            GROUP BY t.id, e.type, l.full_name`,
+            {
+                replacements: {
+                    studentTermId: studentTerm.id,
+                    type,
                 },
-            ],
-        });
-
-        if (transcripts.length === 0) {
-            return Error.sendNotFound(res, 'Transcript not found');
-        }
-
-        const totalScore = transcripts.reduce((total, transcript) => total + transcript.score, 0);
-        const averageScore = (totalScore / transcripts.length).toFixed(2);
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            transcript: {
-                transcripts,
-                averageScore,
-                type,
-            },
+            transcripts,
         });
     } catch (error) {
         console.log(error);
@@ -177,12 +150,25 @@ exports.createTranscript = async (req, res) => {
             },
         });
 
+        if (!lecturerTerm) {
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
+        }
+
         const studentTerm = await StudentTerm.findOne({
             where: {
                 term_id: termId,
                 student_id: studentId,
             },
         });
+
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+        }
+
+        const evaluation = await Evaluation.findByPk(evaluationId);
+        if (score > evaluation.scoreMax) {
+            return Error.sendBadRequest(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
+        }
 
         const transcript = await Transcript.create({
             lecturer_term_id: lecturerTerm.id,
@@ -205,21 +191,26 @@ exports.createTranscript = async (req, res) => {
 exports.updateTranscript = async (req, res) => {
     try {
         const { id } = req.params;
-        const { score, evaluationId } = req.body;
+        const { score } = req.body;
 
         const transcript = await Transcript.findByPk(id);
-        if (score) {
-            transcript.score = score;
+
+        if (!transcript) {
+            return Error.sendNotFound(res, 'Bảng điểm không tồn tại!');
         }
-        if (evaluationId) {
-            transcript.evaluation_id = evaluationId;
+
+        const evaluation = await Evaluation.findByPk(transcript.evaluation_id);
+        if (score > evaluation.scoreMax) {
+            return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
         }
+
+        transcript.score = score;
+
         await transcript.save();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update Success',
-            transcript,
         });
     } catch (error) {
         console.log(error);
