@@ -404,29 +404,6 @@ exports.importGroupStudent = async (req, res) => {
     }
 };
 
-exports.updateTypeReport = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { typeReport } = req.body;
-        const groupStudent = await GroupStudent.findByPk(id);
-        if (!groupStudent) {
-            Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
-        }
-
-        groupStudent.typeReport = typeReport;
-        await groupStudent.save();
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Update success!',
-            groupStudent,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.assignAdminGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;

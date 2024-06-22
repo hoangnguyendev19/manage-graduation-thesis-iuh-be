@@ -10,10 +10,10 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 defaultValue: () => uuidv4(),
             },
-            typeEvaluation: {
-                type: DataTypes.ENUM('ADVISOR', 'REVIEWER', 'SESSION_HOST'),
+            type: {
+                type: DataTypes.ENUM('REVIEWER', 'REPORT_POSTER', 'REPORT_COUNCIL'),
                 allowNull: false,
-                field: 'type_evaluation',
+                field: 'type',
             },
         },
         {
