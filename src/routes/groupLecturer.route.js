@@ -56,7 +56,7 @@ router.post(
     addMemberToGroupLecturer,
 );
 
-router.delete(
+router.put(
     APP_ROUTER.GROUP_LECTURER_MEMBER,
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
