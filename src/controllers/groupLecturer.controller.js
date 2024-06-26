@@ -3,15 +3,16 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
 const { QueryTypes, where } = require('sequelize');
+const _ = require('lodash');
 
 const checkTypeGroup = (value) => {
     switch (value) {
-        case 'ADVISOR':
-            return 'Nhóm chấm hướng dẫn ';
         case 'REVIEWER':
-            return 'Nhóm chấm phản biện ';
-        case 'SESSION_HOST':
-            return 'Nhóm chấm báo cáo ';
+            return 'Nhóm chấm phản biện';
+        case 'REPORT_POSTER':
+            return 'Nhóm chấm poster ';
+        case 'REPORT_COUNCIL':
+            return 'Nhóm chấm hội đồng';
     }
 };
 
@@ -45,8 +46,10 @@ exports.getLecturerNoGroupByType = async (req, res) => {
 
 exports.getGroupLecturers = async (req, res) => {
     try {
-        const { termId, type } = req.query;
+        const { termId, type, limit, page } = req.query;
         let groupLecturers = null;
+        let offset = (page - 1) * limit;
+
         if (termId && !type) {
             groupLecturers = await GroupLecturer.findAll({
                 where: {
@@ -54,18 +57,50 @@ exports.getGroupLecturers = async (req, res) => {
                 },
             });
         }
+
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.email, l.gender, l.degree, l.role, l.is_active as isActive, l.major_id as majoId, m.name as majorName
+        FROM lecturers l LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
+        ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
+        WHERE gl.id = :id;
+        `;
+
         groupLecturers = await GroupLecturer.findAll({
             where: {
                 term_id: termId,
                 type: type.toUpperCase(),
             },
+            limit: parseInt(limit),
+            offset,
         });
+
+        const result = [];
+        for (let i = 0; i < groupLecturers.length; i++) {
+            let id = groupLecturers[i].id;
+            const groupLecturerMembers = await sequelize.query(query, {
+                type: QueryTypes.SELECT,
+                replacements: {
+                    id,
+                },
+            });
+            result.push({
+                groupLecturerId: id,
+                name: groupLecturers[i].name,
+                type: groupLecturers[i].type,
+                members: groupLecturerMembers,
+            });
+        }
+        const total = await GroupLecturer.count();
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            groupLecturers,
-            totalRows: groupLecturers.length,
+            groupLecturers: result,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);

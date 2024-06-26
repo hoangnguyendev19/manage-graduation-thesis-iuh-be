@@ -48,7 +48,7 @@ const isExitGroupLecturerAndGroupStudent = async (req, res, next) => {
         const { groupStudentId } = req.body;
         const oldAssign = await Assign.findOne({
             where: {
-                type_evaluation: type.toUpperCase(),
+                type: type.toUpperCase(),
                 group_student_id: groupStudentId,
             },
         });

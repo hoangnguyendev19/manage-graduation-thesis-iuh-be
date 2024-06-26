@@ -10,6 +10,7 @@ const {
 } = require('../controllers/transcript.controller');
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
+const { isExistTranscript } = require('../middleware/transcript.middleware');
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.get(APP_ROUTER.INDEX, getTranscriptByTypeEvaluation);
 
 router.get(APP_ROUTER.TRANSCRIPT_BY_SUMMARY, protectStudent, getTranscriptSummary);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, createTranscript);
+router.post(APP_ROUTER.INDEX, protectLecturer, isExistTranscript, createTranscript);
 
 router.put(APP_ROUTER.ID, protectLecturer, updateTranscript);
 
