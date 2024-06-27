@@ -2,6 +2,7 @@ const APP_ROUTER = {
     //CORE
     INDEX: '/',
     QUERY: '/query',
+    LIST: '/list',
     ID: '/:id',
     LOGIN: '/login',
     REGISTER: '/register',

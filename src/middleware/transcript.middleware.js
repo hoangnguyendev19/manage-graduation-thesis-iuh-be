@@ -14,7 +14,6 @@ const isExistTranscript = async (req, res, next) => {
         const transcript = await Transcript.findOne({
             attributes: ['id'],
             where: {
-                term_id: termId,
                 student_term_id: studentTerm,
                 evaluation: evaluationId,
             },

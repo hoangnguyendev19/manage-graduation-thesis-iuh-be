@@ -46,3 +46,31 @@ exports.importLecturerTerms = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+exports.getLecturerTermsList = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const lecturerTerms = await LecturerTerm.findAll({
+            where: {
+                term_id: termId,
+            },
+            attributes: {
+                exclude: ['updated_at', 'created_at', 'lecturer_id', 'term_id'],
+            },
+            include: {
+                attributes: ['username', 'fullName', 'degree', 'id'],
+                model: Lecturer,
+                as: 'lecturer',
+            },
+        });
+        const count = lecturerTerms.length;
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách giảng viên trong học kì thành công',
+            lecturerTerms,
+            totalRows: count,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getLecturersList= ~ error:', error);
+        return Error.sendError(res, error);
+    }
+};
