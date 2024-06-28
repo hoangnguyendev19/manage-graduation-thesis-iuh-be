@@ -5,6 +5,7 @@ const {
     Evaluation,
     Lecturer,
     Achievement,
+    GroupLecturerMember,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
@@ -160,6 +161,7 @@ exports.createTranscript = async (req, res) => {
                 student_id: studentId,
             },
         });
+        console.log('🚀 ~ exports.createTranscript= ~ studentTerm:', studentTerm);
 
         if (!studentTerm) {
             return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
@@ -216,5 +218,33 @@ exports.updateTranscript = async (req, res) => {
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);
+    }
+};
+
+exports.unTranscriptStudentsByType = async (req, res) => {
+    try {
+        const { type } = req.params;
+        console.log('🚀 ~ exports.unTranscriptStudentsByType= ~ type:', type);
+        const { termId, lecturerId } = req.body;
+
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: lecturerId,
+                term_id: termId,
+            },
+            attributes: ['id'],
+        });
+
+
+        const groupLecturers = await GroupLecturerMember.findAll({
+            where: {
+                lecturer_term_id: lecturerTerm.id,
+            },
+            attributes: ['group_lecturer_id'],
+        });
+        console.log('🚀 ~ exports.unTranscriptStudentsByType= ~ groupLecturers:', groupLecturers);
+
+    } catch (error) {
+        console.log('🚀 ~ exports.unTranscriptStudentsByType= ~ error:', error);
     }
 };

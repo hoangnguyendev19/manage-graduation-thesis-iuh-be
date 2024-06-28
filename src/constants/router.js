@@ -51,6 +51,7 @@ const APP_ROUTER = {
     //TRANSCRIPTS
     TRANSCRIPT: '/api/v1/transcripts',
     TRANSCRIPT_BY_SUMMARY: '/summary',
+    LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER :'/scoring/:type/listStudentsNoTranscript',
 
     //TOPICS
     TOPIC: '/api/v1/topics',
