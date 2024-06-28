@@ -91,6 +91,8 @@ const APP_ROUTER = {
 
     //EVALUATIONS
     EVALUATION: '/api/v1/evaluations',
+    SCORES: '/scores',
+
     // EVALUATION_EXPORT_PDF: '/pdf/assigns/:assign_id/download',
     // GENERATE_EVALUATION: '/pdf/download',
 

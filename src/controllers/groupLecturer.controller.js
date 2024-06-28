@@ -58,7 +58,7 @@ exports.getGroupLecturers = async (req, res) => {
             });
         }
 
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.email, l.gender, l.degree, l.role, l.is_active as isActive, l.major_id as majoId, m.name as majorName
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.gender, m.name as majorName
         FROM lecturers l LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
         ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
         WHERE gl.id = :id;

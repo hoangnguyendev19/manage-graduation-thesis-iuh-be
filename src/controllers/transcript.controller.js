@@ -166,7 +166,7 @@ exports.createTranscript = async (req, res) => {
         }
 
         const evaluation = await Evaluation.findByPk(evaluationId);
-        console.log('🚀 ~ exports.createTranscript= ~ evaluation:', evaluation);
+
         if (score > evaluation.scoreMax) {
             return Error.sendBadRequest(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
         }

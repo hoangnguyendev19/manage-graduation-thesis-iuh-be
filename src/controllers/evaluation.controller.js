@@ -24,6 +24,28 @@ exports.getEvaluations = async (req, res) => {
     }
 };
 
+exports.getEvaluationsForScoring = async (req, res) => {
+    try {
+        const { termId, type } = req.query;
+        const evaluations = await Evaluation.findAll({
+            where: {
+                term_id: termId,
+                type: type,
+            },
+            attributes: ['id', 'name', 'scoreMax'],
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get success!',
+            evaluations,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getEvaluationById = async (req, res) => {
     try {
         const { id } = req.params;
