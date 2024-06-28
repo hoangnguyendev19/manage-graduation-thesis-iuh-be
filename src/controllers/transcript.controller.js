@@ -203,7 +203,7 @@ exports.updateTranscript = async (req, res) => {
         }
 
         const evaluation = await Evaluation.findByPk(transcript.evaluation_id);
-        if (score > evaluation.score_max) {
+        if (score > evaluation.scoreMax) {
             return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
         }
 

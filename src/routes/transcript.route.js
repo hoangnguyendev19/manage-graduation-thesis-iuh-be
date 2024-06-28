@@ -11,7 +11,6 @@ const {
 } = require('../controllers/transcript.controller');
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
-const { isExistTranscript } = require('../middleware/transcript.middleware');
 
 const router = express.Router();
 
