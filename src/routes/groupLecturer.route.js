@@ -19,6 +19,7 @@ const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.m
 const {
     isExistLecturerInGroup,
     quantityOfGroup,
+    isExistGroupLecturer,
 } = require('../middleware/groupLecturer.middleware');
 
 const router = express.Router();
@@ -35,6 +36,7 @@ router.post(
     APP_ROUTER.GROUP_LECTURER_BY_TYPE,
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
+    isExistGroupLecturer,
     createGroupLecturerByType,
 );
 

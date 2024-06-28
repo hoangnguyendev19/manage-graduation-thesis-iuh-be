@@ -173,7 +173,7 @@ exports.createGroupLecturerByType = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Tạo Nhóm giảng viên mới thành công',
             groupLecturer,
         });
     } catch (error) {
