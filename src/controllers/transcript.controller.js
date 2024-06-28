@@ -235,7 +235,6 @@ exports.unTranscriptStudentsByType = async (req, res) => {
             attributes: ['id'],
         });
 
-
         const groupLecturers = await GroupLecturerMember.findAll({
             where: {
                 lecturer_term_id: lecturerTerm.id,
@@ -243,7 +242,6 @@ exports.unTranscriptStudentsByType = async (req, res) => {
             attributes: ['group_lecturer_id'],
         });
         console.log('🚀 ~ exports.unTranscriptStudentsByType= ~ groupLecturers:', groupLecturers);
-
     } catch (error) {
         console.log('🚀 ~ exports.unTranscriptStudentsByType= ~ error:', error);
     }

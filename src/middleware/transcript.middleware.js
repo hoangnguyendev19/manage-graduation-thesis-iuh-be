@@ -11,12 +11,11 @@ const isExistTranscript = async (req, res, next) => {
                 student_id: studentId,
             },
         });
-
         const transcript = await Transcript.findOne({
             attributes: ['id'],
             where: {
-                student_term_id: studentTerm.id,
-                evaluation_id: evaluationId,
+                student_term_id: studentTerm,
+                evaluation: evaluationId,
             },
         });
         if (transcript) {
