@@ -5,10 +5,12 @@ const {
     GroupLecturerMember,
     GroupStudent,
     Topic,
+    Lecturer,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { Sequelize, Op } = require('sequelize');
+const { sequelize } = require('../configs/connectDB');
 
 const getAssigns = async (req, res) => {
     try {
@@ -68,27 +70,28 @@ const getAssignByType = async (req, res) => {
 const createAssignByType = async (req, res) => {
     try {
         const { type } = req.params;
-        const { groupLecturerId, groupStudentId } = req.body;
+        const { groupLecturerId, listGroupStudentId } = req.body;
         const currentGroupLecturer = await GroupLecturer.findByPk(groupLecturerId, {
-            attributes: ['id'],
+            attributes: ['id', 'name'],
         });
+        console.log('🚀 ~ createAssignByType ~ currentGroupLecturer:', currentGroupLecturer);
 
         if (!currentGroupLecturer) {
             return Error.sendNotFound(res, 'Không tồn tại nhóm giảng viên này');
         }
-        const newAssigner = await Assign.create({
-            group_lecturer_id: groupLecturerId,
-            type: type.toUpperCase(),
-            group_student_id: groupStudentId,
+        listGroupStudentId.map(async (groupStudentId) => {
+            await Assign.create({
+                group_lecturer_id: groupLecturerId,
+                type: type.toUpperCase(),
+                group_student_id: groupStudentId,
+            });
         });
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: `Phân ${currentGroupLecturer.name} chấm điểm nhóm sinh viên thành công`,
-            assign: newAssigner,
         });
     } catch (error) {
-        console.log('🚀 ~ createAssignByType ~ error:', error);
         Error.sendError(res, error);
     }
 };
@@ -140,23 +143,28 @@ const getGroupStudentNoAssign = async (req, res) => {
             },
         });
 
-        const myNotIn = assigns.map((ass) => ass.group_student_id);
-        const resultGroupStudent = await GroupStudent.findAll({
-            where: {
-                term_id: termId,
-                id: {
-                    [Op.notIn]: myNotIn,
-                },
-            },
-            attributes: {
-                exclude: ['term_id', 'updated_at', 'created_at', 'topic_id'],
-            },
-            include: {
-                model: Topic,
-                attributes: ['id', 'name'],
-                as: 'topic',
-            },
+        const myNotIn = assigns.map((ass) => `'${ass.group_student_id}'`);
+
+        // Constructing the condition for NOT IN
+        const notInCondition = myNotIn.length > 0 ? `AND gs.id NOT IN (${myNotIn.join(',')})` : '';
+
+        // Raw query to get group students
+        const groupStudentsQuery = `
+        SELECT gs.id, gs.name,
+                t.name AS topicName, 
+                l.full_name AS fullName,
+                lt.id AS lecturerTermId
+                FROM group_students gs
+                LEFT JOIN topics t ON gs.topic_id = t.id
+                LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                LEFT JOIN lecturers l ON lt.lecturer_id = l.id
+        WHERE gs.term_id = :termId ${notInCondition}`;
+
+        const resultGroupStudent = await sequelize.query(groupStudentsQuery, {
+            replacements: { termId },
+            type: sequelize.QueryTypes.SELECT,
         });
+
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách sinh viên chưa chấm thành công',
