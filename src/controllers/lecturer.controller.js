@@ -367,7 +367,7 @@ exports.importLecturers = async (req, res) => {
         const lecturers = [];
         const password = await hashPassword('12345678');
         // columns: STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
-        jsonData.forEach(async (lecturer) => {
+        for (const lecturer of jsonData) {
             const username = lecturer['Mã GV'];
             const fullName = `${lecturer['Họ và tên']}`;
             const gender = lecturer['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
@@ -384,14 +384,14 @@ exports.importLecturers = async (req, res) => {
                 email,
                 major_id,
             });
-        });
+        }
 
         const lecturerTerms = await LecturerTerm.findAll({
             where: { term_id: termId },
         });
 
         if (lecturerTerms.length !== 0) {
-            lecturers.forEach(async (lec) => {
+            for (const lec of lecturers) {
                 const lecturer = await Lecturer.findOne({
                     where: { username: lec.username },
                 });
@@ -414,9 +414,9 @@ exports.importLecturers = async (req, res) => {
                         });
                     }
                 }
-            });
+            }
         } else {
-            lecturers.forEach(async (lec) => {
+            for (const lec of lecturers) {
                 const lecturer = await Lecturer.findOne({
                     where: { username: lec.username },
                 });
@@ -434,7 +434,7 @@ exports.importLecturers = async (req, res) => {
                         term_id: termId,
                     });
                 }
-            });
+            }
         }
 
         res.status(HTTP_STATUS.CREATED).json({

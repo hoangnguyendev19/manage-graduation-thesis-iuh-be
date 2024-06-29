@@ -7,7 +7,6 @@ exports.getMajors = async (req, res) => {
         const majors = await Major.findAll();
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            status: HTTP_STATUS.OK,
             message: 'Get Success',
             majors,
         });
@@ -23,7 +22,6 @@ exports.getMajorById = async (req, res) => {
         const major = await Major.findByPk(id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            status: HTTP_STATUS.OK,
             message: 'Get Success',
             major,
         });
@@ -37,9 +35,9 @@ exports.createMajor = async (req, res) => {
     try {
         const { name } = req.body;
         const major = await Major.create({ name });
+
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            status: HTTP_STATUS.CREATED,
             message: 'Create Success',
             major,
         });
@@ -54,11 +52,16 @@ exports.updateMajor = async (req, res) => {
         const { id } = req.params;
         const { name } = req.body;
         const major = await Major.findByPk(id);
+
+        if (!major) {
+            return Error.sendNotFound(res, 'Chuyên ngành không tồn tại!');
+        }
+
         major.name = name;
         await major.save();
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            status: HTTP_STATUS.OK,
             message: 'Update Success',
             major,
         });
@@ -72,10 +75,15 @@ exports.deleteMajor = async (req, res) => {
     try {
         const { id } = req.params;
         const major = await Major.findByPk(id);
+
+        if (!major) {
+            return Error.sendNotFound(res, 'Chuyên ngành không tồn tại!');
+        }
+
         await major.destroy();
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            status: HTTP_STATUS.OK,
             message: 'Delete Success',
         });
     } catch (error) {

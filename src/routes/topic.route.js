@@ -9,8 +9,7 @@ const {
     updateTopic,
     updateStatusTopic,
     deleteTopic,
-    getAllTopics,
-    importTopic,
+    importTopics,
     getTopicByParams,
 } = require('../controllers/topic.controller');
 
@@ -27,7 +26,7 @@ router.post(
     protectLecturer,
     upload.single('file'),
     checkRoleLecturer('HEAD_LECTURER'),
-    importTopic,
+    importTopics,
 );
 
 router.get(APP_ROUTER.ID, getTopicById);
