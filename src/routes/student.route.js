@@ -18,6 +18,7 @@ const {
     updatePassword,
     getMe,
     updateMe,
+    getStudentsNoHaveGroup,
 } = require('../controllers/student.controller');
 
 const { protectStudent } = require('../middleware/student.middleware');
@@ -35,6 +36,13 @@ router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
 // ----------------- Admin -----------------
 router.get(APP_ROUTER.INDEX, getStudents);
+
+router.get(
+    APP_ROUTER.STUDENTS_NO_HAVE_GROUP,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    getStudentsNoHaveGroup,
+);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createStudent);
 

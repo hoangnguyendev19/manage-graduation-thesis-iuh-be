@@ -38,6 +38,7 @@ const APP_ROUTER = {
     STUDENT_STATUS: '/:id/status',
     // STUDENT_RESET_PASSWORD: '/:id/reset-password',
     // STUDENT_EXPORT: '/export-transcript',
+    STUDENTS_NO_HAVE_GROUP: '/no-have-group',
 
     //TERMS
     TERM: '/api/v1/terms',
@@ -51,7 +52,7 @@ const APP_ROUTER = {
     //TRANSCRIPTS
     TRANSCRIPT: '/api/v1/transcripts',
     TRANSCRIPT_BY_SUMMARY: '/summary',
-    LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER :'/scoring/:type/listStudentsNoTranscript',
+    LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER: '/scoring/:type/listStudentsNoTranscript',
 
     //TOPICS
     TOPIC: '/api/v1/topics',

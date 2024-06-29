@@ -420,8 +420,6 @@ const importTopic = async (req, res) => {
             const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'];
             const major_id = majorId;
 
-            console.log('🚀 ~ importTopic ~ username:', username);
-
             if (!username) {
                 return Error.sendWarning(res, 'Mã giảng viên không được bỏ trống');
             }
@@ -430,7 +428,7 @@ const importTopic = async (req, res) => {
                     username: username,
                 },
             });
-            console.log("🚀 ~ importTopic ~ oldLecturer:", oldLecturer)
+
             const isExistLecturer = await LecturerTerm.findOne({
                 where: {
                     lecturer_id: oldLecturer.id,
@@ -456,7 +454,7 @@ const importTopic = async (req, res) => {
             } else {
                 return Error.sendWarning(
                     res,
-                    `Mã Giảng viên  ${lecturer_id} của đề tài không tồn tại trong học kì này. `,
+                    `Mã Giảng viên  của đề tài không tồn tại trong học kì này. `,
                 );
             }
         }
