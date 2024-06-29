@@ -9,6 +9,7 @@ const {
     importEvaluations,
     updateEvaluation,
     deleteEvaluation,
+    getEvaluationsForScoring,
 } = require('../controllers/evaluation.controller');
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
 const upload = require('../configs/uploadConfig');
@@ -16,6 +17,7 @@ const upload = require('../configs/uploadConfig');
 const router = express.Router();
 
 router.get(APP_ROUTER.INDEX, getEvaluations);
+router.get(APP_ROUTER.SCORES, getEvaluationsForScoring);
 
 router.get(APP_ROUTER.ID, getEvaluationById);
 

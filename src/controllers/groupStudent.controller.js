@@ -1,7 +1,7 @@
 const { GroupStudent, StudentTerm, Student, Topic } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { QueryTypes } = require('sequelize');
+const { QueryTypes, where } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const _ = require('lodash');
 
@@ -116,7 +116,7 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
         const { termId } = req.query;
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, tc.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
+            `SELECT gs.id, gs.name, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
             LEFT JOIN student_terms st ON gs.id = st.group_student_id

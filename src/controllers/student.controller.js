@@ -551,6 +551,29 @@ exports.updateStatus = async (req, res) => {
     }
 };
 
+exports.getStudentsNoHaveGroup = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const query =
+            'select st.id as studentId, st.full_name as fullName, st.username where students st join student_terms stTerm on stTerm.student_id = st.id where st.group_student_id = null and stTerm.term_id = :termId';
+        
+            const students = await sequelize.query(query, {
+            replacements: {
+                termId,
+            },
+            type: QueryTypes.SELECT,
+        });
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get success',
+            students,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getStudentsNoHaveGroup= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
 // ----------------- Student -----------------
 
 exports.updatePassword = async (req, res) => {

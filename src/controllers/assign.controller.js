@@ -3,13 +3,10 @@ const {
     GroupLecturer,
     LecturerTerm,
     GroupLecturerMember,
-    GroupStudent,
-    Topic,
-    Lecturer,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Sequelize, Op } = require('sequelize');
+const { Sequelize } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 const getAssigns = async (req, res) => {
@@ -74,7 +71,6 @@ const createAssignByType = async (req, res) => {
         const currentGroupLecturer = await GroupLecturer.findByPk(groupLecturerId, {
             attributes: ['id', 'name'],
         });
-        console.log('🚀 ~ createAssignByType ~ currentGroupLecturer:', currentGroupLecturer);
 
         if (!currentGroupLecturer) {
             return Error.sendNotFound(res, 'Không tồn tại nhóm giảng viên này');
@@ -142,13 +138,9 @@ const getGroupStudentNoAssign = async (req, res) => {
                 type: type.toUpperCase(),
             },
         });
-
         const myNotIn = assigns.map((ass) => `'${ass.group_student_id}'`);
-
-        // Constructing the condition for NOT IN
         const notInCondition = myNotIn.length > 0 ? `AND gs.id NOT IN (${myNotIn.join(',')})` : '';
 
-        // Raw query to get group students
         const groupStudentsQuery = `
         SELECT gs.id, gs.name,
                 t.name AS topicName, 
@@ -171,7 +163,6 @@ const getGroupStudentNoAssign = async (req, res) => {
             groupStudent: resultGroupStudent,
         });
     } catch (error) {
-        console.log('🚀 ~ getGroupStudentNoAssign ~ error:', error);
         Error.sendError(res, error);
     }
 };

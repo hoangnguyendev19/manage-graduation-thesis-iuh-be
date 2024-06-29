@@ -5,9 +5,12 @@ const {
     Evaluation,
     Lecturer,
     Achievement,
+    GroupLecturerMember,
+    Assign,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
+const { Sequelize, QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
@@ -215,6 +218,58 @@ exports.updateTranscript = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.unTranscriptStudentsByType = async (req, res) => {
+    try {
+        const { type } = req.params;
+        const { termId } = req.query;
+
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: req.user.id,
+                term_id: termId,
+            },
+            attributes: ['id'],
+        });
+
+        const groupLecturers = await GroupLecturerMember.findAll({
+            where: {
+                lecturer_term_id: lecturerTerm.id,
+            },
+            attributes: ['group_lecturer_id'],
+        });
+
+        const groupStudents = await Assign.findAll({
+            where: {
+                group_lecturer_id: {
+                    [Sequelize.Op.in]: groupLecturers.map((mem) => mem.group_lecturer_id),
+                },
+                type: type.toUpperCase(),
+            },
+            attributes: ['group_student_id'],
+        });
+
+        const myIn = groupStudents.map((ass) => `'${ass.group_student_id}'`);
+        const inGroupQuery = `where stTerm.group_student_id in (${myIn.join(',')})`;
+
+        const query = `select st.id as studentId, st.full_name as fullName, st.username,grs.name as groupStudentName from students st  
+        join student_terms stTerm on stTerm.student_id = st.id join group_students grs on stTerm.group_student_id = grs.id ${inGroupQuery}`;
+
+        const students = await sequelize.query(query, {
+            type: QueryTypes.SELECT,
+        });
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get success',
+            students,
+            totalRows: students.length,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.unTranscriptStudentsByType= ~ error:', error);
         Error.sendError(res, error);
     }
 };

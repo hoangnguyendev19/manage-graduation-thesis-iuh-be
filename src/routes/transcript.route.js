@@ -7,6 +7,7 @@ const {
     getTranscriptSummary,
     createTranscript,
     updateTranscript,
+    unTranscriptStudentsByType,
 } = require('../controllers/transcript.controller');
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -20,5 +21,11 @@ router.get(APP_ROUTER.TRANSCRIPT_BY_SUMMARY, protectStudent, getTranscriptSummar
 router.post(APP_ROUTER.INDEX, protectLecturer, createTranscript);
 
 router.put(APP_ROUTER.ID, protectLecturer, updateTranscript);
+
+router.get(
+    APP_ROUTER.LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER,
+    protectLecturer,
+    unTranscriptStudentsByType,
+);
 
 module.exports = router;
