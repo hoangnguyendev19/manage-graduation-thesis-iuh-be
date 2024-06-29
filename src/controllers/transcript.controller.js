@@ -171,7 +171,7 @@ exports.createTranscript = async (req, res) => {
         const evaluation = await Evaluation.findByPk(evaluationId);
 
         if (score > evaluation.scoreMax) {
-            return Error.sendBadRequest(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
+            return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
         }
 
         const transcript = await Transcript.create({

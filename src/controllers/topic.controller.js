@@ -314,7 +314,7 @@ const updateTopic = async (req, res) => {
             req.body;
         const topic = await Topic.findByPk(id);
         if (!topic) {
-            return Error.sendNotFound(res, 'Topic not found');
+            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
         topic.name = name;
         topic.description = description;
@@ -322,11 +322,12 @@ const updateTopic = async (req, res) => {
         topic.target = target;
         topic.standardOutput = standardOutput;
         topic.requireInput = requireInput;
+
         await topic.save();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Cập nhật thành công!',
             topic,
         });
     } catch (error) {
@@ -335,68 +336,9 @@ const updateTopic = async (req, res) => {
     }
 };
 
-//support
-// const importTopic = async (req, res) => {
-//     try {
-//         const { majorId, termId } = req.body;
-//         if (!req.file) {
-//             return Error.sendWarning(res, 'Please upload a file');
-//         }
-//         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-//         const sheetName = workbook.SheetNames[0];
-//         const sheet = workbook.Sheets[sheetName];
-//         const jsonData = xlsx.utils.sheet_to_json(sheet);
-
-//         const listIdTopic = [];
-
-//         const quantityTopicInDb = await Topic.count();
-
-//         for (const [index, topic] of jsonData.entries()) {
-//             const id = index + quantityTopicInDb + 2;
-
-//             const lecturer_id = topic['Mã giảng viên'];
-
-//             const name = topic['Tên đề tài'];
-//             const target = topic['MỤC TIÊU ĐỀ TÀI'];
-//             const note = topic['DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG'];
-//             const description = topic['Mô tả'];
-//             const requireInput = topic['Yêu cầu đầu vào'];
-//             const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'];
-//             const major_id = majorId;
-
-//             if (!lecturer_id) {
-//                 return Error.sendWarning(res, 'Mã giảng viên không được bỏ trống');
-//             }
-
-//             const isExistLecturer = await LecturerTerm.findOne({
-//                 where: {
-//                     lecturer_id: lecturer_id,
-//                     term_id: termId,
-//                 },
-//             });
-
-//             if (isExistLecturer) {
-//                 listIdTopic.push(id);
-//             }
-//         }
-
-//         console.log('🚀 ~ listIdTopic:', listIdTopic);
-
-//         return res.status(HTTP_STATUS.OK).json({
-//             success: true,
-//             status: HTTP_STATUS.OK,
-//             message: 'Import excel danh sách đề tài thành công!',
-//         });
-//     } catch (error) {
-//         console.log(error);
-//         Error.sendError(res, error);
-//     }
-// };
-
-//
-const importTopic = async (req, res) => {
+const importTopics = async (req, res) => {
     try {
-        const { majorId, termId } = req.body;
+        const { termId } = req.body;
         if (!req.file) {
             return Error.sendWarning(res, 'Vui lòng chọn file tải lên');
         }
@@ -405,12 +347,7 @@ const importTopic = async (req, res) => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
 
-        const listIdTopic = [];
-
-        const quantityTopicInDb = await Topic.count();
-
-        for (const [index, topic] of jsonData.entries()) {
-            const id = index + quantityTopicInDb + 1;
+        for (const topic of jsonData) {
             const username = topic['Mã giảng viên'];
             const name = topic['Tên đề tài'];
             const target = topic['MỤC TIÊU ĐỀ TÀI'];
@@ -418,107 +355,67 @@ const importTopic = async (req, res) => {
             const description = topic['Mô tả'];
             const requireInput = topic['Yêu cầu đầu vào'];
             const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'];
-            const major_id = majorId;
 
-            if (!username) {
-                return Error.sendWarning(res, 'Mã giảng viên không được bỏ trống');
-            }
-            const oldLecturer = await Lecturer.findOne({
+            const lecturer = await Lecturer.findOne({
                 where: {
                     username: username,
                 },
             });
 
+            if (!lecturer) {
+                return Error.sendNotFound(res, `Mã giảng viên ${username} không tồn tại.`);
+            }
+
             const isExistLecturer = await LecturerTerm.findOne({
                 where: {
-                    lecturer_id: oldLecturer.id,
+                    lecturer_id: lecturer.id,
                     term_id: termId,
                 },
             });
-            // have lecturer term
-            if (isExistLecturer) {
-                const rsTopic = await Topic.create({
-                    id,
-                    name,
-                    description,
-                    note,
-                    target,
-                    requireInput,
-                    standardOutput,
-                    lecturer_term_id: isExistLecturer.id,
-                    quantityGroupMax: 5,
-                });
 
-                //add
-                listIdTopic.push(id);
-            } else {
-                return Error.sendWarning(
+            if (!isExistLecturer) {
+                return Error.sendNotFound(
                     res,
-                    `Mã Giảng viên  của đề tài không tồn tại trong học kì này. `,
+                    `Mã giảng viên ${username} không tồn tại trong kỳ này.`,
                 );
             }
+
+            await Topic.create({
+                name,
+                description,
+                quantityGroupMax: 5,
+                note,
+                target,
+                standardOutput,
+                requireInput,
+                lecturer_term_id: isExistLecturer.id,
+            });
         }
-        // Create Topics
-        const newTopics = await Topic.findAll({
-            where: {
-                id: {
-                    [Op.in]: listIdTopic.map((id) => id),
-                },
-            },
-            attributes: { exclude: ['lecturer_term_id'] },
 
-            include: {
-                model: LecturerTerm,
-                attributes: ['id'],
-                include: {
-                    model: Lecturer,
-                    attributes: [
-                        'id',
-                        'userName',
-                        'fullName',
-                        'avatar',
-                        'email',
-                        'phone',
-                        'gender',
-                        'degree',
-                    ],
-                    include: {
-                        model: Major,
-                        attributes: ['id', 'name'],
-                        as: 'major',
-                    },
-                    as: 'lecturer',
-                },
-                as: 'lecturerTerm',
-            },
-        });
-
-        return res.status(HTTP_STATUS.OK).json({
+        res.status(HTTP_STATUS.OK).json({
             success: true,
-            status: HTTP_STATUS.OK,
-            message: 'Import excel danh sách đề tài thành công!',
-            topics: newTopics,
+            message: 'Import danh sách đề tài thành công!',
         });
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);
     }
 };
+
 const updateStatusTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
         const topic = await Topic.findByPk(id);
         if (!topic) {
-            return Error.sendNotFound(res, 'Topic not found');
+            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
         topic.status = status;
         await topic.save();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Status Success',
-            topic,
+            message: 'Cập nhật trạng thái thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -531,12 +428,12 @@ const deleteTopic = async (req, res) => {
         const { id } = req.params;
         const topic = await Topic.findByPk(id);
         if (!topic) {
-            return Error.sendNotFound(res, 'Topic not found');
+            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
         await topic.destroy();
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Xoá thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -553,5 +450,5 @@ module.exports = {
     deleteTopic,
     // getAllTopics,
     getTopicByParams,
-    importTopic,
+    importTopics,
 };
