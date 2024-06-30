@@ -52,6 +52,7 @@ const APP_ROUTER = {
     //TRANSCRIPTS
     TRANSCRIPT: '/api/v1/transcripts',
     TRANSCRIPT_BY_SUMMARY: '/summary',
+    TRANSCRIPT_BY_GROUP_STUDENT: '/group-student',
     LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER: '/scoring/:type/listStudentsNoTranscript',
 
     //TOPICS
@@ -69,7 +70,6 @@ const APP_ROUTER = {
     GROUP_STUDENT: '/api/v1/group-students',
     GROUP_STUDENT_BY_LECTURER: '/lecturer',
     GROUP_STUDENT_BY_MAJOR: '/major',
-    GROUP_STUDENT_TYPE_REPORT: '/:id/type-report',
     GROUP_STUDENT_ASSIGN_ADMIN: '/:id/assign-admin',
     GROUP_STUDENT_ASSIGN_TOPIC: '/:id/assign-topic',
     GROUP_STUDENT_ADD_MEMBER: '/:id/add-member',

@@ -11,7 +11,6 @@ const {
     getMyGroupStudent,
     createGroupStudent,
     importGroupStudent,
-    updateTypeReport,
     assignAdminGroupStudent,
     addMemberGroupStudent,
     deleteMemberGroupStudent,
