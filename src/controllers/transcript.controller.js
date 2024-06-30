@@ -13,7 +13,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { Sequelize, QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
-exports.getTranscriptByTypeEvaluation = async (req, res) => {
+exports.getTranscriptByType = async (req, res) => {
     try {
         const { termId, type, studentId } = req.query;
 
@@ -29,17 +29,49 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
         }
 
         const transcripts = await sequelize.query(
-            `SELECT t.id, avg(t.score) as avgScore, e.type, l.full_name as lecturerName
+            `SELECT t.id, t.score, t.evaluation_id as evaluationId
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            WHERE t.student_term_id = :studentTermId AND e.type = :type
-            GROUP BY t.id, e.type, l.full_name`,
+            WHERE t.student_term_id = :studentTermId AND e.type = :type AND l.id = :lecturerId`,
             {
                 replacements: {
                     studentTermId: studentTerm.id,
                     type,
+                    lecturerId: req.user.id,
+                },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            transcripts,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTranscriptByGroupStudent = async (req, res) => {
+    try {
+        const { termId, groupStudentId } = req.query;
+
+        const transcripts = await sequelize.query(
+            `SELECT s.id, s.username, s.full_name as fullName, e.type, avg(t.score) as avgScore
+            FROM transcripts t
+            INNER JOIN evaluations e ON t.evaluation_id = e.id
+            INNER JOIN student_terms st ON t.student_term_id = st.id
+            INNER JOIN students s ON st.student_id = s.id
+            WHERE st.group_student_id = :groupStudentId AND st.term_id = :termId
+            GROUP BY s.id, e.type`,
+            {
+                replacements: {
+                    groupStudentId,
+                    termId,
                 },
                 type: sequelize.QueryTypes.SELECT,
             },
