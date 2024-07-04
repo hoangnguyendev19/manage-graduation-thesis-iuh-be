@@ -16,7 +16,7 @@ const notificationLecturer = require('./notificationLecturer.route');
 const upload = require('./upload.route');
 const assign = require('./assign.route');
 function router(app) {
-    app.use(APP_ROUTER.MAJORS, major);
+    app.use(APP_ROUTER.MAJOR, major);
     app.use(APP_ROUTER.LECTURER, lecturer);
     app.use(APP_ROUTER.STUDENT, student);
     app.use(APP_ROUTER.TERM, term);

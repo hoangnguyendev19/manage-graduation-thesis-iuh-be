@@ -24,10 +24,9 @@ exports.getNotificationLecturers = async (req, res) => {
 
 exports.createNotificationLecturer = async (req, res) => {
     try {
-        const { message, type, lecturerId } = req.body;
+        const { message, lecturerId } = req.body;
         const notificationLecturer = await NotificationLecturer.create({
             message,
-            type,
             lecturer_id: lecturerId,
         });
 
@@ -45,7 +44,7 @@ exports.createNotificationLecturer = async (req, res) => {
 exports.updateNotificationLecturer = async (req, res) => {
     try {
         const { id } = req.params;
-        const { message, type, lecturerId } = req.body;
+        const { message, lecturerId } = req.body;
         const notificationLecturer = await NotificationLecturer.findByPk(id);
 
         if (!notificationLecturer) {
@@ -54,7 +53,6 @@ exports.updateNotificationLecturer = async (req, res) => {
 
         await notificationLecturer.update({
             message,
-            type,
             Lecturer_id: lecturerId,
         });
 

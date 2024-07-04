@@ -10,7 +10,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const _ = require('lodash');
 const xlsx = require('xlsx');
-const { QueryTypes } = require('sequelize');
+const { QueryTypes, where } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 // ----------------- Auth -----------------
@@ -220,6 +220,31 @@ exports.getLecturers = async (req, res) => {
                 limit: _.toInteger(limit),
                 totalPage,
             },
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getLecturersByMajor = async (req, res) => {
+    try {
+        const { termId, majorId } = req.query;
+
+        const lecturers = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+                FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+                WHERE m.id = :majorId AND lt.term_id = :termId`,
+            {
+                replacements: { termId, majorId },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            lecturers,
         });
     } catch (error) {
         console.log(error);

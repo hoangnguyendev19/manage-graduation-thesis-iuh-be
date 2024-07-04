@@ -27,10 +27,9 @@ exports.getNotificationStudents = async (req, res) => {
 
 exports.createNotificationStudent = async (req, res) => {
     try {
-        const { message, type, studentId } = req.body;
+        const { message, studentId } = req.body;
         const notificationStudent = await NotificationStudent.create({
             message,
-            type,
             student_id: studentId,
         });
 
@@ -48,7 +47,7 @@ exports.createNotificationStudent = async (req, res) => {
 exports.updateNotificationStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { message, type, studentId } = req.body;
+        const { message, studentId } = req.body;
         const notificationStudent = await NotificationStudent.findByPk(id);
 
         if (!notificationStudent) {
@@ -57,7 +56,6 @@ exports.updateNotificationStudent = async (req, res) => {
 
         await notificationStudent.update({
             message,
-            type,
             student_id: studentId,
         });
 
