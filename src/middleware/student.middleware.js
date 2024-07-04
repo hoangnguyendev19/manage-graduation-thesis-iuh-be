@@ -14,14 +14,18 @@ exports.protectStudent = async (req, res, next) => {
             return Error.sendUnauthenticated(res);
         }
 
-        const decoded = verifyAccessToken(token);
-        const student = await Student.findByPk(decoded.id);
+        const decoded = await verifyAccessToken(token);
+
+        if (decoded.expired) {
+            return Error.sendUnauthenticated(res);
+        }
+
+        const student = await Student.findByPk(decoded.payload.id);
         if (!student) {
             return Error.sendUnauthenticated(res);
         }
 
         req.user = student;
-
         next();
     } catch (error) {
         return Error.sendError(res, error);
