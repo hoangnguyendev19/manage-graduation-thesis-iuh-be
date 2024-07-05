@@ -7,6 +7,7 @@ const {
     Achievement,
     GroupLecturerMember,
     Assign,
+    GroupStudent,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
@@ -254,6 +255,36 @@ exports.updateTranscript = async (req, res) => {
     }
 };
 
+exports.unTranscriptGroupStudentByLecturerSupport = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: req.user.id,
+                term_id: termId,
+            },
+            attributes: ['id'],
+        });
+
+        const query =
+            'select gr.id as groupStudentId,gr.name as groupStudentName, t.name as topicName from group_students gr  join topics t on gr.topic_id = t.id where t.lecturer_term_id = :lecturerTermId';
+        const groupStudents = await sequelize.query(query, {
+            replacements: {
+                lecturerTermId: lecturerTerm.id,
+            },
+            type: QueryTypes.SELECT,
+        });
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get success',
+            groupStudents,
+        });
+    } catch (error) {
+        return Error.sendError(res, error);
+    }
+};
+
 exports.unTranscriptStudentsByType = async (req, res) => {
     try {
         const { type } = req.params;
@@ -283,10 +314,17 @@ exports.unTranscriptStudentsByType = async (req, res) => {
             },
             attributes: ['group_student_id'],
         });
-
         const myIn = groupStudents.map((ass) => `'${ass.group_student_id}'`);
         const inGroupQuery = `where stTerm.group_student_id in (${myIn.join(',')})`;
 
+        if (myIn.length < 1) {
+            return res.status(HTTP_STATUS.OK).json({
+                success: true,
+                message: 'Get success',
+                students: [],
+                totalRows: 0,
+            });
+        }
         const query = `select st.id as studentId, st.full_name as fullName, st.username,grs.name as groupStudentName from students st  
         join student_terms stTerm on stTerm.student_id = st.id join group_students grs on stTerm.group_student_id = grs.id ${inGroupQuery}`;
 
@@ -301,7 +339,50 @@ exports.unTranscriptStudentsByType = async (req, res) => {
             totalRows: students.length,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.unTranscriptStudentsByType= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getGroupStudentMemberToScoring = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: req.user.id,
+                term_id: termId,
+            },
+            attributes: ['id'],
+        });
+        const query =
+            `select gr.id as id from group_students gr
+            join topics t on gr.topic_id = t.id
+            where t.lecturer_term_id = :lecturerTermId`;
+        const groupStudents = await sequelize.query(query, {
+            replacements: {
+                lecturerTermId: lecturerTerm.id,
+            },
+            type: QueryTypes.SELECT,
+        });
+        const myIn = groupStudents.map((gr) => `'${gr.id}'`);
+        const inGroupQuery = `where stTerm.group_student_id in (${myIn.join(',')})`;
+
+        const query2 = `select 
+        st.full_name as fullName, st.username, stTerm.group_student_id as groupStudentId,gr.name as groupStudentName,
+        st.id as studentId 
+        from student_terms stTerm 
+        inner join students st on st.id = stTerm.student_id
+        left join group_students gr on gr.id = stTerm.group_student_id 
+        ${inGroupQuery}`;
+
+        const groupStudentMembers = await sequelize.query(query2, {
+            type: QueryTypes.SELECT,
+        });
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get success',
+            groupStudentMembers,
+        });
+    } catch (error) {
         Error.sendError(res, error);
     }
 };

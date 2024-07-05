@@ -67,9 +67,11 @@ exports.getGroupStudents = async (req, res) => {
             total = total[0].total;
         } else if (!majorId && !topicId) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName,l.full_name as lecturerName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
+                LEFT JOIN lecturers l ON l.id = lt.lecturer_id
                 WHERE gs.term_id = :termId
                 GROUP BY gs.id
                 ORDER BY gs.created_at DESC
