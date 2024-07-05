@@ -13,18 +13,21 @@ const {
     createGroupLecturerByType,
     addMemberToGroupLecturer,
     getMemberFromGroupLecturer,
+    getGroupLecturersByLecturerId,
 } = require('../controllers/groupLecturer.controller');
 
 const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
-const {
-    isExistLecturerInGroup,
-    quantityOfGroup,
-    isExistGroupLecturer,
-} = require('../middleware/groupLecturer.middleware');
 
 const router = express.Router();
 
 router.get(APP_ROUTER.GROUP_LECTURER_NO_GROUP, getLecturerNoGroupByType);
+
+router.get(
+    APP_ROUTER.GROUP_LECTURER_BY_LECTURERS,
+    protectLecturer,
+    checkRoleLecturer('HEAD_LECTURER'),
+    getGroupLecturersByLecturerId,
+);
 
 router.get(APP_ROUTER.INDEX, getGroupLecturers);
 
@@ -36,7 +39,6 @@ router.post(
     APP_ROUTER.GROUP_LECTURER_BY_TYPE,
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
-    isExistGroupLecturer,
     createGroupLecturerByType,
 );
 
@@ -53,8 +55,6 @@ router.post(
     APP_ROUTER.GROUP_LECTURER_MEMBER,
     protectLecturer,
     checkRoleLecturer('HEAD_LECTURER'),
-    isExistLecturerInGroup,
-    quantityOfGroup,
     addMemberToGroupLecturer,
 );
 

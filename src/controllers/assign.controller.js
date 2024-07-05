@@ -1,14 +1,18 @@
-const {
-    Assign,
-    GroupLecturer,
-    LecturerTerm,
-    GroupLecturerMember,
-} = require('../models/index');
+const { Assign, GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Sequelize } = require('sequelize');
+const { Sequelize, QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
-
+const checkTypeGroup = (value) => {
+    switch (value) {
+        case 'REVIEWER':
+            return 'Nhóm chấm phản biện';
+        case 'REPORT_POSTER':
+            return 'Nhóm chấm poster ';
+        case 'REPORT_COUNCIL':
+            return 'Nhóm chấm hội đồng';
+    }
+};
 const getAssigns = async (req, res) => {
     try {
         const assigns = await Assign.findAll({
@@ -68,6 +72,27 @@ const createAssignByType = async (req, res) => {
     try {
         const { type } = req.params;
         const { groupLecturerId, listGroupStudentId } = req.body;
+
+        const isExistAssign = await isExitGroupLecturerAndGroupStudent(type, listGroupStudentId);
+
+        if (isExistAssign) {
+            return Error.sendConflict(res, 'Nhóm sinh viên đã được phân công chấm điểm');
+        }
+        if (type === 'reviewer' || type === 'report_poster') {
+            const isExistLecturerSupport = await isExistLecturerSupportInGroupLecturer(
+                groupLecturerId,
+                listGroupStudentId,
+            );
+
+            if (isExistLecturerSupport) {
+                return Error.sendConflict(
+                    res,
+                    `Giảng viên hướng dẫn Đề tài không được phân ${checkTypeGroup(
+                        type.toUpperCase(),
+                    )}`,
+                );
+            }
+        }
         const currentGroupLecturer = await GroupLecturer.findByPk(groupLecturerId, {
             attributes: ['id', 'name'],
         });
@@ -75,6 +100,7 @@ const createAssignByType = async (req, res) => {
         if (!currentGroupLecturer) {
             return Error.sendNotFound(res, 'Không tồn tại nhóm giảng viên này');
         }
+
         listGroupStudentId.map(async (groupStudentId) => {
             await Assign.create({
                 group_lecturer_id: groupLecturerId,
@@ -156,7 +182,6 @@ const getGroupStudentNoAssign = async (req, res) => {
             replacements: { termId },
             type: sequelize.QueryTypes.SELECT,
         });
-
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách sinh viên chưa chấm thành công',
@@ -165,6 +190,46 @@ const getGroupStudentNoAssign = async (req, res) => {
     } catch (error) {
         Error.sendError(res, error);
     }
+};
+const isExistLecturerSupportInGroupLecturer = async (groupLecturerId, listGroupStudentId) => {
+    const query =
+        'select t.lecturer_term_id as id from topics t inner join group_students gt on t.id = gt.topic_id where gt.id = :groupStudentId ';
+
+    const membersOfGroup = await GroupLecturerMember.findAll({
+        where: { group_lecturer_id: groupLecturerId },
+    });
+
+    let isExistLecturerSupportInGroup;
+    for (i = 0; i < listGroupStudentId.length; i++) {
+        let lecturerSupport = await sequelize.query(query, {
+            replacements: {
+                groupStudentId: `${listGroupStudentId[i]}`,
+            },
+            type: QueryTypes.SELECT,
+        });
+
+        isExistLecturerSupportInGroup =
+            membersOfGroup
+                .map((x) => x.lecturer_term_id)
+                .filter((id) => id === lecturerSupport[0].id).length > 0;
+
+        if (isExistLecturerSupportInGroup) break;
+    }
+    return isExistLecturerSupportInGroup;
+};
+const isExitGroupLecturerAndGroupStudent = async (type, listGroupStudentId) => {
+    let flag = false;
+    for (let i = 0; i < listGroupStudentId.length; i++) {
+        const oldAssign = await Assign.findOne({
+            where: {
+                type: type.toUpperCase(),
+                group_student_id: listGroupStudentId[i],
+            },
+        });
+        flag = oldAssign ? true : false;
+        if (flag) break;
+    }
+    return flag === true;
 };
 
 module.exports = {
