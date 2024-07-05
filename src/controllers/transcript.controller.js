@@ -142,7 +142,13 @@ exports.getTranscriptSummary = async (req, res) => {
                 (total, transcript) => total + transcript.score,
                 0,
             );
-            const averageScore = (totalScore / evaluationTranscripts.length).toFixed(2);
+
+            let averageScore = 0;
+
+            if (totalScore !== 0) {
+                averageScore = (totalScore / evaluationTranscripts.length).toFixed(2);
+            }
+
             return {
                 type,
                 averageScore,
@@ -150,24 +156,75 @@ exports.getTranscriptSummary = async (req, res) => {
         });
 
         const advisor = evaluationSummary.find((evaluation) => evaluation.type === 'ADVISOR');
-        const sessionHost = evaluationSummary.find(
-            (evaluation) => evaluation.type === 'SESSION_HOST',
-        );
+        const report = evaluationSummary.find((evaluation) => evaluation.type === 'SESSION_HOST');
         const reviewer = evaluationSummary.find((evaluation) => evaluation.type === 'REVIEWER');
 
         // I want to calculate the total average score of all evaluations
         const totalScore = transcripts.reduce((total, transcript) => total + transcript.score, 0);
-        const totalAverageScore = (totalScore / transcripts.length).toFixed(2);
+        let totalAverageScore = 0;
+        if (totalScore !== 0) {
+            totalAverageScore = (totalScore / transcripts.length).toFixed(2);
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
             transcript: {
                 advisorScore: advisor ? Number(advisor.averageScore) : 0,
-                sessionHostScore: sessionHost ? Number(sessionHost.averageScore) : 0,
+                reportScore: report ? Number(report.averageScore) : 0,
                 reviewerScore: reviewer ? Number(reviewer.averageScore) : 0,
-                totalBonusScore: Number(totalBonusScore),
-                totalAverageScore: Number(totalAverageScore),
+                totalBonusScore: totalBonusScore ? Number(totalBonusScore) : 0,
+                totalAverageScore: totalAverageScore ? Number(totalAverageScore) : 0,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTranscriptByStudent = async (req, res) => {
+    try {
+        const { termId, type } = req.query;
+
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                term_id: termId,
+                student_id: req.user.id,
+            },
+        });
+
+        const transcripts = await sequelize.query(
+            `SELECT t.id, t.score, l.full_name as lecturerName
+            FROM transcripts t
+            INNER JOIN evaluations e ON t.evaluation_id = e.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE t.student_term_id = :studentTermId AND e.type = :type
+            GROUP BY t.id, l.full_name`,
+            {
+                replacements: {
+                    studentTermId: studentTerm.id,
+                    type,
+                },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        let avgScore = 0;
+
+        if (transcripts.length !== 0) {
+            // I want to calculate average score throught transcripts
+            const total = transcripts.reduce((total, transcript) => total + transcript.score, 0);
+            avgScore = Number((total / transcripts.length).toFixed(2));
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            transcript: {
+                transcripts,
+                avgScore,
             },
         });
     } catch (error) {

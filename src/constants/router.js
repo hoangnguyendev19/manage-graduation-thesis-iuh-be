@@ -21,14 +21,12 @@ const APP_ROUTER = {
     UPLOAD: '/api/v1/uploads',
 
     //MAJORS
-    MAJORS: '/api/v1/majors',
+    MAJOR: '/api/v1/majors',
 
     //LECTURERS:
     LECTURER: '/api/v1/lecturers',
-
-    // LECTURER_AVAILABLE_GROUP: '/available-group',
-    CHANGE_ROLE_LECTURE: '/:id/role',
-    // IMPORT_LECTURE: '/import-lecturer',
+    LECTURER_MAJOR: '/major',
+    LECTURER_ROLE: '/:id/role',
 
     // LECTURER_TERM
     LECTURER_TERM: '/api/v1/lecturer-terms',
@@ -54,7 +52,7 @@ const APP_ROUTER = {
     TRANSCRIPT_BY_SUMMARY: '/summary',
     TRANSCRIPT_BY_LECTURER_SUPPORT: '/lecturer-supports',
     TRANSCRIPT_GROUP_STUDENT_TO_SCORING: '/lecturer-supports/group-student-to-scoring',
-
+    TRANSCRIPT_BY_STUDENT: '/student',
     TRANSCRIPT_BY_GROUP_STUDENT: '/group-student',
     LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER: '/scoring/:type/listStudentsNoTranscript',
 

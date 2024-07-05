@@ -277,7 +277,7 @@ exports.getMyGroupStudent = async (req, res) => {
             attributes: ['student_id', 'isAdmin'],
             include: {
                 model: Student,
-                attributes: ['userName', 'fullName', 'avatarUrl', 'gender', 'phoneNumber', 'email'],
+                attributes: ['username', 'fullName', 'avatar', 'gender', 'phone', 'email'],
                 as: 'student',
             },
         });
@@ -286,7 +286,7 @@ exports.getMyGroupStudent = async (req, res) => {
             where: {
                 id: studentTerm.group_student_id,
             },
-            attributes: ['id', 'name', 'status', 'topic_id'],
+            attributes: ['id', 'name', 'topic_id'],
         });
 
         res.status(HTTP_STATUS.OK).json({

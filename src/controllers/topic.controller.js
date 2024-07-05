@@ -161,7 +161,7 @@ const getTopics = async (req, res) => {
                         model: Lecturer,
                         attributes: [
                             'id',
-                            'userName',
+                            'username',
                             'fullName',
                             'avatar',
                             'email',

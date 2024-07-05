@@ -6,6 +6,7 @@ const {
     getTranscriptByType,
     getTranscriptByGroupStudent,
     getTranscriptSummary,
+    getTranscriptByStudent,
     createTranscript,
     updateTranscript,
     unTranscriptStudentsByType,
@@ -33,6 +34,8 @@ router.get(
     protectLecturer,
     getGroupStudentMemberToScoring,
 );
+
+router.get(APP_ROUTER.TRANSCRIPT_BY_STUDENT, protectStudent, getTranscriptByStudent);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, createTranscript);
 

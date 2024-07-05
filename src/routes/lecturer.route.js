@@ -5,6 +5,7 @@ const {
     refreshToken,
     logout,
     getLecturers,
+    getLecturersByMajor,
     getLecturerById,
     changeRole,
     createLecturer,
@@ -39,6 +40,8 @@ router.get(APP_ROUTER.QUERY, searchLecturer);
 
 router.get(APP_ROUTER.INDEX, getLecturers);
 
+router.get(APP_ROUTER.LECTURER_MAJOR, getLecturersByMajor);
+
 router.get(APP_ROUTER.ID, getLecturerById);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
@@ -57,7 +60,7 @@ router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER')
 
 router.post(APP_ROUTER.RESET_PASSWORD, protectLecturer, checkRoleLecturer('ADMIN'), resetPassword);
 
-router.put(APP_ROUTER.CHANGE_ROLE_LECTURE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
+router.put(APP_ROUTER.LECTURER_ROLE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
 
 router.post(APP_ROUTER.LOCK, protectLecturer, checkRoleLecturer('ADMIN'), lockAccount);
 
