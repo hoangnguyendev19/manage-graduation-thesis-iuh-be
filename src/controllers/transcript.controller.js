@@ -62,7 +62,7 @@ exports.getTranscriptByGroupStudent = async (req, res) => {
         const { termId, groupStudentId } = req.query;
 
         const transcripts = await sequelize.query(
-            `SELECT s.id, s.username, s.full_name as fullName, e.type, avg(t.score) as avgScore
+            `SELECT s.id, s.username, s.full_name as fullName, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             INNER JOIN student_terms st ON t.student_term_id = st.id
@@ -77,6 +77,11 @@ exports.getTranscriptByGroupStudent = async (req, res) => {
                 type: sequelize.QueryTypes.SELECT,
             },
         );
+
+        // I want to fix the avgScore to 2 decimal places
+        transcripts.forEach((transcript) => {
+            transcript.avgScore = Number(transcript.avgScore.toFixed(2));
+        });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -93,89 +98,32 @@ exports.getTranscriptSummary = async (req, res) => {
     try {
         const { termId } = req.query;
 
-        const studentTerm = await StudentTerm.findOne({
-            where: {
-                term_id: termId,
-                student_id: req.user.id,
+        const transcripts = await sequelize.query(
+            `SELECT s.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
+            FROM transcripts t
+            INNER JOIN evaluations e ON t.evaluation_id = e.id
+            INNER JOIN student_terms st ON t.student_term_id = st.id
+            INNER JOIN students s ON st.student_id = s.id
+            WHERE st.term_id = :termId AND s.id = :studentId
+            GROUP BY s.id, e.type`,
+            {
+                replacements: {
+                    termId,
+                    studentId: req.user.id,
+                },
+                type: sequelize.QueryTypes.SELECT,
             },
-        });
-
-        if (!studentTerm) {
-            return Error.sendNotFound(res, 'Student term not found');
-        }
-
-        const achievements = await Achievement.findAll({
-            where: {
-                student_term_id: studentTerm.id,
-            },
-            attributes: ['id', 'bonusScore'],
-        });
-
-        const totalBonusScore = achievements.reduce(
-            (total, achievement) => total + achievement.bonusScore,
-            0,
         );
 
-        const transcripts = await Transcript.findAll({
-            where: {
-                student_term_id: studentTerm.id,
-            },
-            attributes: ['id', 'score'],
-            include: [
-                {
-                    model: Evaluation,
-                    attributes: ['type'],
-                    as: 'evaluation',
-                },
-            ],
+        // I want to fix the avgScore to 2 decimal places
+        transcripts.forEach((transcript) => {
+            transcript.avgScore = Number(transcript.avgScore.toFixed(2));
         });
-
-        // I want to calculate the average score of each type of evaluation
-        const evaluationTypes = [
-            ...new Set(transcripts.map((transcript) => transcript.evaluation.type)),
-        ];
-        const evaluationSummary = evaluationTypes.map((type) => {
-            const evaluationTranscripts = transcripts.filter(
-                (transcript) => transcript.evaluation.type === type,
-            );
-            const totalScore = evaluationTranscripts.reduce(
-                (total, transcript) => total + transcript.score,
-                0,
-            );
-
-            let averageScore = 0;
-
-            if (totalScore !== 0) {
-                averageScore = (totalScore / evaluationTranscripts.length).toFixed(2);
-            }
-
-            return {
-                type,
-                averageScore,
-            };
-        });
-
-        const advisor = evaluationSummary.find((evaluation) => evaluation.type === 'ADVISOR');
-        const report = evaluationSummary.find((evaluation) => evaluation.type === 'SESSION_HOST');
-        const reviewer = evaluationSummary.find((evaluation) => evaluation.type === 'REVIEWER');
-
-        // I want to calculate the total average score of all evaluations
-        const totalScore = transcripts.reduce((total, transcript) => total + transcript.score, 0);
-        let totalAverageScore = 0;
-        if (totalScore !== 0) {
-            totalAverageScore = (totalScore / transcripts.length).toFixed(2);
-        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            transcript: {
-                advisorScore: advisor ? Number(advisor.averageScore) : 0,
-                reportScore: report ? Number(report.averageScore) : 0,
-                reviewerScore: reviewer ? Number(reviewer.averageScore) : 0,
-                totalBonusScore: totalBonusScore ? Number(totalBonusScore) : 0,
-                totalAverageScore: totalAverageScore ? Number(totalAverageScore) : 0,
-            },
+            transcripts,
         });
     } catch (error) {
         console.log(error);
@@ -410,8 +358,7 @@ exports.getGroupStudentMemberToScoring = async (req, res) => {
             },
             attributes: ['id'],
         });
-        const query =
-            `select gr.id as id from group_students gr
+        const query = `select gr.id as id from group_students gr
             join topics t on gr.topic_id = t.id
             where t.lecturer_term_id = :lecturerTermId`;
         const groupStudents = await sequelize.query(query, {
