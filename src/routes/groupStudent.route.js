@@ -7,7 +7,7 @@ const {
     getGroupStudentsByLecturer,
     getGroupStudentById,
     getMembersById,
-    getGroupStudentsByMajor,
+    getGroupStudentsByTerm,
     getMyGroupStudent,
     createGroupStudent,
     importGroupStudent,
@@ -28,7 +28,7 @@ const router = express.Router();
 
 router.get(APP_ROUTER.ME, protectStudent, getMyGroupStudent);
 
-router.get(APP_ROUTER.GROUP_STUDENT_BY_MAJOR, protectStudent, getGroupStudentsByMajor);
+router.get(APP_ROUTER.GROUP_STUDENT_BY_TERM, protectStudent, getGroupStudentsByTerm);
 
 router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, protectLecturer, getGroupStudentsByLecturer);
 

@@ -141,19 +141,21 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
     }
 };
 
-exports.getGroupStudentsByMajor = async (req, res) => {
+exports.getGroupStudentsByTerm = async (req, res) => {
     try {
-        const { termId, majorId } = req.query;
+        const { termId } = req.query;
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
-            LEFT JOIN student_terms st ON gs.id = st.group_student_id
-            LEFT JOIN students s ON st.student_id = s.id
-            WHERE gs.term_id = :termId and s.major_id = :majorId
-            GROUP BY gs.id`,
+            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                WHERE gs.term_id = :termId
+                GROUP BY gs.id
+                ORDER BY gs.created_at DESC`,
             {
                 type: QueryTypes.SELECT,
-                replacements: { termId, majorId },
+                replacements: {
+                    termId,
+                },
             },
         );
 
@@ -563,19 +565,19 @@ exports.leaveGroupStudent = async (req, res) => {
 
         await studentTerm.save();
 
-        const studentTerms = await StudentTerm.findAll({
-            where: {
-                group_student_id: id,
-            },
-        });
+        // const studentTerms = await StudentTerm.findAll({
+        //     where: {
+        //         group_student_id: id,
+        //     },
+        // });
 
-        if (studentTerms.length === 0) {
-            const groupStudent = await GroupStudent.findByPk(id);
-            await groupStudent.destroy();
-        } else if (studentTerms.length === 1) {
-            studentTerms[0].isAdmin = true;
-            await studentTerms[0].save();
-        }
+        // if (studentTerms.length === 0) {
+        //     const groupStudent = await GroupStudent.findByPk(id);
+        //     await groupStudent.destroy();
+        // } else if (studentTerms.length === 1) {
+        //     studentTerms[0].isAdmin = true;
+        //     await studentTerms[0].save();
+        // }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -602,7 +604,19 @@ exports.joinGroupStudent = async (req, res) => {
         }
 
         studentTerm.group_student_id = id;
-        studentTerm.isAdmin = false;
+
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
+
+        // check if group has no admin
+        if (studentTerms.length === 0) {
+            studentTerm.isAdmin = true;
+        } else {
+            studentTerm.isAdmin = false;
+        }
 
         await studentTerm.save();
 
