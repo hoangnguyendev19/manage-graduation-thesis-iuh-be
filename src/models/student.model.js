@@ -24,10 +24,6 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 field: 'full_name',
             },
-            avatar: {
-                type: DataTypes.STRING,
-                allowNull: true,
-            },
             phone: {
                 type: DataTypes.STRING,
                 allowNull: true,
@@ -39,11 +35,6 @@ module.exports = (sequelize, DataTypes) => {
             gender: {
                 type: DataTypes.ENUM('MALE', 'FEMALE'),
                 allowNull: true,
-            },
-            dateOfBirth: {
-                type: DataTypes.DATE,
-                allowNull: true,
-                field: 'date_of_birth',
             },
             clazzName: {
                 type: DataTypes.STRING,

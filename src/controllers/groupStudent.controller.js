@@ -150,7 +150,7 @@ exports.getGroupStudentsByTerm = async (req, res) => {
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 WHERE gs.term_id = :termId
                 GROUP BY gs.id
-                ORDER BY gs.created_at DESC`,
+                ORDER BY COUNT(st.student_id) ASC`,
             {
                 type: QueryTypes.SELECT,
                 replacements: {

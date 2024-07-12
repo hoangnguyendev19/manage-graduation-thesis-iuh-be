@@ -272,7 +272,7 @@ const getTopicById = async (req, res) => {
 const createTopic = async (req, res) => {
     const { name, description, quantityGroupMax, target, standardOutput, requireInput } = req.body;
     const { termId } = req.query;
-    console.log('🚀 ~ createTopic ~ termId:', termId);
+
     try {
         const lecturer_id = req.user.id;
 
@@ -310,19 +310,40 @@ const createTopic = async (req, res) => {
 const updateTopic = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, quantityGroupMax, target, standardOutput, requireInput } =
-            req.body;
+        const { name, description, target, standardOutput, requireInput } = req.body;
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
         topic.name = name;
         topic.description = description;
-        topic.quantityGroupMax = quantityGroupMax;
         topic.target = target;
         topic.standardOutput = standardOutput;
         topic.requireInput = requireInput;
 
+        await topic.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Cập nhật thành công!',
+            topic,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+const updateQuantityGroupMax = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { quantityGroupMax } = req.body;
+        const topic = await Topic.findByPk(id);
+        if (!topic) {
+            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
+        }
+
+        topic.quantityGroupMax = quantityGroupMax;
         await topic.save();
 
         res.status(HTTP_STATUS.OK).json({
@@ -446,6 +467,7 @@ module.exports = {
     getTopicById,
     createTopic,
     updateTopic,
+    updateQuantityGroupMax,
     updateStatusTopic,
     deleteTopic,
     // getAllTopics,

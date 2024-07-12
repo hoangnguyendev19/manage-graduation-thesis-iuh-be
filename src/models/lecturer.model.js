@@ -24,10 +24,6 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 field: 'full_name',
             },
-            avatar: {
-                type: DataTypes.STRING,
-                allowNull: true,
-            },
             phone: {
                 type: DataTypes.STRING,
                 allowNull: false,
@@ -44,17 +40,6 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.ENUM('BACHELOR', 'MASTER', 'DOCTOR'),
                 allowNull: true,
                 defaultValue: 'MASTER',
-            },
-            role: {
-                type: DataTypes.ENUM('HEAD_LECTURER', 'LECTURER', 'SUB_HEAD_LECTURER'),
-                allowNull: true,
-                defaultValue: 'LECTURER',
-            },
-            isAdmin: {
-                type: DataTypes.BOOLEAN,
-                allowNull: false,
-                defaultValue: false,
-                field: 'is_admin',
             },
             isActive: {
                 type: DataTypes.BOOLEAN,
