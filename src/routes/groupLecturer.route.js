@@ -25,7 +25,6 @@ router.get(APP_ROUTER.GROUP_LECTURER_NO_GROUP, getLecturerNoGroupByType);
 router.get(
     APP_ROUTER.GROUP_LECTURER_BY_LECTURERS,
     protectLecturer,
-    checkRoleLecturer('HEAD_LECTURER'),
     getGroupLecturersByLecturerId,
 );
 
