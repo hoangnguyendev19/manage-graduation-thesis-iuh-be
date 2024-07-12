@@ -89,6 +89,7 @@ const APP_ROUTER = {
     GROUP_STUDENT_JOIN_GROUP: '/:id/join-group',
     GROUP_STUDENT_CHOOSE_TOPIC: '/:id/choose-topic',
     GROUP_STUDENT_CANCEL_TOPIC: '/:id/cancel-topic',
+    GROUP_STUDENT_MEMBER: '/:id/members',
 
     //test route
     GROUP_NOTIFICATION: '/:id/notfication',

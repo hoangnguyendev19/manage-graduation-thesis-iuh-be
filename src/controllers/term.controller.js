@@ -9,13 +9,14 @@ const _ = require('lodash');
 exports.getTerms = async (req, res) => {
     try {
         const terms = await sequelize.query(
-            `SELECT t.id, t.name, t.start_date as startDate, t.end_date as endDate, td1.start_date as startChooseGroupDate, td1.end_date as endChooseGroupDate, td2.start_date as startChooseTopicDate, td2.end_date as endChooseTopicDate, td3.start_date as startDiscussionDate, td3.end_date as endDiscussionDate, td4.start_date as startReportDate, td4.end_date as endReportDate, td5.start_date as startPublicResultDate, td5.end_date as endPublicResultDate
+            `SELECT t.id, t.name, t.start_date as startDate, t.end_date as endDate, td1.start_date as startChooseGroupDate, td1.end_date as endChooseGroupDate, td2.start_date as startChooseTopicDate, td2.end_date as endChooseTopicDate, td3.start_date as startDiscussionDate, td3.end_date as endDiscussionDate, td4.start_date as startReportDate, td4.end_date as endReportDate, td5.start_date as startPublicResultDate, td5.end_date as endPublicResultDate, m.name as majorName
             FROM terms t 
             LEFT JOIN term_details td1 ON t.id = td1.term_id AND td1.name = 'CHOOSE_GROUP'
             LEFT JOIN term_details td2 ON t.id = td2.term_id AND td2.name = 'CHOOSE_TOPIC'
             LEFT JOIN term_details td3 ON t.id = td3.term_id AND td3.name = 'DISCUSSION'
             LEFT JOIN term_details td4 ON t.id = td4.term_id AND td4.name = 'REPORT'
             LEFT JOIN term_details td5 ON t.id = td5.term_id AND td5.name = 'PUBLIC_RESULT'
+            LEFT JOIN majors m ON t.major_id = m.id
             ORDER BY t.start_date DESC`,
             {
                 type: QueryTypes.SELECT,
@@ -68,13 +69,14 @@ exports.getTermById = async (req, res) => {
     try {
         const { id } = req.params;
         const term = await sequelize.query(
-            `SELECT t.id, t.name, t.start_date as startDate, t.end_date as endDate, td1.start_date as startChooseGroupDate, td1.end_date as endChooseGroupDate, td2.start_date as startChooseTopicDate, td2.end_date as endChooseTopicDate, td3.start_date as startDiscussionDate, td3.end_date as endDiscussionDate, td4.start_date as startReportDate, td4.end_date as endReportDate, td5.start_date as startPublicResultDate, td5.end_date as endPublicResultDate
+            `SELECT t.id, t.name, t.start_date as startDate, t.end_date as endDate, td1.start_date as startChooseGroupDate, td1.end_date as endChooseGroupDate, td2.start_date as startChooseTopicDate, td2.end_date as endChooseTopicDate, td3.start_date as startDiscussionDate, td3.end_date as endDiscussionDate, td4.start_date as startReportDate, td4.end_date as endReportDate, td5.start_date as startPublicResultDate, td5.end_date as endPublicResultDate, m.name as majorName
             FROM terms t 
             LEFT JOIN term_details td1 ON t.id = td1.term_id AND td1.name = 'CHOOSE_GROUP'
             LEFT JOIN term_details td2 ON t.id = td2.term_id AND td2.name = 'CHOOSE_TOPIC'
             LEFT JOIN term_details td3 ON t.id = td3.term_id AND td3.name = 'DISCUSSION'
             LEFT JOIN term_details td4 ON t.id = td4.term_id AND td4.name = 'REPORT'
             LEFT JOIN term_details td5 ON t.id = td5.term_id AND td5.name = 'PUBLIC_RESULT'
+            LEFT JOIN majors m ON t.major_id = m.id
             WHERE t.id = :id
             ORDER BY t.start_date DESC`,
             {
