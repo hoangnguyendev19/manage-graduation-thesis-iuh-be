@@ -11,6 +11,7 @@ const APP_ROUTER = {
     UPDATE_PASSWORD: '/update-password',
     ME: '/me',
     IMPORT: '/import',
+    IMPORT_PREVIOUS: '/import-previous',
     RESET_PASSWORD: '/reset-password',
     // FORGOT_PASSWORD: '/forgot-password',
     LOCK: '/lock',
@@ -25,8 +26,11 @@ const APP_ROUTER = {
 
     //LECTURERS:
     LECTURER: '/api/v1/lecturers',
-    LECTURER_MAJOR: '/major',
-    LECTURER_ROLE: '/:id/role',
+    LECTURER_BY_MAJOR: '/major/:id',
+
+    //ROLES
+    ROLE: '/api/v1/roles',
+    ROLE_BY_LECTURER: '/lecturer/:id',
 
     // LECTURER_TERM
     LECTURER_TERM: '/api/v1/lecturer-terms',
@@ -40,6 +44,7 @@ const APP_ROUTER = {
 
     //TERMS
     TERM: '/api/v1/terms',
+    TERM_BY_MAJOR: '/major/:id',
     TERM_NOW: '/now',
     TERM_CHOOSE_GROUP: '/:id/choose-group',
     TERM_CHOOSE_TOPIC: '/:id/choose-topic',
@@ -60,6 +65,7 @@ const APP_ROUTER = {
     TOPIC: '/api/v1/topics',
     TOPIC_TERM: 'api/v1/topics/:termId',
     TOPIC_STATUS: '/:id/status',
+    TOPIC_QUANTITY_GROUP_MAX: '/:id/quantity-group-max',
 
     //GROUP_LECTURER
     GROUP_LECTURER: '/api/v1/group-lecturers',
@@ -83,6 +89,7 @@ const APP_ROUTER = {
     GROUP_STUDENT_JOIN_GROUP: '/:id/join-group',
     GROUP_STUDENT_CHOOSE_TOPIC: '/:id/choose-topic',
     GROUP_STUDENT_CANCEL_TOPIC: '/:id/cancel-topic',
+    GROUP_STUDENT_MEMBER: '/:id/members',
 
     //test route
     GROUP_NOTIFICATION: '/:id/notfication',

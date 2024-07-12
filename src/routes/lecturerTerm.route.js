@@ -8,13 +8,13 @@ const {
     deleteLecturerTerm,
 } = require('../controllers/lecturerTerm.controller');
 
-const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
+const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 
 const router = express.Router();
 
-router.post(APP_ROUTER.IMPORT, protectLecturer, checkRoleLecturer('ADMIN'), importLecturerTerms);
+router.post(APP_ROUTER.IMPORT, protectLecturer, importLecturerTerms);
 
-router.get(APP_ROUTER.LIST, protectLecturer, checkRoleLecturer('ADMIN'), getLecturerTermsList);
+router.get(APP_ROUTER.LIST, protectLecturer, getLecturerTermsList);
 
 router.delete(APP_ROUTER.INDEX, deleteLecturerTerm);
 

@@ -4,6 +4,7 @@ const { DataTypes } = require('sequelize');
 const StudentModel = require('./student.model');
 const MajorModel = require('./major.model');
 const LecturerModel = require('./lecturer.model');
+const RoleModel = require('./role.model');
 const GroupLecturerModel = require('./groupLecturer.model');
 const GroupLecturerMemberModel = require('./groupLecturerMember.model');
 const LecturerTermModel = require('./lecturerTerm.model');
@@ -23,6 +24,7 @@ const NotificationLecturerModel = require('./notificationLecturer.model');
 const Major = MajorModel(sequelize, DataTypes);
 const Student = StudentModel(sequelize, DataTypes);
 const Lecturer = LecturerModel(sequelize, DataTypes);
+const Role = RoleModel(sequelize, DataTypes);
 const GroupLecturer = GroupLecturerModel(sequelize, DataTypes);
 const GroupLecturerMember = GroupLecturerMemberModel(sequelize, DataTypes);
 const LecturerTerm = LecturerTermModel(sequelize, DataTypes);
@@ -57,6 +59,16 @@ Major.hasMany(Lecturer, {
 Lecturer.belongsTo(Major, {
     foreignKey: 'major_id',
     as: 'major',
+});
+
+Lecturer.hasMany(Role, {
+    foreignKey: 'lecturer_id',
+    as: 'roles',
+});
+
+Role.belongsTo(Lecturer, {
+    foreignKey: 'lecturer_id',
+    as: 'lecturer',
 });
 
 Lecturer.hasMany(LecturerTerm, {
@@ -107,6 +119,16 @@ Term.hasMany(TermDetail, {
 TermDetail.belongsTo(Term, {
     foreignKey: 'term_id',
     as: 'term',
+});
+
+Major.hasMany(Term, {
+    foreignKey: 'major_id',
+    as: 'terms',
+});
+
+Term.belongsTo(Major, {
+    foreignKey: 'major_id',
+    as: 'major',
 });
 
 GroupLecturer.hasMany(GroupLecturerMember, {
@@ -278,6 +300,7 @@ module.exports = {
     GroupStudent,
     Major,
     Lecturer,
+    Role,
     LecturerTerm,
     GroupLecturer,
     GroupLecturerMember,

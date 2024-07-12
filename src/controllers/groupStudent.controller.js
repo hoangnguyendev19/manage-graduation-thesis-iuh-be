@@ -150,7 +150,7 @@ exports.getGroupStudentsByTerm = async (req, res) => {
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 WHERE gs.term_id = :termId
                 GROUP BY gs.id
-                ORDER BY gs.created_at DESC`,
+                ORDER BY COUNT(st.student_id) ASC`,
             {
                 type: QueryTypes.SELECT,
                 replacements: {
@@ -202,6 +202,33 @@ exports.getGroupStudentById = async (req, res) => {
             success: true,
             message: 'Get by id success!',
             groupStudent,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getGroupStudentMembers = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const members = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+            attributes: ['id', 'status', 'isAdmin'],
+            include: {
+                model: Student,
+                attributes: ['id', 'username', 'fullName', 'phone', 'email', 'gender', 'clazzName'],
+                as: 'student',
+            },
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get members success!',
+            members,
         });
     } catch (error) {
         console.log(error);
@@ -565,19 +592,16 @@ exports.leaveGroupStudent = async (req, res) => {
 
         await studentTerm.save();
 
-        // const studentTerms = await StudentTerm.findAll({
-        //     where: {
-        //         group_student_id: id,
-        //     },
-        // });
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
 
-        // if (studentTerms.length === 0) {
-        //     const groupStudent = await GroupStudent.findByPk(id);
-        //     await groupStudent.destroy();
-        // } else if (studentTerms.length === 1) {
-        //     studentTerms[0].isAdmin = true;
-        //     await studentTerms[0].save();
-        // }
+        if (studentTerms.length === 1) {
+            studentTerms[0].isAdmin = true;
+            await studentTerms[0].save();
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

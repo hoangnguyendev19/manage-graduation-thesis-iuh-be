@@ -1,4 +1,4 @@
-const { Lecturer, Major, LecturerTerm } = require('../models/index');
+const { Lecturer, Major, LecturerTerm, Role } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -45,6 +45,11 @@ exports.login = async (req, res) => {
             ],
         });
 
+        const roles = await Role.findAll({
+            where: { lecturer_id: user.id },
+            attributes: ['name'],
+        });
+
         const accessToken = generateAccessToken(lecturer.id);
         const refreshToken = generateRefreshToken(lecturer.id);
 
@@ -52,6 +57,7 @@ exports.login = async (req, res) => {
             success: true,
             message: 'Login success!',
             user,
+            roles: roles.map((role) => role.name),
             accessToken,
             refreshToken,
         });
@@ -227,16 +233,17 @@ exports.getLecturers = async (req, res) => {
     }
 };
 
-exports.getLecturersByMajor = async (req, res) => {
+exports.getLecturersByMajorId = async (req, res) => {
     try {
-        const { termId, majorId } = req.query;
+        const { termId } = req.query;
+        const { id } = req.params;
 
         const lecturers = await sequelize.query(
             `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
                 FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
                 WHERE m.id = :majorId AND lt.term_id = :termId`,
             {
-                replacements: { termId, majorId },
+                replacements: { termId, majorId: id },
                 type: QueryTypes.SELECT,
             },
         );
@@ -303,6 +310,11 @@ exports.createLecturer = async (req, res) => {
             major_id: majorId,
         });
 
+        await Role.create({
+            lecturer_id: lecturer.id,
+            name: 'LECTURER',
+        });
+
         await LecturerTerm.create({
             lecturer_id: lecturer.id,
             term_id: termId,
@@ -326,10 +338,16 @@ exports.createLecturer = async (req, res) => {
             ],
         });
 
+        const roles = await Role.findAll({
+            where: { lecturer_id: lecturer.id },
+            attributes: ['name'],
+        });
+
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Create lecturer success!',
             lecturer: newLecturer,
+            roles,
         });
     } catch (error) {
         console.log(error);
@@ -423,6 +441,12 @@ exports.importLecturers = async (req, res) => {
 
                 if (!lecturer) {
                     const newLecturer = await Lecturer.create(lec);
+
+                    await Role.create({
+                        lecturer_id: newLecturer.id,
+                        name: 'LECTURER',
+                    });
+
                     await LecturerTerm.create({
                         lecturer_id: newLecturer.id,
                         term_id: termId,
@@ -448,6 +472,11 @@ exports.importLecturers = async (req, res) => {
 
                 if (!lecturer) {
                     const newLecturer = await Lecturer.create(lec);
+
+                    await Role.create({
+                        lecturer_id: newLecturer.id,
+                        name: 'LECTURER',
+                    });
 
                     await LecturerTerm.create({
                         lecturer_id: newLecturer.id,
@@ -506,27 +535,6 @@ exports.resetPassword = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Reset password lecturer success!',
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.changeRole = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { role } = req.body;
-        let lecturer = await Lecturer.findByPk(id);
-        if (!lecturer) {
-            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
-        }
-
-        await lecturer.update({ role });
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Change role success!',
         });
     } catch (error) {
         console.log(error);
