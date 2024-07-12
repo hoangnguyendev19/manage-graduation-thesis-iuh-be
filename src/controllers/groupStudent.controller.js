@@ -209,6 +209,33 @@ exports.getGroupStudentById = async (req, res) => {
     }
 };
 
+exports.getGroupStudentMembers = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const members = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+            attributes: ['id', 'status', 'isAdmin'],
+            include: {
+                model: Student,
+                attributes: ['id', 'username', 'fullName', 'phone', 'email', 'gender', 'clazzName'],
+                as: 'student',
+            },
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get members success!',
+            members,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getMembersById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -565,19 +592,16 @@ exports.leaveGroupStudent = async (req, res) => {
 
         await studentTerm.save();
 
-        // const studentTerms = await StudentTerm.findAll({
-        //     where: {
-        //         group_student_id: id,
-        //     },
-        // });
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
 
-        // if (studentTerms.length === 0) {
-        //     const groupStudent = await GroupStudent.findByPk(id);
-        //     await groupStudent.destroy();
-        // } else if (studentTerms.length === 1) {
-        //     studentTerms[0].isAdmin = true;
-        //     await studentTerms[0].save();
-        // }
+        if (studentTerms.length === 1) {
+            studentTerms[0].isAdmin = true;
+            await studentTerms[0].save();
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

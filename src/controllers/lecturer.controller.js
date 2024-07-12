@@ -57,7 +57,7 @@ exports.login = async (req, res) => {
             success: true,
             message: 'Login success!',
             user,
-            roles,
+            roles: roles.map((role) => role.name),
             accessToken,
             refreshToken,
         });

@@ -6,6 +6,7 @@ const {
     getGroupStudents,
     getGroupStudentsByLecturer,
     getGroupStudentById,
+    getGroupStudentMembers,
     getMembersById,
     getGroupStudentsByTerm,
     getMyGroupStudent,
@@ -31,6 +32,8 @@ router.get(APP_ROUTER.ME, protectStudent, getMyGroupStudent);
 router.get(APP_ROUTER.GROUP_STUDENT_BY_TERM, protectStudent, getGroupStudentsByTerm);
 
 router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, protectLecturer, getGroupStudentsByLecturer);
+
+router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, getGroupStudentMembers);
 
 router.get(APP_ROUTER.INDEX, getGroupStudents);
 
