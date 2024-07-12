@@ -1,4 +1,4 @@
-const { Evaluation } = require('../models/index');
+const { Evaluation, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const xlsx = require('xlsx');
@@ -118,6 +118,56 @@ exports.importEvaluations = async (req, res) => {
         });
 
         await Evaluation.bulkCreate(evaluations);
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Import success!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.importPreviousEvaluations = async (req, res) => {
+    try {
+        const { termId, type } = req.body;
+
+        const term = await Term.findByPk(termId);
+
+        const termsByMajor = await Term.findAll({
+            where: {
+                major_id: term.major_id,
+            },
+        });
+
+        let previousTerm = null;
+
+        // how to get previous term by termId
+        termsByMajor.forEach((term) => {
+            if (term.id === termId) {
+                previousTerm = term;
+            }
+        });
+
+        const evaluations = await Evaluation.findAll({
+            where: {
+                term_id: previousTerm.id,
+                type: type,
+            },
+        });
+
+        const newEvaluations = evaluations.map((evaluation) => {
+            return {
+                name: evaluation.name,
+                scoreMax: evaluation.scoreMax,
+                type: evaluation.type,
+                description: evaluation.description,
+                term_id: termId,
+            };
+        });
+
+        await Evaluation.bulkCreate(newEvaluations);
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,

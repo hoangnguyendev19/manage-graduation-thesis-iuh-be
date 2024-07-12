@@ -5,9 +5,8 @@ const {
     refreshToken,
     logout,
     getLecturers,
-    getLecturersByMajor,
+    getLecturersByMajorId,
     getLecturerById,
-    changeRole,
     createLecturer,
     updateLecturer,
     importLecturers,
@@ -21,7 +20,7 @@ const {
     searchLecturer,
 } = require('../controllers/lecturer.controller');
 
-const { protectLecturer, checkRoleLecturer } = require('../middleware/lecturer.middleware');
+const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
@@ -40,31 +39,24 @@ router.get(APP_ROUTER.QUERY, searchLecturer);
 
 router.get(APP_ROUTER.INDEX, getLecturers);
 
-router.get(APP_ROUTER.LECTURER_MAJOR, getLecturersByMajor);
+router.get(APP_ROUTER.LECTURER_BY_MAJOR, getLecturersByMajorId);
 
 router.get(APP_ROUTER.ID, getLecturerById);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createLecturer);
+// router.post(APP_ROUTER.INDEX, protectLecturer, createLecturer);
+router.post(APP_ROUTER.INDEX, createLecturer);
 
-router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), updateLecturer);
+router.put(APP_ROUTER.ID, protectLecturer, updateLecturer);
 
-router.post(
-    APP_ROUTER.IMPORT,
-    protectLecturer,
-    checkRoleLecturer('ADMIN'),
-    upload.single('file'),
-    importLecturers,
-);
+router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importLecturers);
 
-router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), deleteLecturer);
+router.delete(APP_ROUTER.ID, protectLecturer, deleteLecturer);
 
-router.post(APP_ROUTER.RESET_PASSWORD, protectLecturer, checkRoleLecturer('ADMIN'), resetPassword);
+router.post(APP_ROUTER.RESET_PASSWORD, protectLecturer, resetPassword);
 
-router.put(APP_ROUTER.LECTURER_ROLE, protectLecturer, checkRoleLecturer('ADMIN'), changeRole);
+router.post(APP_ROUTER.LOCK, protectLecturer, lockAccount);
 
-router.post(APP_ROUTER.LOCK, protectLecturer, checkRoleLecturer('ADMIN'), lockAccount);
-
-router.post(APP_ROUTER.UNLOCK, protectLecturer, checkRoleLecturer('ADMIN'), unlockAccount);
+router.post(APP_ROUTER.UNLOCK, protectLecturer, unlockAccount);
 
 // ----------------- Lecturer -----------------
 

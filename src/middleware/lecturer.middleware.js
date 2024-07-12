@@ -1,6 +1,7 @@
 const Error = require('../helper/errors');
-const { Lecturer } = require('../models/index');
+const { Lecturer, Role } = require('../models/index');
 const { verifyAccessToken } = require('../helper/jwt');
+const { Op } = require('sequelize');
 
 exports.protectLecturer = async (req, res, next) => {
     try {
@@ -29,17 +30,23 @@ exports.protectLecturer = async (req, res, next) => {
     }
 };
 
-exports.checkRoleLecturer = (roleName) => {
-    // roleName: 'ADMIN' | 'LECTURER' | 'HEAD_LECTURER' | 'SUB_HEAD_LECTURER'
+exports.checkRole = (roles) => {
+    // roleName: 'ADMIN' | 'LECTURER' | 'HEAD_LECTURER' | 'HEAD_COURSE'
     return async (req, res, next) => {
         try {
-            if (roleName === 'ADMIN' && req.user.isAdmin === true) {
-                next();
-                return;
+            const role = await Role.findOne({
+                where: {
+                    name: {
+                        [Op.in]: roles,
+                    },
+                    lecturer_id: req.user.id,
+                },
+            });
+
+            if (!role) {
+                return Error.sendWarning(res, 'Bạn không có quyền truy cập vào tài nguyên này!');
             }
-            if (req.user.role !== roleName) {
-                return Error.sendWarning(res, 'You do not have permission to access this route');
-            }
+
             next();
         } catch (error) {
             return Error.sendError(res, error);
