@@ -20,7 +20,6 @@ const {
 } = require('../controllers/term.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
-const { protectStudent } = require('../middleware/student.middleware');
 
 const router = express.Router();
 
