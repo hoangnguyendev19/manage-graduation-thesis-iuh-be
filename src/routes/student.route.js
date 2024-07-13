@@ -18,10 +18,11 @@ const {
     updatePassword,
     getMe,
     updateMe,
+    getStudentsNoHaveGroup,
 } = require('../controllers/student.controller');
 
 const { protectStudent } = require('../middleware/student.middleware');
-const { checkRoleLecturer, protectLecturer } = require('../middleware/lecturer.middleware');
+const { checkRole, protectLecturer } = require('../middleware/lecturer.middleware');
 const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
@@ -36,39 +37,30 @@ router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 // ----------------- Admin -----------------
 router.get(APP_ROUTER.INDEX, getStudents);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), createStudent);
-
-router.put(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), updateStudent);
-
-router.delete(APP_ROUTER.ID, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), deleteStudent);
+router.get(APP_ROUTER.STUDENTS_NO_HAVE_GROUP, protectLecturer, getStudentsNoHaveGroup);
 
 router.post(
-    APP_ROUTER.IMPORT,
+    APP_ROUTER.INDEX,
     protectLecturer,
-    checkRoleLecturer('HEAD_LECTURER'),
-    upload.single('file'),
-    importStudents,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    createStudent,
 );
 
-router.post(
-    APP_ROUTER.RESET_PASSWORD,
-    protectLecturer,
-    checkRoleLecturer('HEAD_LECTURER'),
-    resetPassword,
-);
+router.put(APP_ROUTER.ID, protectLecturer, updateStudent);
 
-router.post(APP_ROUTER.LOCK, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), lockAccount);
+router.delete(APP_ROUTER.ID, protectLecturer, deleteStudent);
 
-router.put(APP_ROUTER.LOCK, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), lockAccounts);
+router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importStudents);
 
-router.post(APP_ROUTER.UNLOCK, protectLecturer, checkRoleLecturer('HEAD_LECTURER'), unlockAccount);
+router.post(APP_ROUTER.RESET_PASSWORD, protectLecturer, resetPassword);
 
-router.put(
-    APP_ROUTER.STUDENT_STATUS,
-    protectLecturer,
-    checkRoleLecturer('HEAD_LECTURER'),
-    updateStatus,
-);
+router.post(APP_ROUTER.LOCK, protectLecturer, lockAccount);
+
+router.put(APP_ROUTER.LOCK, protectLecturer, lockAccounts);
+
+router.post(APP_ROUTER.UNLOCK, protectLecturer, unlockAccount);
+
+router.put(APP_ROUTER.STUDENT_STATUS, protectLecturer, updateStatus);
 
 // ----------------- Student -----------------
 router.get(APP_ROUTER.ME, protectStudent, getMe);

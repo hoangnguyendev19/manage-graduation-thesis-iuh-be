@@ -11,6 +11,7 @@ const APP_ROUTER = {
     UPDATE_PASSWORD: '/update-password',
     ME: '/me',
     IMPORT: '/import',
+    IMPORT_PREVIOUS: '/import-previous',
     RESET_PASSWORD: '/reset-password',
     // FORGOT_PASSWORD: '/forgot-password',
     LOCK: '/lock',
@@ -21,14 +22,15 @@ const APP_ROUTER = {
     UPLOAD: '/api/v1/uploads',
 
     //MAJORS
-    MAJORS: '/api/v1/majors',
+    MAJOR: '/api/v1/majors',
 
     //LECTURERS:
     LECTURER: '/api/v1/lecturers',
+    LECTURER_BY_MAJOR: '/major/:id',
 
-    // LECTURER_AVAILABLE_GROUP: '/available-group',
-    CHANGE_ROLE_LECTURE: '/:id/role',
-    // IMPORT_LECTURE: '/import-lecturer',
+    //ROLES
+    ROLE: '/api/v1/roles',
+    ROLE_BY_LECTURER: '/lecturer/:id',
 
     // LECTURER_TERM
     LECTURER_TERM: '/api/v1/lecturer-terms',
@@ -38,9 +40,11 @@ const APP_ROUTER = {
     STUDENT_STATUS: '/:id/status',
     // STUDENT_RESET_PASSWORD: '/:id/reset-password',
     // STUDENT_EXPORT: '/export-transcript',
+    STUDENTS_NO_HAVE_GROUP: '/no-have-group',
 
     //TERMS
     TERM: '/api/v1/terms',
+    TERM_BY_MAJOR: '/major/:id',
     TERM_NOW: '/now',
     TERM_CHOOSE_GROUP: '/:id/choose-group',
     TERM_CHOOSE_TOPIC: '/:id/choose-topic',
@@ -51,23 +55,31 @@ const APP_ROUTER = {
     //TRANSCRIPTS
     TRANSCRIPT: '/api/v1/transcripts',
     TRANSCRIPT_BY_SUMMARY: '/summary',
+    TRANSCRIPT_BY_LECTURER_SUPPORT: '/lecturer-supports',
+    TRANSCRIPT_GROUP_STUDENT_TO_SCORING: '/lecturer-supports/group-student-to-scoring',
+    TRANSCRIPT_BY_STUDENT: '/student',
+    TRANSCRIPT_BY_GROUP_STUDENT: '/group-student',
+    LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER: '/scoring/:type/listStudentsNoTranscript',
 
     //TOPICS
     TOPIC: '/api/v1/topics',
     TOPIC_TERM: 'api/v1/topics/:termId',
     TOPIC_STATUS: '/:id/status',
+    TOPIC_QUANTITY_GROUP_MAX: '/:id/quantity-group-max',
 
     //GROUP_LECTURER
     GROUP_LECTURER: '/api/v1/group-lecturers',
     GROUP_LECTURER_MEMBER: '/:id/members',
-    GROUP_LECTURER_NO_GROUP: '/:type/no-group',
     GROUP_LECTURER_BY_TYPE: '/:type',
+    GROUP_LECTURER_NO_GROUP: '/:type/no-group',
+    GROUP_LECTURER_BY_LECTURERS: '/:type/lecturers',
+
+    // GROUP_LECTURER_BY_LECTURERS: '/:type/lecturers',
 
     //GROUP_STUDENT
     GROUP_STUDENT: '/api/v1/group-students',
     GROUP_STUDENT_BY_LECTURER: '/lecturer',
-    GROUP_STUDENT_BY_MAJOR: '/major',
-    GROUP_STUDENT_TYPE_REPORT: '/:id/type-report',
+    GROUP_STUDENT_BY_TERM: '/term',
     GROUP_STUDENT_ASSIGN_ADMIN: '/:id/assign-admin',
     GROUP_STUDENT_ASSIGN_TOPIC: '/:id/assign-topic',
     GROUP_STUDENT_ADD_MEMBER: '/:id/add-member',
@@ -77,6 +89,7 @@ const APP_ROUTER = {
     GROUP_STUDENT_JOIN_GROUP: '/:id/join-group',
     GROUP_STUDENT_CHOOSE_TOPIC: '/:id/choose-topic',
     GROUP_STUDENT_CANCEL_TOPIC: '/:id/cancel-topic',
+    GROUP_STUDENT_MEMBER: '/:id/members',
 
     //test route
     GROUP_NOTIFICATION: '/:id/notfication',
@@ -91,6 +104,8 @@ const APP_ROUTER = {
 
     //EVALUATIONS
     EVALUATION: '/api/v1/evaluations',
+    SCORES: '/scores',
+
     // EVALUATION_EXPORT_PDF: '/pdf/assigns/:assign_id/download',
     // GENERATE_EVALUATION: '/pdf/download',
 

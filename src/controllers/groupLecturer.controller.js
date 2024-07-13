@@ -20,7 +20,7 @@ exports.getLecturerNoGroupByType = async (req, res) => {
     try {
         const { termId } = req.query;
         const { type } = req.params;
-        const subQuery = `SELECT lt.id FROM lecturer_terms lt LEFT JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id LEFT JOIN  group_lecturers gl ON gl.id  = glm.group_lecturer_id WHERE gl.type = '${type.toUpperCase()}' `;
+        const subQuery = `SELECT lt.id FROM lecturer_terms lt INNER JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id LEFT JOIN  group_lecturers gl ON gl.id  = glm.group_lecturer_id WHERE gl.type = '${type.toUpperCase()}' `;
 
         const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId    
              FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
@@ -58,8 +58,8 @@ exports.getGroupLecturers = async (req, res) => {
             });
         }
 
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.email, l.gender, l.degree, l.role, l.is_active as isActive, l.major_id as majoId, m.name as majorName
-        FROM lecturers l LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.gender, m.name as majorName
+        FROM lecturers l  JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
         ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
         WHERE gl.id = :id;
         `;
@@ -108,6 +108,67 @@ exports.getGroupLecturers = async (req, res) => {
     }
 };
 
+exports.getGroupLecturersByLecturerId = async (req, res) => {
+    try {
+        const { termId, lecturerId } = req.query;
+        const { type } = req.params;
+        let groupLecturers = null;
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: lecturerId,
+                term_id: termId,
+            },
+            attributes: ['id'],
+        });
+
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.gender, m.name as majorName
+        FROM lecturers l  JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
+        ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
+        WHERE gl.id = :id;
+        `;
+        const query2 = `select gr.id as id, gr.name, gr.type from group_lecturers gr 
+        left join group_lecturer_members grm
+        on gr.id = grm.group_lecturer_id
+        where grm.lecturer_term_id = :lecturerTermId 
+        and gr.type = :type
+        `;
+        groupLecturers = await sequelize.query(query2, {
+            replacements: {
+                lecturerTermId: lecturerTerm.id,
+                type: type,
+            },
+            type: QueryTypes.SELECT,
+            attributes: ['id', 'name', 'type'],
+        });
+
+        const result = [];
+        for (let i = 0; i < groupLecturers.length; i++) {
+            let id = groupLecturers[i].id;
+            const groupLecturerMembers = await sequelize.query(query, {
+                type: QueryTypes.SELECT,
+                replacements: {
+                    id,
+                },
+            });
+            result.push({
+                groupLecturerId: id,
+                name: groupLecturers[i].name,
+                type: groupLecturers[i].type,
+                members: groupLecturerMembers,
+            });
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            groupLecturers: result,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getGroupLecturerById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -133,7 +194,7 @@ exports.getGroupLecturerById = async (req, res) => {
                 groupLecturerId: oldGr.id,
                 termId: oldGr.term_id,
                 name: oldGr.name,
-                type: oldGr.type,
+                typeGroup: oldGr.type,
                 members: groupLecturerMembers,
             },
         });
@@ -251,6 +312,7 @@ exports.getMemberFromGroupLecturer = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
 exports.removeLecturerFromGroupLecturer = async (req, res) => {
     try {
         const { id } = req.params;
@@ -295,6 +357,16 @@ exports.addMemberToGroupLecturer = async (req, res) => {
         const { id } = req.params;
         const { lecturerId } = req.body;
         const oldGr = await GroupLecturer.findByPk(id);
+        const isExist = await isExistLecturerInGroup(lecturerId, id);
+        if (isExist) {
+            return Error.sendConflict(res, 'Giảng viên đã tham gia nhóm này');
+        }
+        const isFull = await isFullquantityOfGroup(id);
+
+        if (isFull) {
+            return Error.sendNotFound(res, 'Nhóm đã đủ số lượng thành viên tối đa');
+        }
+
         if (!oldGr) {
             return Error.sendNotFound(res, 'Không có nhóm giảng viên này');
         }
@@ -323,4 +395,31 @@ exports.addMemberToGroupLecturer = async (req, res) => {
         console.log(error);
         Error.sendError(res, error);
     }
+};
+//Helper
+const isExistLecturerInGroup = async (lecturerId, id) => {
+    const query =
+        'select l.id from lecturers l join lecturer_terms lt on lt.lecturer_id = l.id right join group_lecturer_members glm on glm.lecturer_term_id = lt.id where glm.group_lecturer_id = :id and l.id = :lecturerId';
+    const member = await sequelize.query(query, {
+        replacements: {
+            id,
+            lecturerId,
+        },
+        type: QueryTypes.SELECT,
+    });
+
+    if (member.length > 0) {
+        return true;
+    } else return false;
+};
+
+const isFullquantityOfGroup = async (id) => {
+    const members = await GroupLecturerMember.findAll({
+        where: {
+            group_lecturer_id: id,
+        },
+    });
+    if (members.length === 2) {
+        return true;
+    } else return false;
 };

@@ -2,6 +2,7 @@ const { APP_ROUTER } = require('../constants/router');
 
 const major = require('./major.route');
 const lecturer = require('./lecturer.route');
+const role = require('./role.route');
 const student = require('./student.route');
 const term = require('./term.route');
 const lecturerTerm = require('./lecturerTerm.route');
@@ -15,9 +16,11 @@ const notificationStudent = require('./notificationStudent.route');
 const notificationLecturer = require('./notificationLecturer.route');
 const upload = require('./upload.route');
 const assign = require('./assign.route');
+
 function router(app) {
-    app.use(APP_ROUTER.MAJORS, major);
+    app.use(APP_ROUTER.MAJOR, major);
     app.use(APP_ROUTER.LECTURER, lecturer);
+    app.use(APP_ROUTER.ROLE, role);
     app.use(APP_ROUTER.STUDENT, student);
     app.use(APP_ROUTER.TERM, term);
     app.use(APP_ROUTER.LECTURER_TERM, lecturerTerm);

@@ -1,7 +1,7 @@
 const { GroupStudent, StudentTerm, Student, Topic } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { QueryTypes } = require('sequelize');
+const { QueryTypes, where } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const _ = require('lodash');
 
@@ -67,9 +67,11 @@ exports.getGroupStudents = async (req, res) => {
             total = total[0].total;
         } else if (!majorId && !topicId) {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName,l.full_name as lecturerName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
                 LEFT JOIN student_terms st ON gs.id = st.group_student_id 
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
+                LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
+                LEFT JOIN lecturers l ON l.id = lt.lecturer_id
                 WHERE gs.term_id = :termId
                 GROUP BY gs.id
                 ORDER BY gs.created_at DESC
@@ -116,7 +118,7 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
         const { termId } = req.query;
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, tc.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
+            `SELECT gs.id, gs.name, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
@@ -139,19 +141,21 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
     }
 };
 
-exports.getGroupStudentsByMajor = async (req, res) => {
+exports.getGroupStudentsByTerm = async (req, res) => {
     try {
-        const { termId, majorId } = req.query;
+        const { termId } = req.query;
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs
-            LEFT JOIN student_terms st ON gs.id = st.group_student_id
-            LEFT JOIN students s ON st.student_id = s.id
-            WHERE gs.term_id = :termId and s.major_id = :majorId
-            GROUP BY gs.id`,
+            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+                WHERE gs.term_id = :termId
+                GROUP BY gs.id
+                ORDER BY COUNT(st.student_id) ASC`,
             {
                 type: QueryTypes.SELECT,
-                replacements: { termId, majorId },
+                replacements: {
+                    termId,
+                },
             },
         );
 
@@ -198,6 +202,33 @@ exports.getGroupStudentById = async (req, res) => {
             success: true,
             message: 'Get by id success!',
             groupStudent,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getGroupStudentMembers = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const members = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+            attributes: ['id', 'status', 'isAdmin'],
+            include: {
+                model: Student,
+                attributes: ['id', 'username', 'fullName', 'phone', 'email', 'gender', 'clazzName'],
+                as: 'student',
+            },
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get members success!',
+            members,
         });
     } catch (error) {
         console.log(error);
@@ -275,7 +306,7 @@ exports.getMyGroupStudent = async (req, res) => {
             attributes: ['student_id', 'isAdmin'],
             include: {
                 model: Student,
-                attributes: ['userName', 'fullName', 'avatarUrl', 'gender', 'phoneNumber', 'email'],
+                attributes: ['username', 'fullName', 'avatar', 'gender', 'phone', 'email'],
                 as: 'student',
             },
         });
@@ -284,7 +315,7 @@ exports.getMyGroupStudent = async (req, res) => {
             where: {
                 id: studentTerm.group_student_id,
             },
-            attributes: ['id', 'name', 'status', 'topic_id'],
+            attributes: ['id', 'name', 'topic_id'],
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -567,10 +598,7 @@ exports.leaveGroupStudent = async (req, res) => {
             },
         });
 
-        if (studentTerms.length === 0) {
-            const groupStudent = await GroupStudent.findByPk(id);
-            await groupStudent.destroy();
-        } else if (studentTerms.length === 1) {
+        if (studentTerms.length === 1) {
             studentTerms[0].isAdmin = true;
             await studentTerms[0].save();
         }
@@ -600,7 +628,19 @@ exports.joinGroupStudent = async (req, res) => {
         }
 
         studentTerm.group_student_id = id;
-        studentTerm.isAdmin = false;
+
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
+
+        // check if group has no admin
+        if (studentTerms.length === 0) {
+            studentTerm.isAdmin = true;
+        } else {
+            studentTerm.isAdmin = false;
+        }
 
         await studentTerm.save();
 

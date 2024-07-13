@@ -339,7 +339,7 @@ exports.importStudents = async (req, res) => {
         const students = [];
         const password = await hashPassword('12345678');
         // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Số điện thoại, Mã lớp
-        jsonData.forEach(async (student) => {
+        for (const student of jsonData) {
             const username = student['Mã SV'];
             const fullName = `${student['Họ đệm']} ${student['Tên']}`;
             const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
@@ -358,14 +358,14 @@ exports.importStudents = async (req, res) => {
                 clazzName,
                 major_id,
             });
-        });
+        }
 
         const studentTerms = await StudentTerm.findAll({
             where: { term_id: termId },
         });
 
         if (studentTerms.length !== 0) {
-            students.forEach(async (stu) => {
+            for (const stu of students) {
                 const student = await Student.findOne({
                     where: { username: stu.username },
                 });
@@ -388,9 +388,9 @@ exports.importStudents = async (req, res) => {
                         });
                     }
                 }
-            });
+            }
         } else {
-            students.forEach(async (stu) => {
+            for (const stu of students) {
                 const student = await Student.findOne({
                     where: { username: stu.username },
                 });
@@ -408,7 +408,7 @@ exports.importStudents = async (req, res) => {
                         term_id: termId,
                     });
                 }
-            });
+            }
         }
 
         res.status(HTTP_STATUS.CREATED).json({
@@ -547,6 +547,29 @@ exports.updateStatus = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getStudentsNoHaveGroup = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const query =
+            'select st.id as studentId, st.full_name as fullName, st.username where students st join student_terms stTerm on stTerm.student_id = st.id where st.group_student_id = null and stTerm.term_id = :termId';
+
+        const students = await sequelize.query(query, {
+            replacements: {
+                termId,
+            },
+            type: QueryTypes.SELECT,
+        });
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get success',
+            students,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getStudentsNoHaveGroup= ~ error:', error);
         Error.sendError(res, error);
     }
 };
