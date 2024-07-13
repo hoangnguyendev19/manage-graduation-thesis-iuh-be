@@ -24,7 +24,7 @@ const { protectStudent } = require('../middleware/student.middleware');
 
 const router = express.Router();
 
-router.get(APP_ROUTER.TERM_NOW, protectStudent, getTermNow);
+router.get(APP_ROUTER.TERM_NOW, getTermNow);
 
 router.get(APP_ROUTER.TERM_BY_MAJOR, getTermByMajorId);
 

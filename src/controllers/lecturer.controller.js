@@ -626,10 +626,15 @@ exports.getMe = async (req, res) => {
                 },
             ],
         });
+        const roles = await Role.findAll({
+            where: { lecturer_id: lecturer.id },
+            attributes: ['name'],
+        });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get me success!',
+            roles: roles.map((role) => role.name),
             lecturer,
         });
     } catch (error) {
