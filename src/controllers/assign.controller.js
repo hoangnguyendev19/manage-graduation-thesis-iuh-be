@@ -171,6 +171,7 @@ const getGroupStudentNoAssign = async (req, res) => {
         SELECT gs.id, gs.name,
                 t.name AS topicName, 
                 l.full_name AS fullName,
+                lt.lecturer_id AS lecturerId,
                 lt.id AS lecturerTermId
                 FROM group_students gs
                 LEFT JOIN topics t ON gs.topic_id = t.id

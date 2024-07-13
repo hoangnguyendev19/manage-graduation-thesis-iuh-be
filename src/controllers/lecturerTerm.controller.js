@@ -2,6 +2,8 @@ const { LecturerTerm, Lecturer, Major } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
+const { where } = require('sequelize');
+const { sequelize } = require('../configs/connectDB');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
@@ -72,5 +74,30 @@ exports.getLecturerTermsList = async (req, res) => {
     } catch (error) {
         console.log('🚀 ~ exports.getLecturersList= ~ error:', error);
         return Error.sendError(res, error);
+    }
+};
+
+exports.deleteLecturerTerm = async (req, res) => {
+    const { lecturerId, termId } = req.query;
+    try {
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: lecturerId,
+                term_id: termId,
+            },
+            attributes: ['id'],
+        });
+        if (!lecturerTerm) {
+            Error.sendError(res, 'Không tồn tại giảng viên này');
+        }
+        await lecturerTerm.destroy();
+
+        return res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Xóa giảng viên ra khỏi học kì thành công',
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.deleteLecturerTerm ~ error:', error);
+        Error.sendError(res, error);
     }
 };
