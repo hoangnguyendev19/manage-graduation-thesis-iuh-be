@@ -111,9 +111,9 @@ exports.searchLecturer = async (req, res) => {
         const { termId, limit, page, searchField, keywords } = req.query;
         let offset = (page - 1) * limit;
         // searchField = 'fullName' | 'username' | 'phone' | 'email';
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
             FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-            WHERE lt.term_id = :termId   AND l.${searchField} LIKE :keywords
+            WHERE lt.term_id = :termId   AND l.${searchField} like :keywords
             ORDER BY l.created_at DESC
             LIMIT :limit OFFSET :offset`;
 
@@ -168,7 +168,7 @@ exports.getLecturers = async (req, res) => {
 
         if (majorId) {
             lecturers = await sequelize.query(
-                `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+                `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
                 FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
                 WHERE m.id = :majorId AND lt.term_id = :termId
                 ORDER BY l.created_at DESC
@@ -191,7 +191,7 @@ exports.getLecturers = async (req, res) => {
             });
         } else {
             lecturers = await sequelize.query(
-                `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+                `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
                 FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
                 WHERE lt.term_id = :termId
                 ORDER BY l.created_at DESC
@@ -239,7 +239,7 @@ exports.getLecturersByMajorId = async (req, res) => {
         const { id } = req.params;
 
         const lecturers = await sequelize.query(
-            `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.phone, l.email, l.gender, l.degree, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+            `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
                 FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
                 WHERE m.id = :majorId AND lt.term_id = :termId`,
             {

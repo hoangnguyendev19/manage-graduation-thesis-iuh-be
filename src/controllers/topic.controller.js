@@ -53,7 +53,6 @@ const getTopicByParams = async (req, res) => {
                             'id',
                             'userName',
                             'fullName',
-                            'avatar',
                             'email',
                             'phone',
                             'gender',
@@ -163,7 +162,6 @@ const getTopics = async (req, res) => {
                             'id',
                             'username',
                             'fullName',
-                            'avatar',
                             'email',
                             'phone',
                             'gender',
@@ -238,7 +236,6 @@ const getTopicById = async (req, res) => {
                         'id',
                         'userName',
                         'fullName',
-                        'avatar',
                         'email',
                         'phone',
                         'gender',
@@ -359,7 +356,7 @@ const updateQuantityGroupMax = async (req, res) => {
 
 const importTopics = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId, majorId } = req.body;
         if (!req.file) {
             return Error.sendWarning(res, 'Vui lòng chọn file tải lên');
         }
@@ -368,23 +365,35 @@ const importTopics = async (req, res) => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
 
+        let listTopic = [];
         for (const topic of jsonData) {
             const username = topic['Mã giảng viên'];
-            const name = topic['Tên đề tài'];
-            const target = topic['MỤC TIÊU ĐỀ TÀI'];
-            const note = topic['DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG'];
-            const description = topic['Mô tả'];
-            const requireInput = topic['Yêu cầu đầu vào'];
-            const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'];
+            const name = topic['Tên đề tài'].trim();
+            const target = topic['MỤC TIÊU ĐỀ TÀI'].trim();
+            const note =
+                topic['DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG'].trim();
+            const description = topic['Mô tả'].trim();
+            const requireInput = topic['Yêu cầu đầu vào'].trim();
+            const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'].trim();
 
+            let topicToSaved = {
+                username: username,
+                name: name,
+                note: note,
+                target: target,
+                description: description,
+                requireInput: requireInput,
+                standardOutput: standardOutput,
+            };
             const lecturer = await Lecturer.findOne({
                 where: {
                     username: username,
                 },
+                attributes: ['id'],
             });
 
             if (!lecturer) {
-                return Error.sendNotFound(res, `Mã giảng viên ${username} không tồn tại.`);
+                return Error.sendNotFound(res, `Giảng viên có mã ${username} không tồn tại.`);
             }
 
             const isExistLecturer = await LecturerTerm.findOne({
@@ -392,6 +401,7 @@ const importTopics = async (req, res) => {
                     lecturer_id: lecturer.id,
                     term_id: termId,
                 },
+                attributes: ['id'],
             });
 
             if (!isExistLecturer) {
@@ -399,19 +409,33 @@ const importTopics = async (req, res) => {
                     res,
                     `Mã giảng viên ${username} không tồn tại trong kỳ này.`,
                 );
+            } else {
+                topicToSaved.lecturerTermId = isExistLecturer.id;
+                listTopic.push(topicToSaved);
             }
-
-            await Topic.create({
+        }
+        listTopic.map(
+            async ({
                 name,
                 description,
-                quantityGroupMax: 5,
                 note,
                 target,
                 standardOutput,
                 requireInput,
-                lecturer_term_id: isExistLecturer.id,
-            });
-        }
+                lecturerTermId,
+            }) => {
+                await Topic.create({
+                    name,
+                    description,
+                    quantityGroupMax: 5,
+                    note,
+                    target,
+                    standardOutput,
+                    requireInput,
+                    lecturer_term_id: lecturerTermId,
+                });
+            },
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -426,12 +450,13 @@ const importTopics = async (req, res) => {
 const updateStatusTopic = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, note } = req.body;
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
         topic.status = status;
+        topic.note = note;
         await topic.save();
 
         res.status(HTTP_STATUS.OK).json({
