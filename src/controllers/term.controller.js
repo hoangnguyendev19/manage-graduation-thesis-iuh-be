@@ -102,6 +102,7 @@ exports.getTermById = async (req, res) => {
 
 exports.getTermNow = async (req, res) => {
     try {
+        const { majorId } = req.query;
         const term = await sequelize.query(
             `SELECT t.id, t.name, t.start_date as startDate, t.end_date as endDate, td1.start_date as startChooseGroupDate, td1.end_date as endChooseGroupDate, td2.start_date as startChooseTopicDate, td2.end_date as endChooseTopicDate, td3.start_date as startDiscussionDate, td3.end_date as endDiscussionDate, td4.start_date as startReportDate, td4.end_date as endReportDate, td5.start_date as startPublicResultDate, td5.end_date as endPublicResultDate
             FROM terms t 
@@ -113,7 +114,7 @@ exports.getTermNow = async (req, res) => {
             WHERE t.start_date <= NOW() AND t.end_date >= NOW() AND t.major_id = :majorId`,
             {
                 type: QueryTypes.SELECT,
-                replacements: { majorId: req.user.major_id },
+                replacements: { majorId },
             },
         );
 
