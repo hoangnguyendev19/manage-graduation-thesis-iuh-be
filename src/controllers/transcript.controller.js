@@ -11,45 +11,82 @@ const {
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Sequelize, QueryTypes } = require('sequelize');
+const { Sequelize, QueryTypes, where } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 exports.getTranscriptByType = async (req, res) => {
     try {
-        const { termId, type, studentId } = req.query;
+        const { termId, type, groupStudentId } = req.query;
 
-        const studentTerm = await StudentTerm.findOne({
+        const studentTerms = await StudentTerm.findAll({
             where: {
                 term_id: termId,
-                student_id: studentId,
+                group_student_id: groupStudentId,
             },
         });
 
-        if (!studentTerm) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+        if (studentTerms.length === 0) {
+            return res.status(HTTP_STATUS.OK).json({
+                success: true,
+                message: 'Get success',
+                transcripts: [],
+            });
         }
 
+        const studentTermIds = studentTerms.map((studentTerm) => studentTerm.id);
+
         const transcripts = await sequelize.query(
-            `SELECT t.id, t.score, t.evaluation_id as evaluationId
+            `SELECT t.evaluation_id as evaluationId, e.name as evaluationName, e.score_max as scoreMax, t.id as transcriptId, t.score, s.id as studentId, s.username, s.full_name as fullName
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
-            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            WHERE t.student_term_id = :studentTermId AND e.type = :type AND l.id = :lecturerId`,
+            INNER JOIN student_terms st ON t.student_term_id = st.id
+            INNER JOIN students s ON st.student_id = s.id
+            WHERE e.type = :type AND t.student_term_id in (:studentTermIds)`,
             {
                 replacements: {
-                    studentTermId: studentTerm.id,
+                    studentTermIds,
                     type,
-                    lecturerId: req.user.id,
                 },
                 type: sequelize.QueryTypes.SELECT,
             },
         );
 
+        const newTranscripts = transcripts.reduce((acc, trans) => {
+            const {
+                evaluationId,
+                evaluationName,
+                scoreMax,
+                transcriptId,
+                score,
+                studentId,
+                username,
+                fullName,
+            } = trans;
+
+            if (!acc[evaluationId]) {
+                acc[evaluationId] = {
+                    evaluationId,
+                    evaluationName,
+                    scoreMax,
+                    students: [],
+                };
+            }
+
+            acc[evaluationId].students.push({
+                transcriptId,
+                score,
+                studentId,
+                username,
+                fullName,
+            });
+
+            return acc;
+        }, {});
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
-            transcripts,
+            transcripts: Object.values(newTranscripts),
         });
     } catch (error) {
         console.log(error);
@@ -266,6 +303,61 @@ exports.getTranscriptByStudent = async (req, res) => {
                 transcripts,
                 avgScore,
             },
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.createTranscriptList = async (req, res) => {
+    try {
+        const { transcripts } = req.body;
+
+        const transcriptPromises = transcripts.map(async (transcript) => {
+            const { termId, studentId, score, evaluationId } = transcript;
+
+            const lecturerTerm = await LecturerTerm.findOne({
+                where: {
+                    term_id: termId,
+                    lecturer_id: req.user.id,
+                },
+            });
+
+            if (!lecturerTerm) {
+                return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
+            }
+
+            const studentTerm = await StudentTerm.findOne({
+                where: {
+                    term_id: termId,
+                    student_id: studentId,
+                },
+            });
+
+            if (!studentTerm) {
+                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+            }
+
+            const evaluation = await Evaluation.findByPk(evaluationId);
+
+            if (score > evaluation.scoreMax) {
+                return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
+            }
+
+            await Transcript.create({
+                lecturer_term_id: lecturerTerm.id,
+                student_term_id: studentTerm.id,
+                evaluation_id: evaluation.id,
+                score,
+            });
+        });
+
+        await Promise.all(transcriptPromises);
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Create Success',
         });
     } catch (error) {
         console.log(error);

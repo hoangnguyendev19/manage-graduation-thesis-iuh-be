@@ -4,6 +4,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { Op, where } = require('sequelize');
 const xlsx = require('xlsx');
 const _ = require('lodash');
+const { sequelize } = require('../configs/connectDB');
 
 //  get all topic -> theo chuyên ngành, học kì
 
@@ -356,7 +357,7 @@ const updateQuantityGroupMax = async (req, res) => {
 
 const importTopics = async (req, res) => {
     try {
-        const { termId, majorId } = req.body;
+        const { termId } = req.body;
         if (!req.file) {
             return Error.sendWarning(res, 'Vui lòng chọn file tải lên');
         }
@@ -370,16 +371,16 @@ const importTopics = async (req, res) => {
             const username = topic['Mã giảng viên'];
             const name = topic['Tên đề tài'].trim();
             const target = topic['MỤC TIÊU ĐỀ TÀI'].trim();
-            const note =
+            const description =
+                topic['Mô tả'].trim() +
+                ' - ' +
                 topic['DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG'].trim();
-            const description = topic['Mô tả'].trim();
             const requireInput = topic['Yêu cầu đầu vào'].trim();
             const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'].trim();
 
             let topicToSaved = {
                 username: username,
                 name: name,
-                note: note,
                 target: target,
                 description: description,
                 requireInput: requireInput,
@@ -415,20 +416,11 @@ const importTopics = async (req, res) => {
             }
         }
         listTopic.map(
-            async ({
-                name,
-                description,
-                note,
-                target,
-                standardOutput,
-                requireInput,
-                lecturerTermId,
-            }) => {
+            async ({ name, description, target, standardOutput, requireInput, lecturerTermId }) => {
                 await Topic.create({
                     name,
                     description,
                     quantityGroupMax: 5,
-                    note,
                     target,
                     standardOutput,
                     requireInput,
@@ -443,6 +435,79 @@ const importTopics = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+const importTopicsFromTermIdToSelectedTermId = async (req, res) => {
+    try {
+        const { termId, selectedTermId } = req.body;
+
+        if (termId === selectedTermId) {
+            return Error.sendWarning(res, 'Học kì được chọn phải khác học kỳ hiện tại!');
+        }
+
+        const lecturersSelected = await LecturerTerm.findAll({
+            where: { term_id: selectedTermId },
+            attributes: ['lecturer_id'],
+        });
+
+        if (!lecturersSelected.length) {
+            return Error.sendNotFound(res, 'Không tìm thấy giảng viên trong học kì được chọn!');
+        }
+
+        const lecturers = await LecturerTerm.findAll({
+            where: { term_id: termId },
+            attributes: ['lecturer_id'],
+        });
+
+        if (!lecturers.length) {
+            return Error.sendNotFound(res, 'Không tìm thấy giảng viên trong học kì hiện tại!');
+        }
+
+        const lecturersArr = lecturers.map((lecturer) => lecturer.lecturer_id);
+        const lecturersSelectedArr = lecturersSelected.map((lecturer) => lecturer.lecturer_id);
+        const newLecturersArr = lecturersArr.filter(
+            (lecturer) => !lecturersSelectedArr.includes(lecturer),
+        );
+
+        const processLecturerTopics = async (lecturerId) => {
+            const lecturerTerm = await LecturerTerm.findOne({
+                where: { term_id: termId, lecturer_id: lecturerId },
+            });
+
+            const lecturerTermSelected = await LecturerTerm.findOne({
+                where: { term_id: selectedTermId, lecturer_id: lecturerId },
+            });
+
+            const topics = await Topic.findAll({
+                where: { lecturer_term_id: lecturerTerm.id },
+            });
+
+            for (const topic of topics) {
+                await Topic.create({
+                    name: topic.name,
+                    description: topic.description,
+                    quantityGroupMax: topic.quantityGroupMax,
+                    target: topic.target,
+                    standardOutput: topic.standardOutput,
+                    requireInput: topic.requireInput,
+                    lecturer_term_id: lecturerTermSelected.id,
+                });
+            }
+        };
+
+        const lecturersToProcess = newLecturersArr.length ? newLecturersArr : lecturersArr;
+        for (const lecturerId of lecturersToProcess) {
+            await processLecturerTopics(lecturerId);
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Import danh sách đề tài thành công!',
+        });
+    } catch (error) {
+        console.error(error);
         Error.sendError(res, error);
     }
 };
@@ -495,7 +560,7 @@ module.exports = {
     updateQuantityGroupMax,
     updateStatusTopic,
     deleteTopic,
-    // getAllTopics,
     getTopicByParams,
     importTopics,
+    importTopicsFromTermIdToSelectedTermId,
 };
