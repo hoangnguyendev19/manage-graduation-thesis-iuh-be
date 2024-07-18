@@ -22,7 +22,7 @@ exports.getLecturerNoGroupByType = async (req, res) => {
         const { type } = req.params;
         const subQuery = `SELECT lt.id FROM lecturer_terms lt INNER JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id LEFT JOIN  group_lecturers gl ON gl.id  = glm.group_lecturer_id WHERE gl.type = '${type.toUpperCase()}' `;
 
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.role, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId    
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.is_admin as isAdmin, l.is_active as isActive, l.major_id as majorId    
              FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
             WHERE lt.term_id = :termId AND lt.id NOT IN (${subQuery})`;
 
@@ -176,7 +176,7 @@ exports.getGroupLecturerById = async (req, res) => {
         if (!oldGr) {
             return Error.sendNotFound(res, 'Không có nhóm giảng viên này');
         }
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.email, l.gender, l.degree, l.role, l.is_active as isActive, l.major_id as majoId, m.name as majorName
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majoId, m.name as majorName
         FROM lecturers l JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
         ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
         WHERE gl.id = :id;
@@ -287,7 +287,7 @@ exports.getMemberFromGroupLecturer = async (req, res) => {
         if (!oldGr) {
             return Error.sendNotFound(res, 'Không có nhóm giảng viên này');
         }
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.avatar, l.email, l.gender, l.degree, l.role, l.is_active, l.major_id 
+        const query = `SELECT l.id, l.username, l.full_name as fullName, l.email, l.gender, l.degree, l.is_active, l.major_id 
         FROM lecturers l JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
         ON glm.group_lecturer_id = gl.id 
         WHERE gl.id = :id and l.id = :lecturer;

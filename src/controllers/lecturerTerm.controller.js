@@ -2,14 +2,12 @@ const { LecturerTerm, Lecturer, Major } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
-const { where } = require('sequelize');
-const { sequelize } = require('../configs/connectDB');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId, majorId } = req.body;
 
-        const lecturers = await Lecturer.findAll();
+        const lecturers = await Lecturer.findAll({ where: { major_id: majorId } });
         await LecturerTerm.bulkCreate(
             lecturers.map((lecturer) => ({
                 term_id: termId,

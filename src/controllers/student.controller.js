@@ -112,7 +112,7 @@ exports.getStudents = async (req, res) => {
 
         if (majorId) {
             students = await sequelize.query(
-                `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+                `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
                 FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
                 WHERE m.id = :majorId AND stt.term_id = :termId
                 ORDER BY st.created_at DESC
@@ -135,7 +135,7 @@ exports.getStudents = async (req, res) => {
             });
         } else {
             students = await sequelize.query(
-                `SELECT st.id, st.username, st.full_name as fullName, st.avatar, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+                `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
                 FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
                 WHERE stt.term_id = :termId
                 ORDER BY st.created_at DESC
@@ -631,10 +631,10 @@ exports.getMe = async (req, res) => {
 
 exports.updateMe = async (req, res) => {
     try {
-        const { fullName, email, phoneNumber, avatarUrl, gender } = req.body;
+        const { fullName, email, phoneNumber, gender } = req.body;
 
         await Student.update(
-            { fullName, email, phoneNumber, gender, avatarUrl },
+            { fullName, email, phoneNumber, gender },
             { where: { id: req.user.id } },
         );
 
