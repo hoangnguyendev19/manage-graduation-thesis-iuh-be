@@ -11,7 +11,7 @@ const APP_ROUTER = {
     UPDATE_PASSWORD: '/update-password',
     ME: '/me',
     IMPORT: '/import',
-    IMPORT_PREVIOUS: '/import-previous',
+    IMPORT_FROM_SELECT: '/import-from-select',
     RESET_PASSWORD: '/reset-password',
     // FORGOT_PASSWORD: '/forgot-password',
     LOCK: '/lock',

@@ -1,15 +1,43 @@
 const { Role } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
+const { sequelize } = require('../configs/connectDB');
 
 exports.getRoles = async (req, res) => {
     try {
-        const roles = await Role.findAll();
+        const roles = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name as fullName, m.name as majorName, r.name as roleName
+            FROM lecturers l
+            LEFT JOIN roles r ON r.lecturer_id = l.id
+            LEFT JOIN majors m ON l.major_id = m.id`,
+            {
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        const newRoles = roles.reduce((acc, role) => {
+            const { id, username, fullName, majorName, roleName } = role;
+            if (!acc[id]) {
+                acc[id] = {
+                    id,
+                    username,
+                    fullName,
+                    majorName,
+                    roles: [],
+                };
+            }
+
+            if (roleName) {
+                acc[id].roles.push(roleName);
+            }
+
+            return acc;
+        }, {});
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Roles retrieved successfully',
-            roles,
+            roles: Object.values(newRoles),
         });
     } catch (error) {
         return Error.sendError(res, error);
@@ -39,6 +67,22 @@ exports.getRolesByLecturerId = async (req, res) => {
 exports.createRole = async (req, res) => {
     try {
         const { name, lecturerId } = req.body;
+
+        if (!name || !lecturerId) {
+            return Error.sendWarning(res, 'Thiếu thông tin cần thiết!');
+        }
+
+        const roleExist = await Role.findOne({
+            where: {
+                name,
+                lecturer_id: lecturerId,
+            },
+        });
+
+        if (roleExist) {
+            return Error.sendWarning(res, 'Role đã tồn tại!');
+        }
+
         const role = await Role.create({
             name,
             lecturer_id: lecturerId,

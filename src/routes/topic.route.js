@@ -11,6 +11,7 @@ const {
     updateStatusTopic,
     deleteTopic,
     importTopics,
+    importTopicsFromTermIdToSelectedTermId,
 } = require('../controllers/topic.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
@@ -21,6 +22,8 @@ const router = express.Router();
 router.get(APP_ROUTER.INDEX, getTopics);
 
 router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importTopics);
+
+router.post(APP_ROUTER.IMPORT_FROM_SELECT, protectLecturer, importTopicsFromTermIdToSelectedTermId);
 
 router.get(APP_ROUTER.ID, getTopicById);
 

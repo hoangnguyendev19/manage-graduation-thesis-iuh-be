@@ -7,7 +7,7 @@ const {
     getEvaluationById,
     createEvaluation,
     importEvaluations,
-    importPreviousEvaluations,
+    importEvaluationsFromTermIdToSelectedTermId,
     updateEvaluation,
     deleteEvaluation,
     getEvaluationsForScoring,
@@ -18,6 +18,7 @@ const upload = require('../configs/uploadConfig');
 const router = express.Router();
 
 router.get(APP_ROUTER.INDEX, getEvaluations);
+
 router.get(APP_ROUTER.SCORES, getEvaluationsForScoring);
 
 router.get(APP_ROUTER.ID, getEvaluationById);
@@ -26,7 +27,11 @@ router.post(APP_ROUTER.INDEX, protectLecturer, createEvaluation);
 
 router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importEvaluations);
 
-router.post(APP_ROUTER.IMPORT_PREVIOUS, protectLecturer, importPreviousEvaluations);
+router.post(
+    APP_ROUTER.IMPORT_FROM_SELECT,
+    protectLecturer,
+    importEvaluationsFromTermIdToSelectedTermId,
+);
 
 router.put(APP_ROUTER.ID, protectLecturer, updateEvaluation);
 

@@ -129,45 +129,26 @@ exports.importEvaluations = async (req, res) => {
     }
 };
 
-exports.importPreviousEvaluations = async (req, res) => {
+exports.importEvaluationsFromTermIdToSelectedTermId = async (req, res) => {
     try {
-        const { termId, type } = req.body;
-
-        const term = await Term.findByPk(termId);
-
-        const termsByMajor = await Term.findAll({
-            where: {
-                major_id: term.major_id,
-            },
-        });
-
-        let previousTerm = null;
-
-        // how to get previous term by termId
-        termsByMajor.forEach((term) => {
-            if (term.id === termId) {
-                previousTerm = term;
-            }
-        });
+        const { termId, selectedTermId, type } = req.body;
 
         const evaluations = await Evaluation.findAll({
             where: {
-                term_id: previousTerm.id,
+                term_id: termId,
                 type: type,
             },
         });
 
-        const newEvaluations = evaluations.map((evaluation) => {
-            return {
+        for (const evaluation of evaluations) {
+            await Evaluation.create({
                 name: evaluation.name,
                 scoreMax: evaluation.scoreMax,
-                type: evaluation.type,
                 description: evaluation.description,
-                term_id: termId,
-            };
-        });
-
-        await Evaluation.bulkCreate(newEvaluations);
+                type: evaluation.type,
+                term_id: selectedTermId,
+            });
+        }
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
