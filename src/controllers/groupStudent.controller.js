@@ -247,7 +247,7 @@ exports.getMembersById = async (req, res) => {
             attributes: ['id', 'status', 'isAdmin'],
             include: {
                 model: Student,
-                attributes: ['id', 'username', 'fullName', 'avatar', 'clazzName'],
+                attributes: ['id', 'username', 'fullName', 'clazzName'],
                 as: 'student',
             },
         });
@@ -306,7 +306,7 @@ exports.getMyGroupStudent = async (req, res) => {
             attributes: ['student_id', 'isAdmin'],
             include: {
                 model: Student,
-                attributes: ['username', 'fullName', 'avatar', 'gender', 'phone', 'email'],
+                attributes: ['username', 'fullName', 'gender', 'phone', 'email'],
                 as: 'student',
             },
         });
