@@ -78,7 +78,7 @@ const createAssignByType = async (req, res) => {
         if (isExistAssign) {
             return Error.sendConflict(res, 'Nhóm sinh viên đã được phân công chấm điểm');
         }
-        if (type === 'reviewer' || type === 'report_poster') {
+        if (type === 'reviewer' || type === 'report_poster' || type === 'report_council') {
             const isExistLecturerSupport = await isExistLecturerSupportInGroupLecturer(
                 groupLecturerId,
                 listGroupStudentId,

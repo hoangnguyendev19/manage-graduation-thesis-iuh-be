@@ -7,7 +7,6 @@ const {
     getGroupLecturerById,
     updateGroupLecturer,
     deleteGroupLecturer,
-    addLecturerToGroupLecturer,
     removeLecturerFromGroupLecturer,
     getLecturerNoGroupByType,
     createGroupLecturerByType,
