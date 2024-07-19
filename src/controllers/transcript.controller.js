@@ -444,6 +444,41 @@ exports.updateTranscript = async (req, res) => {
     }
 };
 
+exports.updateTranscriptList = async (req, res) => {
+    try {
+        const { transcripts } = req.body;
+
+        const transcriptPromises = transcripts.map(async (transcript) => {
+            const { id, score } = transcript;
+
+            const transcript = await Transcript.findByPk(id);
+
+            if (!transcript) {
+                return Error.sendNotFound(res, 'Bảng điểm không tồn tại!');
+            }
+
+            const evaluation = await Evaluation.findByPk(transcript.evaluation_id);
+            if (score > evaluation.scoreMax) {
+                return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
+            }
+
+            transcript.score = score;
+
+            await transcript.save();
+        });
+
+        await Promise.all(transcriptPromises);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Update Success',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.unTranscriptGroupStudentByLecturerSupport = async (req, res) => {
     try {
         const { termId } = req.query;
