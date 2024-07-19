@@ -1,7 +1,14 @@
-const { Topic, LecturerTerm, Lecturer, Major, GroupStudent } = require('../models/index');
+const {
+    Topic,
+    LecturerTerm,
+    Lecturer,
+    Major,
+    GroupStudent,
+    GroupLecturer,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op, where } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
@@ -214,6 +221,50 @@ const getTopics = async (req, res) => {
             success: true,
             message: 'Get Success',
             topics,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+const getTopicsByGroupLecturerId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const groupLecturer = await GroupLecturer.findByPk(id);
+        if (!groupLecturer) {
+            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
+        }
+
+        const topics = await sequelize.query(
+            `SELECT t.id, t.name FROM assigns a
+            INNER JOIN group_students gs ON a.group_student_id = gs.id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            WHERE a.group_lecturer_id = :id`,
+            {
+                replacements: {
+                    id,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const newTopics = topics.reduce((acc, topic) => {
+            const { id, name } = topic;
+            if (!acc[id]) {
+                acc[id] = {
+                    id,
+                    name,
+                };
+            }
+
+            return acc;
+        }, {});
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            topics: Object.values(newTopics),
         });
     } catch (error) {
         console.log(error);
@@ -554,6 +605,7 @@ const deleteTopic = async (req, res) => {
 
 module.exports = {
     getTopics,
+    getTopicsByGroupLecturerId,
     getTopicById,
     createTopic,
     updateTopic,
