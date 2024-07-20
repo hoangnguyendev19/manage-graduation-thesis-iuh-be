@@ -282,7 +282,22 @@ exports.getMembersById = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+exports.countOfGroupStudent = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const count = (await GroupStudent.count({ where: { term_id: termId } })) + 1;
 
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Count success',
+            count: count - 1,
+            nameCount: 'Nhóm số ' + count,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.countOfGroupStudent= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
 exports.getMyGroupStudent = async (req, res) => {
     try {
         const { termId } = req.query;
