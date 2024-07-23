@@ -35,6 +35,7 @@ const APP_ROUTER = {
 
     // LECTURER_TERM
     LECTURER_TERM: '/api/v1/lecturer-terms',
+    LECTURER_TERM_TO_ADDING: '/to-adding',
 
     //STUDENTS
     STUDENT: '/api/v1/students',
@@ -98,10 +99,13 @@ const APP_ROUTER = {
 
     //NOTIFICATION_STUDENT
     NOTIFICATION_STUDENT: '/api/v1/notification-students',
+    NOTIFICATION_STUDENT_TERM: '/terms',
     NOTIFICATION_STUDENT_READ: '/:id/read',
+    
 
     //NOTIFICATION_LECTURER
     NOTIFICATION_LECTURER: '/api/v1/notification-lecturers',
+    NOTIFICATION_LECTURER_TERM: '/terms',
     NOTIFICATION_LECTURER_READ: '/:id/read',
 
     //EVALUATIONS

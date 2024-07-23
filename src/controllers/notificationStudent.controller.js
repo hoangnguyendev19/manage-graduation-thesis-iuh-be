@@ -1,7 +1,41 @@
-const { NotificationStudent } = require('../models/index');
+const { NotificationStudent, StudentTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op } = require('sequelize');
+
+exports.getMyNotification = async (req, res) => {
+    try {
+        const { user } = req;
+        const notificationStudents = await NotificationStudent.findAll({
+            where: { student_id: user.id },
+        });
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            notificationStudents,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getMyNotification= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getNotificationById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const notification = await NotificationStudent.findByPk(id);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get by id success',
+            notification,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getNotificationById= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+
 
 exports.getNotificationStudents = async (req, res) => {
     try {
@@ -21,6 +55,30 @@ exports.getNotificationStudents = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.createAllNotificationStudentTerms = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const { message } = req.body;
+        const studentTerms = await StudentTerm.findAll({
+            where: { term_id: termId },
+        });
+
+        const studentConvert = studentTerms.map((lt) => ({
+            student_id: lt.student_id,
+            message: message,
+        }));
+        await NotificationStudent.bulkCreate(studentConvert);
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: `Gửi thông báo đến toàn bộ Sinh viên thành công.`,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.createAllNotificationStudentTerms= ~ error:', error);
         Error.sendError(res, error);
     }
 };
