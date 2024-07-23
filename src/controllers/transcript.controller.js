@@ -13,6 +13,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { Sequelize, QueryTypes, where } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+const { SELECT } = require('sequelize/lib/query-types');
 
 exports.getTranscriptByType = async (req, res) => {
     try {
@@ -357,39 +358,37 @@ exports.unTranscriptStudentsByType = async (req, res) => {
             },
             attributes: ['group_lecturer_id'],
         });
-
-        const groupStudents = await Assign.findAll({
-            where: {
-                group_lecturer_id: {
-                    [Sequelize.Op.in]: groupLecturers.map((mem) => mem.group_lecturer_id),
-                },
-                type: type.toUpperCase(),
-            },
-            attributes: ['group_student_id'],
-        });
-        const myIn = groupStudents.map((ass) => `'${ass.group_student_id}'`);
-        const inGroupQuery = `where stTerm.group_student_id in (${myIn.join(',')})`;
-
+        const myIn = groupLecturers.map((mem) => `'${mem.group_lecturer_id}'`);
         if (myIn.length < 1) {
             return res.status(HTTP_STATUS.OK).json({
                 success: true,
                 message: 'Get success',
-                students: [],
+                groupStudents: [],
                 totalRows: 0,
             });
         }
-        const query = `select st.id as studentId, st.full_name as fullName, st.username,grs.name as groupStudentName from students st  
-        join student_terms stTerm on stTerm.student_id = st.id join group_students grs on stTerm.group_student_id = grs.id ${inGroupQuery}`;
+        const inGroupLecturerQuery = `where ass.group_lecturer_id in (${myIn.join(',')})`;
+        const query = `select grStudent.topic_id as topicId, grStudent.name as name, grStudent.id as id, t.name as topicName 
+        from group_students grStudent
+        join topics t
+        on grStudent.topic_id  = t.id
+        join assigns ass
+        on grStudent.id  = ass.group_student_id
+        ${inGroupLecturerQuery}
+        and ass.type = :type
+        `;
 
-        const students = await sequelize.query(query, {
-            type: QueryTypes.SELECT,
+        const groupStudents = await sequelize.query(query, {
+            type: SELECT,
+            replacements: {
+                type: type,
+            },
         });
-
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get success',
-            students,
-            totalRows: students.length,
+            groupStudents,
+            totalRows: groupStudents.length,
         });
     } catch (error) {
         Error.sendError(res, error);

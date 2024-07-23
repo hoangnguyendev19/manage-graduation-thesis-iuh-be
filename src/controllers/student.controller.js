@@ -555,8 +555,9 @@ exports.getStudentsNoHaveGroup = async (req, res) => {
     try {
         const { termId } = req.query;
         const query =
-            'select st.id as studentId, st.full_name as fullName, st.username where students st join student_terms stTerm on stTerm.student_id = st.id where st.group_student_id = null and stTerm.term_id = :termId';
-
+        `select st.id as studentId, st.full_name as fullName, st.username
+        from students st join student_terms stTerm on stTerm.student_id = st.id 
+        where stTerm.group_student_id is null and stTerm.term_id = :termId`;
         const students = await sequelize.query(query, {
             replacements: {
                 termId,
