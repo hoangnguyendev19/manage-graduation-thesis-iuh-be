@@ -80,15 +80,22 @@ exports.getLecturerTermsList = async (req, res) => {
 exports.getLecturerTermsToAdding = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
-        const query = `SELECT l.id AS lecturerId, l.full_name AS fullName, m.name AS majorName 
+        const query = `SELECT l.id AS lecturerId, l.full_name AS fullName, m.name AS majorName
                         FROM lecturers l
-                        LEFT JOIN lecturer_terms lt ON lt.lecturer_id = l.id
+                        LEFT JOIN lecturer_terms lt ON lt.lecturer_id = l.id AND lt.term_id = :termId
                         LEFT JOIN majors m ON m.id = l.major_id
                         WHERE 
-                        lt.lecturer_id IS NULL`;
+                        lt.lecturer_id IS NULL
+                        OR
+                        l.major_id  != :majorId
+                        `;
 
         const lecturerTerms = await sequelize.query(query, {
             type: QueryTypes.SELECT,
+            replacements: {
+                majorId: majorId,
+                termId: termId,
+            },
         });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -107,8 +114,7 @@ exports.getLecturerTermsToAdding = async (req, res) => {
 
 exports.createLecturerTerm = async (req, res) => {
     try {
-        const { termId } = req.query;
-        const { lecturerId } = req.body;
+        const { lecturerId, termId } = req.body;
         const lecturer = await Lecturer.findByPk(lecturerId);
         if (!lecturer) {
             return Error.sendNotFound(res, 'Giảng viên không hợp lệ.');
@@ -120,7 +126,7 @@ exports.createLecturerTerm = async (req, res) => {
             return Error.sendConflict(res, 'Đã tồn tại giảng viên này trong học kì.');
         }
 
-        await LecturerTerm.create({ ...lecturer, term_id: termId });
+        await LecturerTerm.create({ lecturer_id: lecturerId, term_id: termId });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: `Thêm giảng viên ${lecturer.fullName} thành công.`,
@@ -144,13 +150,8 @@ exports.deleteLecturerTerm = async (req, res) => {
         if (!lecturerTerm) {
             Error.sendError(res, 'Không tồn tại giảng viên này');
         }
-        const isDelete = await lecturerTerm.destroy();
-        // if (isDelete)
-        //     await lecturerTerm.destroy({
-        //         where: {
-        //             lecturer_id: null,
-        //         },
-        //     });
+        await lecturerTerm.destroy({ force: true });
+
         return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Xóa giảng viên ra khỏi học kì thành công',
