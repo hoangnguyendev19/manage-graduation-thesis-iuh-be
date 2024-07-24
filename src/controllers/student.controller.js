@@ -101,7 +101,84 @@ exports.logout = async (req, res) => {
 };
 
 // ----------------- Admin -----------------
+exports.getStudentsOfSearch = async (req, res) => {
+    try {
+        const { termId, majorId, page, limit, keywords, searchField } = req.query;
+        let offset = (page - 1) * limit;
+        let students = [];
+        let total = 0;
 
+        let replacements = {
+            termId: termId,
+            keywords: `%${keywords}%`,
+            limit: _.toInteger(limit),
+            offset: offset,
+        };
+
+        let searchQuery = searchField ? `AND st.${searchField} like :keywords` : '';
+
+        let initQUery = `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+                FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
+                WHERE m.id = :majorId AND stt.term_id = :termId ${searchQuery}
+                ORDER BY st.created_at DESC
+                LIMIT :limit OFFSET :offset`;
+        let countQuery = `
+        SELECT COUNT(*) as count
+        FROM students st
+        LEFT JOIN majors m ON st.major_id = m.id
+        LEFT JOIN student_terms stt ON st.id = stt.student_id
+        WHERE stt.term_id = :termId ${searchQuery}
+        `;
+
+        if (majorId) {
+            students = await sequelize.query(initQUery, {
+                replacements: { ...replacements, majorId: majorId },
+                type: QueryTypes.SELECT,
+            });
+
+            let countResult = await sequelize.query(countQuery, {
+                replacements: { ...replacements, majorId: majorId },
+                type: QueryTypes.SELECT,
+            });
+            total = countResult[0].count;
+        } else {
+            let searchQuery = searchField ? `AND st.${searchField} like :keywords` : '';
+
+            students = await sequelize.query(initQUery, {
+                replacements: replacements,
+                type: QueryTypes.SELECT,
+            });
+            let countResult = await sequelize.query(countQuery, {
+                replacements: replacements,
+                type: QueryTypes.SELECT,
+            });
+            total = countResult[0].count;
+        }
+
+        const totalPage = _.ceil(total / _.toInteger(limit));
+
+        students = students.map((stu) => {
+            return {
+                ...stu,
+                isActive: Boolean(stu.isActive),
+            };
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get all students success!',
+            students,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
 exports.getStudents = async (req, res) => {
     try {
         const { termId, majorId, page, limit } = req.query;
@@ -554,8 +631,7 @@ exports.updateStatus = async (req, res) => {
 exports.getStudentsNoHaveGroup = async (req, res) => {
     try {
         const { termId } = req.query;
-        const query =
-        `select st.id as studentId, st.full_name as fullName, st.username
+        const query = `select st.id as studentId, st.full_name as fullName, st.username
         from students st join student_terms stTerm on stTerm.student_id = st.id 
         where stTerm.group_student_id is null and stTerm.term_id = :termId`;
         const students = await sequelize.query(query, {

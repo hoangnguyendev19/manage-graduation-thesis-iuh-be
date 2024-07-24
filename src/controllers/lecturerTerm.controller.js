@@ -2,6 +2,8 @@ const { LecturerTerm, Lecturer, Major } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
+const { QueryTypes } = require('sequelize');
+const { sequelize } = require('../configs/connectDB');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
@@ -31,6 +33,7 @@ exports.importLecturerTerms = async (req, res) => {
         let totalPage = newLecturers.length;
 
         totalPage = _.ceil(totalPage / _.toInteger(10));
+
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Import Success',
@@ -74,6 +77,65 @@ exports.getLecturerTermsList = async (req, res) => {
         return Error.sendError(res, error);
     }
 };
+exports.getLecturerTermsToAdding = async (req, res) => {
+    try {
+        const { termId, majorId } = req.query;
+        const query = `SELECT l.id AS lecturerId, l.full_name AS fullName, m.name AS majorName
+                        FROM lecturers l
+                        LEFT JOIN lecturer_terms lt ON lt.lecturer_id = l.id AND lt.term_id = :termId
+                        LEFT JOIN majors m ON m.id = l.major_id
+                        WHERE 
+                        lt.lecturer_id IS NULL
+                        OR
+                        l.major_id  != :majorId
+                        `;
+
+        const lecturerTerms = await sequelize.query(query, {
+            type: QueryTypes.SELECT,
+            replacements: {
+                majorId: majorId,
+                termId: termId,
+            },
+        });
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get success',
+            lecturerTerms: lecturerTerms.map((lec) => ({
+                ...lec,
+                nameSelect: 'GV: ' + lec.fullName + ' - ' + lec.majorName,
+            })),
+            total: lecturerTerms.length,
+        });
+    } catch (error) {
+        console.log('🚀 ~ export.getLecturerTermsToAdding= ~ error:', error);
+        return Error.sendError(res, error);
+    }
+};
+
+exports.createLecturerTerm = async (req, res) => {
+    try {
+        const { lecturerId, termId } = req.body;
+        const lecturer = await Lecturer.findByPk(lecturerId);
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Giảng viên không hợp lệ.');
+        }
+        const isExist = await LecturerTerm.findOne({
+            where: { term_id: termId, lecturer_id: lecturer.id },
+        });
+        if (isExist) {
+            return Error.sendConflict(res, 'Đã tồn tại giảng viên này trong học kì.');
+        }
+
+        await LecturerTerm.create({ lecturer_id: lecturerId, term_id: termId });
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: `Thêm giảng viên ${lecturer.fullName} thành công.`,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.addLecturerTerm= ~ error:', error);
+        return Error.sendError(res, error);
+    }
+};
 
 exports.deleteLecturerTerm = async (req, res) => {
     const { lecturerId, termId } = req.query;
@@ -88,7 +150,7 @@ exports.deleteLecturerTerm = async (req, res) => {
         if (!lecturerTerm) {
             Error.sendError(res, 'Không tồn tại giảng viên này');
         }
-        await lecturerTerm.destroy();
+        await lecturerTerm.destroy({ force: true });
 
         return res.status(HTTP_STATUS.CREATED).json({
             success: true,

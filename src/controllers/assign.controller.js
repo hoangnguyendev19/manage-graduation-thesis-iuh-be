@@ -174,9 +174,9 @@ const getGroupStudentNoAssign = async (req, res) => {
                 lt.lecturer_id AS lecturerId,
                 lt.id AS lecturerTermId
                 FROM group_students gs
-                LEFT JOIN topics t ON gs.topic_id = t.id
-                LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                LEFT JOIN lecturers l ON lt.lecturer_id = l.id
+                RIGHT JOIN topics t ON gs.topic_id = t.id
+                RIGHT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                RIGHT JOIN lecturers l ON lt.lecturer_id = l.id
         WHERE gs.term_id = :termId ${notInCondition}`;
 
         const resultGroupStudent = await sequelize.query(groupStudentsQuery, {
