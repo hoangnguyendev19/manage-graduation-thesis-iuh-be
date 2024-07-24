@@ -49,6 +49,7 @@ const APP_ROUTER = {
     TERM_BY_MAJOR: '/major/:id',
     TERM_NOW: '/now',
     TERM_CHOOSE_GROUP: '/:id/choose-group',
+    TERM_PUBLIC_TOPIC: '/:id/public-topic',
     TERM_CHOOSE_TOPIC: '/:id/choose-topic',
     TERM_DISCUSSION: '/:id/discussion',
     TERM_REPORT: '/:id/report',
@@ -101,7 +102,6 @@ const APP_ROUTER = {
     NOTIFICATION_STUDENT: '/api/v1/notification-students',
     NOTIFICATION_STUDENT_TERM: '/terms',
     NOTIFICATION_STUDENT_READ: '/:id/read',
-    
 
     //NOTIFICATION_LECTURER
     NOTIFICATION_LECTURER: '/api/v1/notification-lecturers',

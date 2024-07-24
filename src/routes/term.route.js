@@ -6,17 +6,19 @@ const {
     getTermById,
     getTermNow,
     getTermDetailWithChooseGroup,
+    getTermDetailWithPublicTopic,
     getTermDetailWithChooseTopic,
     getTermDetailWithDiscussion,
     getTermDetailWithReport,
     getTermDetailWithPublicResult,
     createTerm,
     updateTerm,
-    updatePublicResultTerm,
-    updateDiscussionTerm,
-    updateChooseTopicTerm,
-    updateReportTerm,
     updateChooseGroupTerm,
+    updatePublicTopicTerm,
+    updateChooseTopicTerm,
+    updateDiscussionTerm,
+    updateReportTerm,
+    updatePublicResultTerm,
 } = require('../controllers/term.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
@@ -33,6 +35,8 @@ router.get(APP_ROUTER.ID, getTermById);
 
 router.get(APP_ROUTER.TERM_CHOOSE_GROUP, getTermDetailWithChooseGroup);
 
+router.get(APP_ROUTER.TERM_PUBLIC_TOPIC, getTermDetailWithPublicTopic);
+
 router.get(APP_ROUTER.TERM_CHOOSE_TOPIC, getTermDetailWithChooseTopic);
 
 router.get(APP_ROUTER.TERM_DISCUSSION, getTermDetailWithDiscussion);
@@ -46,14 +50,16 @@ router.post(APP_ROUTER.INDEX, createTerm);
 
 router.put(APP_ROUTER.ID, protectLecturer, updateTerm);
 
-router.put(APP_ROUTER.TERM_PUBLIC_RESULT, protectLecturer, updatePublicResultTerm);
+router.put(APP_ROUTER.TERM_CHOOSE_GROUP, protectLecturer, updateChooseGroupTerm);
 
-router.put(APP_ROUTER.TERM_DISCUSSION, protectLecturer, updateDiscussionTerm);
+router.put(APP_ROUTER.TERM_PUBLIC_TOPIC, protectLecturer, updatePublicTopicTerm);
 
 router.put(APP_ROUTER.TERM_CHOOSE_TOPIC, protectLecturer, updateChooseTopicTerm);
 
+router.put(APP_ROUTER.TERM_DISCUSSION, protectLecturer, updateDiscussionTerm);
+
 router.put(APP_ROUTER.TERM_REPORT, protectLecturer, updateReportTerm);
 
-router.put(APP_ROUTER.TERM_CHOOSE_GROUP, protectLecturer, updateChooseGroupTerm);
+router.put(APP_ROUTER.TERM_PUBLIC_RESULT, protectLecturer, updatePublicResultTerm);
 
 module.exports = router;

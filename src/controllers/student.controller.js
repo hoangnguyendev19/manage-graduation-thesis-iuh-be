@@ -9,7 +9,6 @@ const {
 const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const xlsx = require('xlsx');
-const moment = require('moment');
 const _ = require('lodash');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
@@ -420,7 +419,6 @@ exports.importStudents = async (req, res) => {
             const username = student['Mã SV'];
             const fullName = `${student['Họ đệm']} ${student['Tên']}`;
             const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
-            const dateOfBirth = moment(student['Ngày sinh'], 'DD/MM/YYYY').format('YYYY-MM-DD');
             const phone = student['Số điện thoại'];
             const clazzName = student['Mã lớp'];
             const major_id = majorId;
@@ -430,7 +428,6 @@ exports.importStudents = async (req, res) => {
                 password,
                 fullName,
                 gender,
-                dateOfBirth,
                 phone,
                 clazzName,
                 major_id,
@@ -454,6 +451,9 @@ exports.importStudents = async (req, res) => {
                         term_id: termId,
                     });
                 } else {
+                    student.isActive = true;
+                    await student.save();
+
                     const studentTerm = await StudentTerm.findOne({
                         where: { student_id: student.id, term_id: termId },
                     });
@@ -480,6 +480,9 @@ exports.importStudents = async (req, res) => {
                         term_id: termId,
                     });
                 } else {
+                    student.isActive = true;
+                    await student.save();
+
                     await StudentTerm.create({
                         student_id: student.id,
                         term_id: termId,
