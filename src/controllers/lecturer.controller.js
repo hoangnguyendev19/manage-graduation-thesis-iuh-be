@@ -318,11 +318,6 @@ exports.createLecturer = async (req, res) => {
             name: 'LECTURER',
         });
 
-        await LecturerTerm.create({
-            lecturer_id: lecturer.id,
-            term_id: termId,
-        });
-
         let newLecturer = await Lecturer.findOne({
             where: { id: lecturer.id },
             attributes: {
@@ -401,7 +396,7 @@ exports.updateLecturer = async (req, res) => {
 
 exports.importLecturers = async (req, res) => {
     try {
-        const { termId, majorId } = req.body;
+        const { majorId } = req.body;
         if (!req.file) {
             return Error.sendWarning(res, 'Hãy chọn file để import!');
         }
@@ -410,7 +405,6 @@ exports.importLecturers = async (req, res) => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
 
-        const lecturers = [];
         const password = await hashPassword('12345678');
         // columns: STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
         for (const lecturer of jsonData) {
@@ -421,76 +415,23 @@ exports.importLecturers = async (req, res) => {
             const email = lecturer['Email'];
             const major_id = majorId;
 
-            lecturers.push({
-                username,
-                password,
-                fullName,
-                gender,
-                phone,
-                email,
-                major_id,
-            });
-        }
+            const existedLecturer = await Lecturer.findOne({ where: { username } });
 
-        const lecturerTerms = await LecturerTerm.findAll({
-            where: { term_id: termId },
-        });
-
-        if (lecturerTerms.length !== 0) {
-            for (const lec of lecturers) {
-                const lecturer = await Lecturer.findOne({
-                    where: { username: lec.username },
+            if (!existedLecturer) {
+                const newLecturer = await Lecturer.create({
+                    username,
+                    password,
+                    fullName,
+                    gender,
+                    phone,
+                    email,
+                    major_id,
                 });
 
-                if (!lecturer) {
-                    const newLecturer = await Lecturer.create(lec);
-
-                    await Role.create({
-                        lecturer_id: newLecturer.id,
-                        name: 'LECTURER',
-                    });
-
-                    await LecturerTerm.create({
-                        lecturer_id: newLecturer.id,
-                        term_id: termId,
-                    });
-                } else {
-                    const lecturerTerm = await LecturerTerm.findOne({
-                        where: { lecturer_id: lecturer.id, term_id: termId },
-                    });
-
-                    if (!lecturerTerm) {
-                        await LecturerTerm.create({
-                            lecturer_id: lecturer.id,
-                            term_id: termId,
-                        });
-                    }
-                }
-            }
-        } else {
-            for (const lec of lecturers) {
-                const lecturer = await Lecturer.findOne({
-                    where: { username: lec.username },
+                await Role.create({
+                    lecturer_id: newLecturer.id,
+                    name: 'LECTURER',
                 });
-
-                if (!lecturer) {
-                    const newLecturer = await Lecturer.create(lec);
-
-                    await Role.create({
-                        lecturer_id: newLecturer.id,
-                        name: 'LECTURER',
-                    });
-
-                    await LecturerTerm.create({
-                        lecturer_id: newLecturer.id,
-                        term_id: termId,
-                    });
-                } else {
-                    await LecturerTerm.create({
-                        lecturer_id: lecturer.id,
-                        term_id: termId,
-                    });
-                }
             }
         }
 
