@@ -1,4 +1,4 @@
-const { Role } = require('../models/index');
+const { Role, Lecturer } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
@@ -72,10 +72,16 @@ exports.createRole = async (req, res) => {
             return Error.sendWarning(res, 'Thiếu thông tin cần thiết!');
         }
 
+        const lecturerExist = await Lecturer.findByPk(lecturerId);
+
+        if (!lecturerExist) {
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
+        }
+
         const roleExist = await Role.findOne({
             where: {
                 name,
-                lecturer_id: lecturerId,
+                lecturer_id: lecturerExist.id,
             },
         });
 

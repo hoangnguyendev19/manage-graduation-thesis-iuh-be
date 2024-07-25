@@ -48,6 +48,7 @@ exports.getTermByMajorId = async (req, res) => {
             LEFT JOIN term_details td4 ON t.id = td4.term_id AND td4.name = 'DISCUSSION'
             LEFT JOIN term_details td5 ON t.id = td5.term_id AND td5.name = 'REPORT'
             LEFT JOIN term_details td6 ON t.id = td6.term_id AND td6.name = 'PUBLIC_RESULT'
+            LEFT JOIN majors m ON t.major_id = m.id
             WHERE t.major_id = :majorId
             ORDER BY t.start_date DESC`,
             {
@@ -88,7 +89,7 @@ exports.getTermById = async (req, res) => {
             },
         );
 
-        if (!term) {
+        if (term.length === 0) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
@@ -115,6 +116,7 @@ exports.getTermNow = async (req, res) => {
             LEFT JOIN term_details td4 ON t.id = td4.term_id AND td4.name = 'DISCUSSION'
             LEFT JOIN term_details td5 ON t.id = td5.term_id AND td5.name = 'REPORT'
             LEFT JOIN term_details td6 ON t.id = td6.term_id AND td6.name = 'PUBLIC_RESULT'
+            LEFT JOIN majors m ON t.major_id = m.id
             WHERE t.start_date <= NOW() AND t.end_date >= NOW() AND t.major_id = :majorId`,
             {
                 type: QueryTypes.SELECT,
