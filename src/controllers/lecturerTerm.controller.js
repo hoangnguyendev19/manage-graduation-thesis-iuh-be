@@ -1,4 +1,4 @@
-const { LecturerTerm, Lecturer, Major } = require('../models/index');
+const { LecturerTerm, Lecturer, Major, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
@@ -7,48 +7,42 @@ const { sequelize } = require('../configs/connectDB');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
-        const { termId, majorId } = req.body;
+        const { termId } = req.body;
 
-        const lecturers = await Lecturer.findAll({ where: { major_id: majorId } });
-        await LecturerTerm.bulkCreate(
-            lecturers.map((lecturer) => ({
-                term_id: termId,
-                lecturer_id: lecturer.id,
-            })),
-        );
+        const term = await Term.findByPk(termId);
 
-        const newLecturers = await Lecturer.findAll({
-            attributes: { exclude: ['password', 'created_at', 'updated_at', 'major_id'] },
-            include: [
-                {
-                    model: Major,
-                    attributes: ['id', 'name'],
-                    as: 'major',
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại');
+        }
+
+        const lecturers = await Lecturer.findAll({ where: { major_id: term.major_id } });
+
+        for (const lecturer of lecturers) {
+            const isExist = await LecturerTerm.findOne({
+                where: {
+                    term_id: termId,
+                    lecturer_id: lecturer.id,
                 },
-            ],
-            offset: 0,
-            limit: 10,
-        });
+            });
 
-        let totalPage = newLecturers.length;
-
-        totalPage = _.ceil(totalPage / _.toInteger(10));
+            if (!isExist) {
+                await LecturerTerm.create({
+                    term_id: termId,
+                    lecturer_id: lecturer.id,
+                });
+            }
+        }
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import Success',
-            lecturers: newLecturers,
-            params: {
-                page: 1,
-                limit: _.toInteger(10),
-                totalPage,
-            },
+            message: 'Import lecturer terms success',
         });
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);
     }
 };
+
 exports.getLecturerTermsList = async (req, res) => {
     try {
         const { termId } = req.query;
@@ -77,6 +71,7 @@ exports.getLecturerTermsList = async (req, res) => {
         return Error.sendError(res, error);
     }
 };
+
 exports.getLecturerTermsToAdding = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
