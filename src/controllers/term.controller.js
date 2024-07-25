@@ -120,7 +120,7 @@ exports.getTermNow = async (req, res) => {
             WHERE t.start_date <= NOW() AND t.end_date >= NOW() AND t.major_id = :majorId`,
             {
                 type: QueryTypes.SELECT,
-                replacements: { majorId },
+                replacements: { majorId: majorId },
             },
         );
 

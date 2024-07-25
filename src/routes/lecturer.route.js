@@ -22,6 +22,7 @@ const {
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const upload = require('../configs/uploadConfig');
+const { check } = require('express-validator');
 
 const router = express.Router();
 
@@ -35,7 +36,12 @@ router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 // ----------------- Admin -----------------
 router.get(APP_ROUTER.ME, protectLecturer, getMe);
 
-router.get(APP_ROUTER.QUERY, searchLecturer);
+router.get(
+    APP_ROUTER.QUERY,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    searchLecturer,
+);
 
 router.get(APP_ROUTER.INDEX, getLecturers);
 

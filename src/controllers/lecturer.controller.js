@@ -108,39 +108,41 @@ exports.logout = async (req, res) => {
 
 exports.searchLecturer = async (req, res) => {
     try {
-        const { termId, limit, page, searchField, keywords } = req.query;
+        const { majorId, limit, page, searchField, keywords } = req.query;
+
         let offset = (page - 1) * limit;
-        // searchField = 'fullName' | 'username' | 'phone' | 'email';
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
-            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-            WHERE lt.term_id = :termId AND l.${searchField} like :keywords
+
+        let replacements = {
+            keywords: `%${keywords}%`,
+            limit: _.toInteger(limit),
+            majorId: majorId,
+            offset: offset,
+        };
+
+        let searchQuery = searchField ? ` AND l.${searchField} like :keywords` : '';
+        let countSearchQuery = searchField ? `WHERE  l.${searchField} like :keywords` : '';
+        let initQuery = `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id
+            WHERE m.id = :majorId   ${searchQuery}
             ORDER BY l.created_at DESC
             LIMIT :limit OFFSET :offset`;
 
-        const lecturers = await sequelize.query(query, {
-            replacements: {
-                termId,
-                keywords: `%${keywords}%`,
-                limit: parseInt(limit),
-                offset,
-            },
+        let countQuery = `
+            SELECT COUNT(*) as count
+            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id
+            ${countSearchQuery}
+            ORDER BY l.created_at DESC`;
+
+        const lecturers = await sequelize.query(initQuery, {
+            replacements: replacements,
             type: QueryTypes.SELECT,
         });
-        const countLec = await sequelize.query(
-            `SELECT l.id
-            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-            WHERE lt.term_id = :termId   AND l.${searchField} LIKE :keywords
-            ORDER BY l.created_at DESC
-        `,
-            {
-                replacements: {
-                    termId,
-                    keywords: `%${keywords}%`,
-                },
-                type: QueryTypes.SELECT,
-            },
-        );
-        const total = countLec.length;
+        const countLec = await sequelize.query(countQuery, {
+            replacements: replacements,
+            type: QueryTypes.SELECT,
+        });
+
+        const total = countLec[0].count;
         const totalPage = _.ceil(total / _.toInteger(limit));
 
         return res.status(HTTP_STATUS.OK).json({
@@ -155,6 +157,7 @@ exports.searchLecturer = async (req, res) => {
         });
     } catch (error) {
         console.log('🚀 ~ exports.searchLecturer= ~ error:', error);
+        Error.sendError(res, error);
     }
 };
 

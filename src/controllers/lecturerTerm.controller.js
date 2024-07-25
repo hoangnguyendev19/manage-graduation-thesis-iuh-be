@@ -72,10 +72,72 @@ exports.getLecturerTermsList = async (req, res) => {
     }
 };
 
+exports.searchLecturerTerms = async (req, res) => {
+    try {
+        const { majorId, termId, limit, page, searchField, keywords } = req.query;
+
+        let offset = (page - 1) * limit;
+
+        let replacements = {
+            keywords: `%${keywords}%`,
+            limit: _.toInteger(limit),
+            majorId: majorId,
+            termId: termId,
+            offset: offset,
+        };
+
+        let searchQuery = searchField ? ` AND l.${searchField} like :keywords` : '';
+        let initQuery = `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+            FROM lecturers l
+            LEFT JOIN majors m ON l.major_id = m.id
+            LEFT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id
+            WHERE m.id = :majorId  AND lt.term_id = :termId  ${searchQuery}
+            ORDER BY l.created_at DESC
+            LIMIT :limit OFFSET :offset`;
+
+        let countQuery = `
+            SELECT COUNT(*) as count
+            FROM lecturers l 
+            LEFT JOIN majors m ON l.major_id = m.id
+            LEFT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id AND lt.term_id = :termId
+            WHERE  m.id = :majorId 
+            ${searchQuery}
+            ORDER BY l.created_at DESC`;
+        console.log("🚀 ~ exports.searchLecturerTerms= ~ countQuery:", countQuery)
+
+        const lecturerTerms = await sequelize.query(initQuery, {
+            replacements: replacements,
+            type: QueryTypes.SELECT,
+        });
+        const countLec = await sequelize.query(countQuery, {
+            replacements: replacements,
+            type: QueryTypes.SELECT,
+        });
+
+        const total = countLec[0].count;
+        const totalPage = _.ceil(total / _.toInteger(limit));
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Tìm kiếm giảng viên HD thành công',
+            lecturerTerms,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.searchLecturerTerms= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getLecturerTermsToAdding = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
-        const query = `SELECT l.id AS lecturerId, l.full_name AS fullName, m.name AS majorName
+        const query = `SELECT l.id AS lecturerId, l.full_name AS fullName,l.username as username,
+                        l.email,l.degree, m.name AS majorName
                         FROM lecturers l
                         LEFT JOIN lecturer_terms lt ON lt.lecturer_id = l.id AND lt.term_id = :termId
                         LEFT JOIN majors m ON m.id = l.major_id
