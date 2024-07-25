@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
             name: {
                 type: DataTypes.ENUM(
                     'CHOOSE_GROUP',
+                    'PUBLIC_TOPIC',
                     'CHOOSE_TOPIC',
                     'DISCUSSION',
                     'REPORT',

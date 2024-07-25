@@ -282,6 +282,7 @@ exports.getMembersById = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
 exports.countOfGroupStudent = async (req, res) => {
     try {
         const { termId } = req.query;
@@ -298,6 +299,7 @@ exports.countOfGroupStudent = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
 exports.getMyGroupStudent = async (req, res) => {
     try {
         const { termId } = req.query;
@@ -351,6 +353,27 @@ exports.createGroupStudent = async (req, res) => {
     try {
         const { termId, studentIds } = req.body;
 
+        let group = null;
+        // Get number of group student
+        const groupStudents = await GroupStudent.findAll({
+            where: {
+                term_id: termId,
+            },
+        });
+
+        if (studentIds.length === 0) {
+            group = await GroupStudent.create({
+                name: `Nhóm số ${groupStudents.length + 1}`,
+                term_id: termId,
+            });
+
+            return res.status(HTTP_STATUS.CREATED).json({
+                success: true,
+                message: 'Create success!',
+                groupStudent: group,
+            });
+        }
+
         // Check if student already have a group
         for (let i = 0; i < studentIds.length; i++) {
             const studentTerm = await StudentTerm.findOne({
@@ -368,14 +391,7 @@ exports.createGroupStudent = async (req, res) => {
             }
         }
 
-        // Get number of group student
-        const groupStudents = await GroupStudent.findAll({
-            where: {
-                term_id: termId,
-            },
-        });
-
-        const group = await GroupStudent.create({
+        group = await GroupStudent.create({
             name: `Nhóm số ${groupStudents.length + 1}`,
             term_id: termId,
         });

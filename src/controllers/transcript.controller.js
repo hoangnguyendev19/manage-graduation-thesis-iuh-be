@@ -11,7 +11,7 @@ const {
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Sequelize, QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const { SELECT } = require('sequelize/lib/query-types');
 
@@ -279,9 +279,29 @@ exports.updateTranscriptList = async (req, res) => {
         const { transcripts } = req.body;
 
         const transcriptPromises = transcripts.map(async (trans) => {
-            const { id, score } = trans;
+            const { termId, studentId, evaluationId, score } = trans;
 
-            const transcript = await Transcript.findByPk(id);
+            const studentTerm = await StudentTerm.findOne({
+                where: {
+                    term_id: termId,
+                    student_id: studentId,
+                },
+            });
+
+            const lecturerTerm = await LecturerTerm.findOne({
+                where: {
+                    term_id: termId,
+                    lecturer_id: req.user.id,
+                },
+            });
+
+            const transcript = await Transcript.findOne({
+                where: {
+                    student_term_id: studentTerm.id,
+                    evaluation_id: evaluationId,
+                    lecturer_term_id: lecturerTerm.id,
+                },
+            });
 
             if (!transcript) {
                 return Error.sendNotFound(res, 'Bảng điểm không tồn tại!');
