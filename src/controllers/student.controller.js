@@ -667,7 +667,7 @@ exports.updatePassword = async (req, res) => {
 
         newPassword = await hashPassword(newPassword);
 
-        await student.update({ password: newPassword }, { where: { id: req.user.id } });
+        await Student.update({ password: newPassword }, { where: { id: req.user.id } });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

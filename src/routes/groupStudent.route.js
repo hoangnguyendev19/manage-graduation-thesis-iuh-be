@@ -36,14 +36,9 @@ router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, protectLecturer, getGroupStuden
 
 router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, getGroupStudentMembers);
 
-router.get(APP_ROUTER.INDEX, getGroupStudents);
 router.get(APP_ROUTER.COUNT, countOfGroupStudent);
 
 router.get(APP_ROUTER.MEMBER, getMembersById);
-
-router.get(APP_ROUTER.ID, getGroupStudentById);
-
-router.post(APP_ROUTER.INDEX, protectLecturer, createGroupStudent);
 
 router.post(APP_ROUTER.IMPORT, protectLecturer, importGroupStudent);
 
@@ -65,6 +60,12 @@ router.put(APP_ROUTER.GROUP_STUDENT_CANCEL_TOPIC, protectStudent, cancelTopic);
 
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_TOPIC, protectLecturer, assignTopic);
 
+router.get(APP_ROUTER.ID, getGroupStudentById);
+
 router.delete(APP_ROUTER.ID, protectLecturer, deleteGroupStudent);
+
+router.get(APP_ROUTER.INDEX, getGroupStudents);
+
+router.post(APP_ROUTER.INDEX, protectLecturer, createGroupStudent);
 
 module.exports = router;

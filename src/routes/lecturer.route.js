@@ -26,14 +26,12 @@ const { check } = require('express-validator');
 
 const router = express.Router();
 
-// ----------------- Auth -----------------
 router.post(APP_ROUTER.LOGIN, login);
 
 router.delete(APP_ROUTER.LOGOUT, protectLecturer, logout);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
-// ----------------- Admin -----------------
 router.get(APP_ROUTER.ME, protectLecturer, getMe);
 
 router.get(
@@ -49,14 +47,7 @@ router.get(APP_ROUTER.LECTURER_BY_MAJOR, getLecturersByMajorId);
 
 router.get(APP_ROUTER.ID, getLecturerById);
 
-// router.post(APP_ROUTER.INDEX, protectLecturer, createLecturer);
-router.post(APP_ROUTER.INDEX, createLecturer);
-
-router.put(APP_ROUTER.ID, protectLecturer, updateLecturer);
-
 router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importLecturers);
-
-router.delete(APP_ROUTER.ID, protectLecturer, deleteLecturer);
 
 router.post(APP_ROUTER.RESET_PASSWORD, protectLecturer, resetPassword);
 
@@ -64,10 +55,15 @@ router.post(APP_ROUTER.LOCK, protectLecturer, lockAccount);
 
 router.post(APP_ROUTER.UNLOCK, protectLecturer, unlockAccount);
 
-// ----------------- Lecturer -----------------
+// router.post(APP_ROUTER.INDEX, protectLecturer, createLecturer);
+router.post(APP_ROUTER.INDEX, createLecturer);
 
 router.put(APP_ROUTER.ME, protectLecturer, updateMe);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectLecturer, updatePassword);
+
+router.put(APP_ROUTER.ID, protectLecturer, updateLecturer);
+
+router.delete(APP_ROUTER.ID, protectLecturer, deleteLecturer);
 
 module.exports = router;

@@ -28,14 +28,12 @@ const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
 
-// ----------------- Auth -----------------
 router.post(APP_ROUTER.LOGIN, login);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
 router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
-// ----------------- Admin -----------------
 router.get(APP_ROUTER.QUERY, getStudentsOfSearch);
 
 router.get(APP_ROUTER.INDEX, getStudents);
@@ -49,9 +47,11 @@ router.post(
     createStudent,
 );
 
-router.put(APP_ROUTER.ID, protectLecturer, updateStudent);
+router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, updatePassword);
 
-router.delete(APP_ROUTER.ID, protectLecturer, deleteStudent);
+router.get(APP_ROUTER.ME, protectStudent, getMe);
+
+router.put(APP_ROUTER.ME, protectStudent, updateMe);
 
 router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importStudents);
 
@@ -65,13 +65,10 @@ router.post(APP_ROUTER.UNLOCK, protectLecturer, unlockAccount);
 
 router.put(APP_ROUTER.STUDENT_STATUS, protectLecturer, updateStatus);
 
-// ----------------- Student -----------------
-router.get(APP_ROUTER.ME, protectStudent, getMe);
+router.put(APP_ROUTER.ID, protectLecturer, updateStudent);
 
-router.put(APP_ROUTER.ME, protectStudent, updateMe);
+router.delete(APP_ROUTER.ID, protectLecturer, deleteStudent);
 
 router.get(APP_ROUTER.ID, getStudentById);
-
-router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, updatePassword);
 
 module.exports = router;
