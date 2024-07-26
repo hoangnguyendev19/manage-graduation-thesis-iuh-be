@@ -1,15 +1,18 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const env = 'development';
-const config = require('./config')[env];
+const env = 'local'; // development, production
+const config = require('./config')[env]['mysql'];
 
-const sequelize = new Sequelize(config.database, config.username, config.password, {
+const sequelize = new Sequelize({
+    username: config.username,
+    password: config.password,
+    database: config.database,
     host: config.host,
-    port: 3306,
+    port: config.port,
     dialect: config.dialect,
     logging: config.logging,
-    timezone: '+07:00',
+    timezone: config.timezone,
 });
 
 // (async () => await sequelize.sync({ alter: true }))();

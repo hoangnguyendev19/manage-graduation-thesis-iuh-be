@@ -2,11 +2,16 @@ const redis = require('redis');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const env = 'local'; // development, production
+const config = require('./config')[env]['redis'];
+
 const client = redis.createClient({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    // username: process.env.REDIS_USERNAME,
-    // password: process.env.REDIS_PASSWORD,
+    password: env === 'local' ? undefined : config.password,
+    username: env === 'local' ? undefined : config.username,
+    socket: {
+        host: config.host,
+        port: config.port,
+    },
 });
 
 client.on('error', (error) => {

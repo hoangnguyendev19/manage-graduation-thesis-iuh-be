@@ -23,20 +23,20 @@ router.get(APP_ROUTER.GROUP_LECTURER_NO_GROUP, getLecturerNoGroupByType);
 
 router.get(APP_ROUTER.GROUP_LECTURER_BY_LECTURERS, protectLecturer, getGroupLecturersByLecturerId);
 
-router.get(APP_ROUTER.INDEX, getGroupLecturers);
-
-router.get(APP_ROUTER.ID, getGroupLecturerById);
-
 router.get(APP_ROUTER.GROUP_LECTURER_MEMBER, getMemberFromGroupLecturer);
 
 router.post(APP_ROUTER.GROUP_LECTURER_BY_TYPE, protectLecturer, createGroupLecturerByType);
+
+router.post(APP_ROUTER.GROUP_LECTURER_MEMBER, protectLecturer, addMemberToGroupLecturer);
+
+router.put(APP_ROUTER.GROUP_LECTURER_MEMBER, protectLecturer, removeLecturerFromGroupLecturer);
+
+router.get(APP_ROUTER.ID, getGroupLecturerById);
 
 router.put(APP_ROUTER.ID, protectLecturer, updateGroupLecturer);
 
 router.delete(APP_ROUTER.ID, protectLecturer, deleteGroupLecturer);
 
-router.post(APP_ROUTER.GROUP_LECTURER_MEMBER, protectLecturer, addMemberToGroupLecturer);
-
-router.put(APP_ROUTER.GROUP_LECTURER_MEMBER, protectLecturer, removeLecturerFromGroupLecturer);
+router.get(APP_ROUTER.INDEX, getGroupLecturers);
 
 module.exports = router;
