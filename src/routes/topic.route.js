@@ -3,6 +3,7 @@ const express = require('express');
 const { APP_ROUTER } = require('../constants/router');
 
 const {
+    getTopicOfSearch,
     getTopics,
     getTopicsByGroupLecturerId,
     getTopicById,
@@ -21,6 +22,8 @@ const upload = require('../configs/uploadConfig');
 const router = express.Router();
 
 router.get(APP_ROUTER.TOPIC_BY_GROUP_LECTURER, getTopicsByGroupLecturerId);
+
+router.get(APP_ROUTER.QUERY, getTopicOfSearch);
 
 router.get(APP_ROUTER.INDEX, getTopics);
 

@@ -236,6 +236,61 @@ exports.getGroupStudentMembers = async (req, res) => {
     }
 };
 
+exports.getGroupStudentOfSearch = async (req, res) => {
+    try {
+        const { termId, page, limit, keywords, searchField } = req.query;
+        let offset = (page - 1) * limit;
+        let total = 0;
+
+        let searchQuery = searchField ? `and ${searchField} LIKE :keywords` : '';
+
+        const groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            WHERE gs.term_id = :termId ${searchQuery}
+            GROUP BY gs.id
+            ORDER BY gs.created_at DESC
+            LIMIT :limit OFFSET :offset`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: {
+                    termId,
+                    keywords: `%${keywords}%`,
+                    limit: parseInt(limit),
+                    offset,
+                },
+            },
+        );
+
+        total = await sequelize.query(
+            `SELECT COUNT(gs.id) as total FROM group_students gs 
+            WHERE gs.term_id = :termId ${searchQuery}`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId, keywords: `%${keywords}%` },
+            },
+        );
+
+        total = total[0].total;
+
+        const totalPage = _.ceil(total / _.toInteger(limit));
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get all success!',
+            groupStudents,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getMembersById = async (req, res) => {
     try {
         const { id } = req.params;
