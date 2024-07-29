@@ -650,7 +650,7 @@ exports.getStudentsNoHaveGroup = async (req, res) => {
         });
     } catch (error) {
         console.log('🚀 ~ exports.getStudentsNoHaveGroup= ~ error:', error);
-        Error.sendError(res, error);
+        return Error.sendError(res, error);
     }
 };
 
@@ -711,12 +711,9 @@ exports.getMe = async (req, res) => {
 
 exports.updateMe = async (req, res) => {
     try {
-        const { fullName, email, phoneNumber, gender } = req.body;
+        const { fullName, email,clazzName, phone, gender } = req.body;
 
-        await Student.update(
-            { fullName, email, phoneNumber, gender },
-            { where: { id: req.user.id } },
-        );
+        await Student.update({ fullName, email,clazzName, phone, gender }, { where: { id: req.user.id } });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

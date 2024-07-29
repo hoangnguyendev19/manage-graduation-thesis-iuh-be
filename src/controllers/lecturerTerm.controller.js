@@ -8,13 +8,10 @@ const { sequelize } = require('../configs/connectDB');
 exports.importLecturerTerms = async (req, res) => {
     try {
         const { termId } = req.body;
-
         const term = await Term.findByPk(termId);
-
         if (!term) {
             return Error.sendNotFound(res, 'Học kì không tồn tại');
         }
-
         const lecturers = await Lecturer.findAll({ where: { major_id: term.major_id } });
 
         for (const lecturer of lecturers) {
@@ -74,24 +71,23 @@ exports.getLecturerTermsList = async (req, res) => {
 
 exports.searchLecturerTerms = async (req, res) => {
     try {
-        const { majorId, termId, limit, page, searchField, keywords } = req.query;
-
-        let offset = (page - 1) * limit;
+        const { termId, limit, page, searchField, keywords } = req.query;
 
         let replacements = {
             keywords: `%${keywords}%`,
             limit: _.toInteger(limit),
-            majorId: majorId,
             termId: termId,
-            offset: offset,
+            offset: (page - 1) * limit,
         };
 
-        let searchQuery = searchField ? ` AND l.${searchField} like :keywords` : '';
+        let searchQuery = searchField
+            ? `lt.term_id = :termId AND l.${searchField} like :keywords`
+            : 'lt.term_id = :termId ';
         let initQuery = `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
             FROM lecturers l
             LEFT JOIN majors m ON l.major_id = m.id
-            LEFT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id
-            WHERE m.id = :majorId  AND lt.term_id = :termId  ${searchQuery}
+            RIGHT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id
+            WHERE  ${searchQuery}
             ORDER BY l.created_at DESC
             LIMIT :limit OFFSET :offset`;
 
@@ -99,11 +95,10 @@ exports.searchLecturerTerms = async (req, res) => {
             SELECT COUNT(*) as count
             FROM lecturers l 
             LEFT JOIN majors m ON l.major_id = m.id
-            LEFT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id AND lt.term_id = :termId
-            WHERE  m.id = :majorId 
+            LEFT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id
+            WHERE
             ${searchQuery}
             ORDER BY l.created_at DESC`;
-        console.log("🚀 ~ exports.searchLecturerTerms= ~ countQuery:", countQuery)
 
         const lecturerTerms = await sequelize.query(initQuery, {
             replacements: replacements,
@@ -144,7 +139,7 @@ exports.getLecturerTermsToAdding = async (req, res) => {
                         WHERE 
                         lt.lecturer_id IS NULL
                         OR
-                        l.major_id  != :majorId
+                        ( l.major_id  != :majorId AND  lt.lecturer_id IS NULL )
                         `;
 
         const lecturerTerms = await sequelize.query(query, {
@@ -204,15 +199,18 @@ exports.deleteLecturerTerm = async (req, res) => {
             },
             attributes: ['id'],
         });
-        if (!lecturerTerm) {
-            Error.sendError(res, 'Không tồn tại giảng viên này');
-        }
-        await lecturerTerm.destroy({ force: true });
+        console.log('🚀 ~ exports.deleteLecturerTerm ~ lecturerTerm:', lecturerTerm);
+        if (lecturerTerm === null) {
+            return Error.sendError(res, 'Không tồn tại giảng viên này');
+        } else {
+            const isDestroy = await lecturerTerm.destroy({ force: true });
+            console.log('🚀 ~ exports.deleteLecturerTerm ~ isDestroy:', isDestroy);
 
-        return res.status(HTTP_STATUS.CREATED).json({
-            success: true,
-            message: 'Xóa giảng viên ra khỏi học kì thành công',
-        });
+            return res.status(HTTP_STATUS.CREATED).json({
+                success: true,
+                message: 'Xóa giảng viên ra khỏi học kì thành công',
+            });
+        }
     } catch (error) {
         console.log('🚀 ~ exports.deleteLecturerTerm ~ error:', error);
         Error.sendError(res, error);
