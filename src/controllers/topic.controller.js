@@ -309,8 +309,15 @@ const createTopic = async (req, res) => {
 const updateTopic = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, target, expectedResult, standardOutput, requireInput } =
-            req.body;
+        const {
+            name,
+            description,
+            target,
+            expectedResult,
+            standardOutput,
+            quantityGroupMax,
+            requireInput,
+        } = req.body;
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
@@ -321,6 +328,7 @@ const updateTopic = async (req, res) => {
         topic.expectedResult = expectedResult;
         topic.standardOutput = standardOutput;
         topic.requireInput = requireInput;
+        topic.quantityGroupMax = quantityGroupMax;
 
         await topic.save();
 
@@ -337,20 +345,25 @@ const updateTopic = async (req, res) => {
 
 const updateQuantityGroupMax = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { termId } = req.query;
         const { quantityGroupMax } = req.body;
-        const topic = await Topic.findByPk(id);
-        if (!topic) {
-            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
-        }
 
-        topic.quantityGroupMax = quantityGroupMax;
-        await topic.save();
-
+        const query = `
+        UPDATE topics t
+        JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+        SET t.quantity_group_max = :quantityGroupMax
+        WHERE lt.term_id = :termId
+        `;
+        const rs = await sequelize.query(query, {
+            type: QueryTypes.BULKUPDATE,
+            replacements: {
+                quantityGroupMax: quantityGroupMax,
+                termId: termId,
+            },
+        });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Cập nhật thành công!',
-            topic,
+            message: 'Cập nhật số lượng thành công!',
         });
     } catch (error) {
         console.log(error);

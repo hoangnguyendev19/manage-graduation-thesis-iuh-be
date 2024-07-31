@@ -302,6 +302,15 @@ exports.createLecturer = async (req, res) => {
     try {
         let { username, fullName, gender, phone, email, degree, majorId, termId } = req.body;
         const password = await hashPassword('12345678');
+        const lecturer_id = await Lecturer.findOne({
+            where: {
+                username,
+            },
+            attributes: ['id'],
+        });
+        if (lecturer_id) {
+            return Error.sendConflict(res, 'Mã giảng viên không được phép trùng.');
+        }
         const lecturer = await Lecturer.create({
             username,
             fullName,
