@@ -13,119 +13,6 @@ const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
 
-//  get all topic -> theo chuyên ngành, học kì
-
-const getTopicByParams = async (req, res) => {
-    try {
-        const { lecturerId, termId, majorId, limit, page } = req.query;
-        let topics = null;
-        let offset = (page - 1) * limit;
-        //case 1
-        if (!lecturerId && termId && majorId) {
-            const lecturers = await Lecturer.findAll({
-                where: {
-                    major_id: majorId,
-                },
-                attributes: ['id'],
-            });
-
-            const lecturerTerms = await LecturerTerm.findAll({
-                where: {
-                    term_id: termId,
-                    lecturer_id: {
-                        [Op.in]: lecturers.map((lecturer) => lecturer.id),
-                    },
-                },
-            });
-
-            if (lecturerTerms.length === 0) {
-                return Error.sendNotFound(res, 'Lecturer Term not found');
-            }
-
-            topics = await Topic.findAll({
-                offset: offset,
-                limit: parseInt(limit),
-                where: {
-                    lecturer_term_id: {
-                        [Op.in]: lecturerTerms.map((lecturerTerm) => lecturerTerm.id),
-                    },
-                },
-                attributes: { exclude: ['lecturer_term_id'] },
-
-                include: {
-                    model: LecturerTerm,
-                    attributes: ['id'],
-                    include: {
-                        model: Lecturer,
-                        attributes: [
-                            'id',
-                            'userName',
-                            'fullName',
-                            'email',
-                            'phone',
-                            'gender',
-                            'degree',
-                        ],
-                        include: {
-                            model: Major,
-                            attributes: ['id', 'name'],
-                            as: 'major',
-                        },
-                        as: 'lecturer',
-                    },
-                    as: 'lecturerTerm',
-                },
-            });
-
-            for (let i = 0; i < topics.length; i++) {
-                const topic = topics[i];
-                const groupStudents = await GroupStudent.findAll({
-                    where: {
-                        topic_id: topic.id,
-                    },
-                });
-
-                topic.dataValues.quantityGroup = groupStudents.length;
-            }
-        }
-        //case 2
-        else if (lecturerId && termId && !majorId) {
-            const lecturerTerm = await LecturerTerm.findOne({
-                where: {
-                    lecturer_id: lecturerId,
-                    term_id: termId,
-                },
-            });
-
-            if (!lecturerTerm) {
-                return Error.sendNotFound(res, 'Lecturer Term not found');
-            }
-
-            topics = await Topic.findAll({
-                offset: offset,
-                limit: parseInt(limit),
-                where: {
-                    lecturer_term_id: lecturerTerm.id,
-                },
-            });
-        }
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Get Success',
-            topics,
-            params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
-                totalPage: _.ceil(topics.length / _.toInteger(limit)),
-            },
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 const getTopicOfSearch = async (req, res) => {
     try {
         const { termId, page, limit, keywords, searchField } = req.query;
@@ -135,7 +22,7 @@ const getTopicOfSearch = async (req, res) => {
         let searchQuery = searchField ? `and ${searchField} LIKE :keywords` : '';
 
         const topics = await sequelize.query(
-            `SELECT t.id, t.name, t.description, t.target, t.standard_output, t.require_input, t.status, t.note, t.quantity_group_max, t.lecturer_term_id FROM topics t
+            `SELECT t.id, t.name, t.description, t.target, t.expected_result, t.standard_output, t.require_input, t.status, t.note, t.quantity_group_max, t.lecturer_term_id FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             WHERE lt.term_id = :termId ${searchQuery}
             LIMIT :limit OFFSET :offset`,
@@ -185,15 +72,12 @@ const getTopicOfSearch = async (req, res) => {
 
 const getTopics = async (req, res) => {
     try {
-        const { lecturerId, termId, majorId } = req.query;
+        const { lecturerId, termId } = req.query;
         let topics = null;
 
         //case 1
-        if (!lecturerId && termId && majorId) {
+        if (!lecturerId && termId) {
             const lecturers = await Lecturer.findAll({
-                where: {
-                    major_id: majorId,
-                },
                 attributes: ['id'],
             });
 
@@ -255,7 +139,7 @@ const getTopics = async (req, res) => {
             }
         }
         //case 2
-        else if (lecturerId && termId && !majorId) {
+        else if (lecturerId && termId) {
             const lecturerTerm = await LecturerTerm.findOne({
                 where: {
                     lecturer_id: lecturerId,
@@ -376,7 +260,15 @@ const getTopicById = async (req, res) => {
 };
 
 const createTopic = async (req, res) => {
-    const { name, description, quantityGroupMax, target, standardOutput, requireInput } = req.body;
+    const {
+        name,
+        description,
+        quantityGroupMax,
+        target,
+        expectedResult,
+        standardOutput,
+        requireInput,
+    } = req.body;
     const { termId } = req.query;
 
     try {
@@ -397,6 +289,7 @@ const createTopic = async (req, res) => {
             description,
             quantityGroupMax,
             target,
+            expectedResult,
             standardOutput,
             requireInput,
             lecturer_term_id: lecturerTerm.id,
@@ -416,7 +309,8 @@ const createTopic = async (req, res) => {
 const updateTopic = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, target, standardOutput, requireInput } = req.body;
+        const { name, description, target, expectedResult, standardOutput, requireInput } =
+            req.body;
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
@@ -424,6 +318,7 @@ const updateTopic = async (req, res) => {
         topic.name = name;
         topic.description = description;
         topic.target = target;
+        topic.expectedResult = expectedResult;
         topic.standardOutput = standardOutput;
         topic.requireInput = requireInput;
 
@@ -479,10 +374,9 @@ const importTopics = async (req, res) => {
             const username = topic['Mã giảng viên'];
             const name = topic['Tên đề tài'].trim();
             const target = topic['MỤC TIÊU ĐỀ TÀI'].trim();
-            const description =
-                topic['Mô tả'].trim() +
-                ' - ' +
+            const expectedResult =
                 topic['DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG'].trim();
+            const description = topic['Mô tả'].trim();
             const requireInput = topic['Yêu cầu đầu vào'].trim();
             const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'].trim();
 
@@ -490,6 +384,7 @@ const importTopics = async (req, res) => {
                 username: username,
                 name: name,
                 target: target,
+                expectedResult: expectedResult,
                 description: description,
                 requireInput: requireInput,
                 standardOutput: standardOutput,
@@ -524,12 +419,21 @@ const importTopics = async (req, res) => {
             }
         }
         listTopic.map(
-            async ({ name, description, target, standardOutput, requireInput, lecturerTermId }) => {
+            async ({
+                name,
+                description,
+                target,
+                expectedResult,
+                standardOutput,
+                requireInput,
+                lecturerTermId,
+            }) => {
                 await Topic.create({
                     name,
                     description,
                     quantityGroupMax: 5,
                     target,
+                    expectedResult,
                     standardOutput,
                     requireInput,
                     lecturer_term_id: lecturerTermId,
@@ -550,6 +454,8 @@ const importTopics = async (req, res) => {
 const importTopicsFromTermIdToSelectedTermId = async (req, res) => {
     try {
         const { termId, selectedTermId } = req.body;
+
+        console.log(termId, selectedTermId);
 
         if (termId === selectedTermId) {
             return Error.sendWarning(res, 'Học kì được chọn phải khác học kỳ hiện tại!');
@@ -598,6 +504,7 @@ const importTopicsFromTermIdToSelectedTermId = async (req, res) => {
                     description: topic.description,
                     quantityGroupMax: topic.quantityGroupMax,
                     target: topic.target,
+                    expectedResult: topic.expectedResult,
                     standardOutput: topic.standardOutput,
                     requireInput: topic.requireInput,
                     lecturer_term_id: lecturerTermSelected.id,
@@ -670,7 +577,6 @@ module.exports = {
     updateQuantityGroupMax,
     updateStatusTopic,
     deleteTopic,
-    getTopicByParams,
     importTopics,
     importTopicsFromTermIdToSelectedTermId,
 };

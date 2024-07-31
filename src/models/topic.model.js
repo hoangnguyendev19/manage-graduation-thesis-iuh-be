@@ -31,6 +31,11 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.TEXT,
                 allowNull: true,
             },
+            expectedResult: {
+                type: DataTypes.TEXT('medium'),
+                allowNull: true,
+                field: 'expected_result',
+            },
             standardOutput: {
                 type: DataTypes.TEXT('medium'),
                 allowNull: true,

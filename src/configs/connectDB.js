@@ -1,8 +1,8 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const env = 'local'; // development, production
-const config = require('./config')[env]['mysql'];
+const env = process.env.NODE_ENV;
+const config = require('./config')[env];
 
 const sequelize = new Sequelize({
     username: config.username,
