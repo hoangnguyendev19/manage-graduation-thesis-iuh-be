@@ -2,15 +2,14 @@ const redis = require('redis');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const env = 'local'; // development, production
-const config = require('./config')[env]['redis'];
+const env = process.env.NODE_ENV;
 
 const client = redis.createClient({
-    password: env === 'local' ? undefined : config.password,
-    username: env === 'local' ? undefined : config.username,
+    password: env === 'local' ? undefined : process.env.CLOUD_REDIS_PASSWORD,
+    username: env === 'local' ? undefined : process.env.CLOUD_REDIS_USERNAME,
     socket: {
-        host: config.host,
-        port: config.port,
+        host: env === 'local' ? process.env.REDIS_HOST : process.env.CLOUD_REDIS_HOST,
+        port: env === 'local' ? process.env.REDIS_PORT : process.env.CLOUD_REDIS_PORT,
     },
 });
 

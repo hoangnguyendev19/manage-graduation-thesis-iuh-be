@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: () => uuidv4(),
             },
             message: {
-                type: DataTypes.STRING,
+                type: DataTypes.TEXT('medium'),
                 allowNull: false,
             },
             isRead: {
