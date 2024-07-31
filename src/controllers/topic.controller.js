@@ -15,30 +15,11 @@ const { sequelize } = require('../configs/connectDB');
 
 const getTopicOfSearch = async (req, res) => {
     try {
-        const { termId, page, limit, keywords, searchField } = req.query;
-        let offset = (page - 1) * limit;
-        let total = 0;
-
+        const { termId, keywords, searchField } = req.query;
         let searchQuery = searchField ? `and ${searchField} LIKE :keywords` : '';
 
         const topics = await sequelize.query(
             `SELECT t.id, t.name, t.description, t.target, t.expected_result, t.standard_output, t.require_input, t.status, t.note, t.quantity_group_max, t.lecturer_term_id FROM topics t
-            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            WHERE lt.term_id = :termId ${searchQuery}
-            LIMIT :limit OFFSET :offset`,
-            {
-                replacements: {
-                    termId,
-                    limit: parseInt(limit),
-                    offset,
-                    keywords: `%${keywords}%`,
-                },
-                type: QueryTypes.SELECT,
-            },
-        );
-
-        total = await sequelize.query(
-            `SELECT COUNT(t.id) as total FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             WHERE lt.term_id = :termId ${searchQuery}`,
             {
@@ -50,19 +31,10 @@ const getTopicOfSearch = async (req, res) => {
             },
         );
 
-        total = total[0].total;
-
-        const totalPage = _.ceil(total / _.toInteger(limit));
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get all success!',
             topics,
-            params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
-                totalPage,
-            },
         });
     } catch (error) {
         console.log(error);
