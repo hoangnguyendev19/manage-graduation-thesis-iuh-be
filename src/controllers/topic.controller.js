@@ -15,31 +15,13 @@ const { sequelize } = require('../configs/connectDB');
 
 const getTopicOfSearch = async (req, res) => {
     try {
-        const { termId, page, limit, keywords, searchField } = req.query;
-        let offset = (page - 1) * limit;
-        let total = 0;
-
+        const { termId, keywords, searchField } = req.query;
         let searchQuery = searchField ? `and ${searchField} LIKE :keywords` : '';
 
         const topics = await sequelize.query(
-            `SELECT t.id, t.name, t.description, t.target, t.expected_result, t.standard_output, t.require_input, t.status, t.note, t.quantity_group_max, t.lecturer_term_id FROM topics t
+            `SELECT t.id, t.name, t.status, t.quantity_group_max, l.full_name as fullName FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            WHERE lt.term_id = :termId ${searchQuery}
-            LIMIT :limit OFFSET :offset`,
-            {
-                replacements: {
-                    termId,
-                    limit: parseInt(limit),
-                    offset,
-                    keywords: `%${keywords}%`,
-                },
-                type: QueryTypes.SELECT,
-            },
-        );
-
-        total = await sequelize.query(
-            `SELECT COUNT(t.id) as total FROM topics t
-            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
             WHERE lt.term_id = :termId ${searchQuery}`,
             {
                 replacements: {
@@ -50,19 +32,10 @@ const getTopicOfSearch = async (req, res) => {
             },
         );
 
-        total = total[0].total;
-
-        const totalPage = _.ceil(total / _.toInteger(limit));
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get all success!',
             topics,
-            params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
-                totalPage,
-            },
         });
     } catch (error) {
         console.log(error);
@@ -77,85 +50,34 @@ const getTopics = async (req, res) => {
 
         //case 1
         if (!lecturerId && termId) {
-            const lecturers = await Lecturer.findAll({
-                attributes: ['id'],
-            });
-
-            const lecturerTerms = await LecturerTerm.findAll({
-                where: {
-                    term_id: termId,
-                    lecturer_id: {
-                        [Op.in]: lecturers.map((lecturer) => lecturer.id),
+            topics = await sequelize.query(
+                `SELECT t.id, t.name, t.status, t.quantity_group_max, l.full_name as fullName FROM topics t
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE lt.term_id = :termId`,
+                {
+                    replacements: {
+                        termId,
                     },
+                    type: QueryTypes.SELECT,
                 },
-            });
-
-            if (lecturerTerms.length === 0) {
-                return Error.sendNotFound(res, 'Lecturer Term not found');
-            }
-
-            topics = await Topic.findAll({
-                where: {
-                    lecturer_term_id: {
-                        [Op.in]: lecturerTerms.map((lecturerTerm) => lecturerTerm.id),
-                    },
-                },
-                attributes: { exclude: ['lecturer_term_id'] },
-
-                include: {
-                    model: LecturerTerm,
-                    attributes: ['id'],
-                    include: {
-                        model: Lecturer,
-                        attributes: [
-                            'id',
-                            'username',
-                            'fullName',
-                            'email',
-                            'phone',
-                            'gender',
-                            'degree',
-                        ],
-                        include: {
-                            model: Major,
-                            attributes: ['id', 'name'],
-                            as: 'major',
-                        },
-                        as: 'lecturer',
-                    },
-                    as: 'lecturerTerm',
-                },
-            });
-
-            for (let i = 0; i < topics.length; i++) {
-                const topic = topics[i];
-                const groupStudents = await GroupStudent.findAll({
-                    where: {
-                        topic_id: topic.id,
-                    },
-                });
-
-                topic.dataValues.quantityGroup = groupStudents.length;
-            }
+            );
         }
         //case 2
         else if (lecturerId && termId) {
-            const lecturerTerm = await LecturerTerm.findOne({
-                where: {
-                    lecturer_id: lecturerId,
-                    term_id: termId,
+            topics = await sequelize.query(
+                `SELECT t.id, t.name, t.status, t.quantity_group_max, l.full_name as fullName FROM topics t
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
+                {
+                    replacements: {
+                        termId,
+                        lecturerId,
+                    },
+                    type: QueryTypes.SELECT,
                 },
-            });
-
-            if (!lecturerTerm) {
-                return Error.sendNotFound(res, 'Lecturer Term not found');
-            }
-
-            topics = await Topic.findAll({
-                where: {
-                    lecturer_term_id: lecturerTerm.id,
-                },
-            });
+            );
         }
 
         res.status(HTTP_STATUS.OK).json({
