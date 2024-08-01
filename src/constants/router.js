@@ -68,7 +68,7 @@ const APP_ROUTER = {
     TOPIC: '/api/v1/topics',
     TOPIC_TERM: 'api/v1/topics/:termId',
     TOPIC_STATUS: '/:id/status',
-    TOPIC_QUANTITY_GROUP_MAX: '/:id/quantity-group-max',
+    TOPIC_QUANTITY_GROUP_MAX: '/quantity-group-max',
     TOPIC_BY_GROUP_LECTURER: '/group-lecturer/:id',
 
     //GROUP_LECTURER
