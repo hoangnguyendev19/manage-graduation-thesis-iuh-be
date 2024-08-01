@@ -25,21 +25,43 @@ router.get(APP_ROUTER.TOPIC_BY_GROUP_LECTURER, getTopicsByGroupLecturerId);
 
 router.get(APP_ROUTER.QUERY, getTopicOfSearch);
 
-router.put(APP_ROUTER.TOPIC_QUANTITY_GROUP_MAX, protectLecturer, updateQuantityGroupMax);
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    upload.single('file'),
+    importTopics,
+);
 
-router.get(APP_ROUTER.INDEX, getTopics);
+router.post(
+    APP_ROUTER.IMPORT_FROM_SELECT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    importTopicsFromTermIdToSelectedTermId,
+);
 
-router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importTopics);
+router.put(
+    APP_ROUTER.TOPIC_QUANTITY_GROUP_MAX,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    updateQuantityGroupMax,
+);
 
-router.post(APP_ROUTER.IMPORT_FROM_SELECT, protectLecturer, importTopicsFromTermIdToSelectedTermId);
+router.put(
+    APP_ROUTER.TOPIC_STATUS,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    updateStatusTopic,
+);
 
 router.get(APP_ROUTER.ID, getTopicById);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, createTopic);
-
 router.put(APP_ROUTER.ID, protectLecturer, updateTopic);
+
 router.delete(APP_ROUTER.ID, protectLecturer, deleteTopic);
 
-router.put(APP_ROUTER.TOPIC_STATUS, protectLecturer, updateStatusTopic);
+router.get(APP_ROUTER.INDEX, getTopics);
+
+router.post(APP_ROUTER.INDEX, protectLecturer, createTopic);
 
 module.exports = router;

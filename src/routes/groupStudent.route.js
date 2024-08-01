@@ -43,13 +43,28 @@ router.get(APP_ROUTER.COUNT, countOfGroupStudent);
 
 router.get(APP_ROUTER.MEMBER, getMembersById);
 
-router.post(APP_ROUTER.IMPORT, protectLecturer, importGroupStudent);
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRole(['HEAD_LETURER', 'HEAD_COURSE']),
+    importGroupStudent,
+);
 
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);
 
-router.put(APP_ROUTER.GROUP_STUDENT_ADD_MEMBER, protectLecturer, addMemberGroupStudent);
+router.put(
+    APP_ROUTER.GROUP_STUDENT_ADD_MEMBER,
+    protectLecturer,
+    checkRole(['HEAD_LETURER', 'HEAD_COURSE']),
+    addMemberGroupStudent,
+);
 
-router.put(APP_ROUTER.GROUP_STUDENT_DELETE_MEMBER, protectLecturer, deleteMemberGroupStudent);
+router.put(
+    APP_ROUTER.GROUP_STUDENT_DELETE_MEMBER,
+    protectLecturer,
+    checkRole(['HEAD_LETURER', 'HEAD_COURSE']),
+    deleteMemberGroupStudent,
+);
 
 router.put(APP_ROUTER.GROUP_STUDENT_REMOVE_MEMBER, protectStudent, removeMemberGroupStudent);
 
@@ -61,14 +76,29 @@ router.put(APP_ROUTER.GROUP_STUDENT_CHOOSE_TOPIC, protectStudent, chooseTopic);
 
 router.put(APP_ROUTER.GROUP_STUDENT_CANCEL_TOPIC, protectStudent, cancelTopic);
 
-router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_TOPIC, protectLecturer, assignTopic);
+router.put(
+    APP_ROUTER.GROUP_STUDENT_ASSIGN_TOPIC,
+    protectLecturer,
+    checkRole(['HEAD_LETURER', 'HEAD_COURSE']),
+    assignTopic,
+);
 
 router.get(APP_ROUTER.ID, getGroupStudentById);
 
-router.delete(APP_ROUTER.ID, protectLecturer, deleteGroupStudent);
+router.delete(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['HEAD_LETURER', 'HEAD_COURSE']),
+    deleteGroupStudent,
+);
 
 router.get(APP_ROUTER.INDEX, getGroupStudents);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, createGroupStudent);
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['HEAD_LETURER', 'HEAD_COURSE']),
+    createGroupStudent,
+);
 
 module.exports = router;

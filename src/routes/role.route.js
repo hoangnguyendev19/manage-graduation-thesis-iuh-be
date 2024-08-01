@@ -9,12 +9,14 @@ const {
 
 const router = express.Router();
 
-router.get(APP_ROUTER.INDEX, getRoles);
+const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 
 router.get(APP_ROUTER.ROLE_BY_LECTURER, getRolesByLecturerId);
 
-router.post(APP_ROUTER.INDEX, createRole);
+router.delete(APP_ROUTER.ID, protectLecturer, checkRole(['ADMIN', 'HEAD_LECTURER']), deleteRole);
 
-router.delete(APP_ROUTER.ID, deleteRole);
+router.get(APP_ROUTER.INDEX, getRoles);
+
+router.post(APP_ROUTER.INDEX, protectLecturer, checkRole(['ADMIN', 'HEAD_LECTURER']), createRole);
 
 module.exports = router;

@@ -22,7 +22,6 @@ const {
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const upload = require('../configs/uploadConfig');
-const { check } = require('express-validator');
 
 const router = express.Router();
 
@@ -34,36 +33,56 @@ router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
 router.get(APP_ROUTER.ME, protectLecturer, getMe);
 
-router.get(
-    APP_ROUTER.QUERY,
-    protectLecturer,
-    checkRole(['ADMIN', 'HEAD_LECTURER']),
-    searchLecturer,
-);
-
-router.get(APP_ROUTER.INDEX, getLecturers);
+router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturer);
 
 router.get(APP_ROUTER.LECTURER_BY_MAJOR, getLecturersByMajorId);
 
-router.get(APP_ROUTER.ID, getLecturerById);
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    upload.single('file'),
+    importLecturers,
+);
 
-router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importLecturers);
+router.post(
+    APP_ROUTER.RESET_PASSWORD,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    resetPassword,
+);
 
-router.post(APP_ROUTER.RESET_PASSWORD, protectLecturer, resetPassword);
+router.post(APP_ROUTER.LOCK, protectLecturer, checkRole(['ADMIN', 'HEAD_LECTURER']), lockAccount);
 
-router.post(APP_ROUTER.LOCK, protectLecturer, lockAccount);
-
-router.post(APP_ROUTER.UNLOCK, protectLecturer, unlockAccount);
-
-// router.post(APP_ROUTER.INDEX, protectLecturer, createLecturer);
-router.post(APP_ROUTER.INDEX, createLecturer);
+router.post(
+    APP_ROUTER.UNLOCK,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    unlockAccount,
+);
 
 router.put(APP_ROUTER.ME, protectLecturer, updateMe);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectLecturer, updatePassword);
 
-router.put(APP_ROUTER.ID, protectLecturer, updateLecturer);
+router.put(APP_ROUTER.ID, protectLecturer, checkRole(['ADMIN', 'HEAD_LECTURER']), updateLecturer);
 
-router.delete(APP_ROUTER.ID, protectLecturer, deleteLecturer);
+router.delete(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    deleteLecturer,
+);
+
+router.get(APP_ROUTER.ID, getLecturerById);
+
+router.get(APP_ROUTER.INDEX, getLecturers);
+
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    createLecturer,
+);
 
 module.exports = router;

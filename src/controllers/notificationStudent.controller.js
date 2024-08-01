@@ -35,8 +35,6 @@ exports.getNotificationById = async (req, res) => {
     }
 };
 
-
-
 exports.getNotificationStudents = async (req, res) => {
     try {
         const notificationStudents = await NotificationStudent.findAll({
@@ -94,32 +92,6 @@ exports.createNotificationStudent = async (req, res) => {
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Create Success',
-            notificationStudent,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.updateNotificationStudent = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { message, studentId } = req.body;
-        const notificationStudent = await NotificationStudent.findByPk(id);
-
-        if (!notificationStudent) {
-            throw new Error.NotFoundError('NotificationStudent not found');
-        }
-
-        await notificationStudent.update({
-            message,
-            student_id: studentId,
-        });
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Update Success',
             notificationStudent,
         });
     } catch (error) {

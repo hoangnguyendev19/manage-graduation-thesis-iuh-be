@@ -15,25 +15,25 @@ const { protectLecturer, checkRole } = require('../middleware/lecturer.middlewar
 
 const router = express.Router();
 
-router.post(APP_ROUTER.IMPORT, protectLecturer, importLecturerTerms);
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    importLecturerTerms,
+);
 
 router.get(APP_ROUTER.LIST, protectLecturer, getLecturerTermsList);
 
-router.get(
-    APP_ROUTER.QUERY,
+router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturerTerms);
+
+router.get(APP_ROUTER.LECTURER_TERM_TO_ADDING, protectLecturer, getLecturerTermsToAdding);
+router.post(
+    APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
-    searchLecturerTerms,
+    createLecturerTerm,
 );
 
-router.get(
-    APP_ROUTER.LECTURER_TERM_TO_ADDING,
-    protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
-    getLecturerTermsToAdding,
-);
-router.post(APP_ROUTER.INDEX, protectLecturer, createLecturerTerm);
-
-router.delete(APP_ROUTER.INDEX, deleteLecturerTerm);
+router.delete(APP_ROUTER.INDEX, checkRole(['HEAD_LECTURER', 'HEAD_COURSE']), deleteLecturerTerm);
 
 module.exports = router;

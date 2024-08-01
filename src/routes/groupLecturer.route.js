@@ -25,17 +25,42 @@ router.get(APP_ROUTER.GROUP_LECTURER_BY_LECTURERS, protectLecturer, getGroupLect
 
 router.get(APP_ROUTER.GROUP_LECTURER_MEMBER, getMemberFromGroupLecturer);
 
-router.post(APP_ROUTER.GROUP_LECTURER_BY_TYPE, protectLecturer, createGroupLecturerByType);
+router.post(
+    APP_ROUTER.GROUP_LECTURER_BY_TYPE,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    createGroupLecturerByType,
+);
 
-router.post(APP_ROUTER.GROUP_LECTURER_MEMBER, protectLecturer, addMemberToGroupLecturer);
+router.post(
+    APP_ROUTER.GROUP_LECTURER_MEMBER,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    addMemberToGroupLecturer,
+);
 
-router.put(APP_ROUTER.GROUP_LECTURER_MEMBER, protectLecturer, removeLecturerFromGroupLecturer);
+router.put(
+    APP_ROUTER.GROUP_LECTURER_MEMBER,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    removeLecturerFromGroupLecturer,
+);
 
 router.get(APP_ROUTER.ID, getGroupLecturerById);
 
-router.put(APP_ROUTER.ID, protectLecturer, updateGroupLecturer);
+router.put(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    updateGroupLecturer,
+);
 
-router.delete(APP_ROUTER.ID, protectLecturer, deleteGroupLecturer);
+router.delete(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    deleteGroupLecturer,
+);
 
 router.get(APP_ROUTER.INDEX, getGroupLecturers);
 
