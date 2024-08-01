@@ -8,16 +8,33 @@ const {
     deleteAchievement,
 } = require('../controllers/achievement.controller');
 
+const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+
 const router = express.Router();
 
 router.get(APP_ROUTER.INDEX, getAchievements);
 
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    createAchievement,
+);
+
 router.get(APP_ROUTER.ID, getAchievementById);
 
-router.post(APP_ROUTER.INDEX, createAchievement);
+router.put(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    updateAchievement,
+);
 
-router.put(APP_ROUTER.ID, updateAchievement);
-
-router.delete(APP_ROUTER.ID, deleteAchievement);
+router.delete(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    deleteAchievement,
+);
 
 module.exports = router;

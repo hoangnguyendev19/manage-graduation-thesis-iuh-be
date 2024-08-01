@@ -17,24 +17,46 @@ const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
 
-router.get(APP_ROUTER.INDEX, getEvaluations);
-
 router.get(APP_ROUTER.SCORES, getEvaluationsForScoring);
 
-router.get(APP_ROUTER.ID, getEvaluationById);
-
-router.post(APP_ROUTER.INDEX, protectLecturer, createEvaluation);
-
-router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importEvaluations);
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    upload.single('file'),
+    importEvaluations,
+);
 
 router.post(
     APP_ROUTER.IMPORT_FROM_SELECT,
     protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     importEvaluationsFromTermIdToSelectedTermId,
 );
 
-router.put(APP_ROUTER.ID, protectLecturer, updateEvaluation);
+router.get(APP_ROUTER.ID, getEvaluationById);
 
-router.delete(APP_ROUTER.ID, protectLecturer, deleteEvaluation);
+router.put(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    updateEvaluation,
+);
+
+router.delete(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    deleteEvaluation,
+);
+
+router.get(APP_ROUTER.INDEX, getEvaluations);
+
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    createEvaluation,
+);
 
 module.exports = router;
