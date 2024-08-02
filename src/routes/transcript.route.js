@@ -18,8 +18,6 @@ const { protectStudent } = require('../middleware/student.middleware');
 
 const router = express.Router();
 
-router.get(APP_ROUTER.INDEX, protectLecturer, getTranscriptByType);
-
 router.get(APP_ROUTER.TRANSCRIPT_BY_GROUP_STUDENT, protectLecturer, getTranscriptByGroupStudent);
 
 router.get(APP_ROUTER.TRANSCRIPT_BY_SUMMARY, protectStudent, getTranscriptSummary);
@@ -46,5 +44,7 @@ router.get(
     protectLecturer,
     unTranscriptStudentsByType,
 );
+
+router.get(APP_ROUTER.INDEX, protectLecturer, getTranscriptByType);
 
 module.exports = router;

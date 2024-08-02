@@ -4,7 +4,6 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     getNotificationLecturers,
     createNotificationLecturer,
-    updateNotificationLecturer,
     updateReadStatus,
     deleteNotificationLecturer,
     createAllNotificationLecturerTerms,
@@ -15,11 +14,7 @@ const { protectLecturer, checkRole } = require('../middleware/lecturer.middlewar
 
 const router = express.Router();
 
-router.get(APP_ROUTER.INDEX, protectLecturer, getNotificationLecturers);
-
 router.get(APP_ROUTER.ME, protectLecturer, getMyNotification);
-
-router.get(APP_ROUTER.ID, protectLecturer, getNotificationById);
 
 router.post(
     APP_ROUTER.NOTIFICATION_LECTURER_TERM,
@@ -27,14 +22,20 @@ router.post(
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     createAllNotificationLecturerTerms,
 );
-router.post(APP_ROUTER.INDEX, protectLecturer, createNotificationLecturer);
 
-router.put(APP_ROUTER.ID, protectLecturer, updateNotificationLecturer);
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    createNotificationLecturer,
+);
 
 router.put(APP_ROUTER.NOTIFICATION_LECTURER_READ, protectLecturer, updateReadStatus);
 
-router.delete(APP_ROUTER.ID, protectLecturer, deleteNotificationLecturer);
+router.get(APP_ROUTER.ID, protectLecturer, getNotificationById);
 
 router.delete(APP_ROUTER.ID, protectLecturer, deleteNotificationLecturer);
+
+router.get(APP_ROUTER.INDEX, protectLecturer, getNotificationLecturers);
 
 module.exports = router;

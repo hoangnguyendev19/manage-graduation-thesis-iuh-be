@@ -36,16 +36,7 @@ router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
 router.get(APP_ROUTER.QUERY, getStudentsOfSearch);
 
-router.get(APP_ROUTER.INDEX, getStudents);
-
 router.get(APP_ROUTER.STUDENTS_NO_HAVE_GROUP, protectLecturer, getStudentsNoHaveGroup);
-
-router.post(
-    APP_ROUTER.INDEX,
-    protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
-    createStudent,
-);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, updatePassword);
 
@@ -53,22 +44,72 @@ router.get(APP_ROUTER.ME, protectStudent, getMe);
 
 router.put(APP_ROUTER.ME, protectStudent, updateMe);
 
-router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importStudents);
+router.post(
+    APP_ROUTER.IMPORT,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    upload.single('file'),
+    importStudents,
+);
 
-router.post(APP_ROUTER.RESET_PASSWORD, protectLecturer, resetPassword);
+router.post(
+    APP_ROUTER.RESET_PASSWORD,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    resetPassword,
+);
 
-router.post(APP_ROUTER.LOCK, protectLecturer, lockAccount);
+router.post(
+    APP_ROUTER.LOCK,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    lockAccount,
+);
 
-router.put(APP_ROUTER.LOCK, protectLecturer, lockAccounts);
+router.put(
+    APP_ROUTER.LOCK,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    lockAccounts,
+);
 
-router.post(APP_ROUTER.UNLOCK, protectLecturer, unlockAccount);
+router.post(
+    APP_ROUTER.UNLOCK,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    unlockAccount,
+);
 
-router.put(APP_ROUTER.STUDENT_STATUS, protectLecturer, updateStatus);
+router.put(
+    APP_ROUTER.STUDENT_STATUS,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    updateStatus,
+);
 
-router.put(APP_ROUTER.ID, protectLecturer, updateStudent);
+router.put(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    updateStudent,
+);
 
-router.delete(APP_ROUTER.ID, protectLecturer, deleteStudent);
+router.delete(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    deleteStudent,
+);
 
 router.get(APP_ROUTER.ID, getStudentById);
+
+router.get(APP_ROUTER.INDEX, getStudents);
+
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    createStudent,
+);
 
 module.exports = router;

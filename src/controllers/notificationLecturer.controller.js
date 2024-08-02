@@ -97,32 +97,6 @@ exports.createNotificationLecturer = async (req, res) => {
     }
 };
 
-exports.updateNotificationLecturer = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { message, lecturerId } = req.body;
-        const notificationLecturer = await NotificationLecturer.findByPk(id);
-
-        if (!notificationLecturer) {
-            throw new Error.NotFoundError('NotificationLecturer not found');
-        }
-
-        await notificationLecturer.update({
-            message,
-            Lecturer_id: lecturerId,
-        });
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Update Success',
-            notificationLecturer,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.updateReadStatus = async (req, res) => {
     try {
         const { id } = req.params;
