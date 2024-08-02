@@ -1,14 +1,7 @@
-const {
-    Topic,
-    LecturerTerm,
-    Lecturer,
-    Major,
-    GroupStudent,
-    GroupLecturer,
-} = require('../models/index');
+const { Topic, LecturerTerm, Lecturer, Major, GroupLecturer } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op, QueryTypes } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
@@ -16,13 +9,15 @@ const { sequelize } = require('../configs/connectDB');
 const getTopicOfSearch = async (req, res) => {
     try {
         const { termId, keywords, searchField } = req.query;
-        let searchQuery = searchField ? `and ${searchField} LIKE :keywords` : '';
+        let searchQuery = searchField ? `and t.${searchField} LIKE :keywords` : '';
 
         const topics = await sequelize.query(
-            `SELECT t.id, t.name, t.status, t.quantity_group_max, l.full_name as fullName FROM topics t
+            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            WHERE lt.term_id = :termId ${searchQuery}`,
+            LEFT JOIN group_students gs ON t.id = gs.topic_id
+            WHERE lt.term_id = :termId ${searchQuery}
+            GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
             {
                 replacements: {
                     termId,
@@ -51,10 +46,12 @@ const getTopics = async (req, res) => {
         //case 1
         if (!lecturerId && termId) {
             topics = await sequelize.query(
-                `SELECT t.id, t.name, t.status, t.quantity_group_max, l.full_name as fullName FROM topics t
+                `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE lt.term_id = :termId`,
+                LEFT JOIN group_students gs ON t.id = gs.topic_id
+                WHERE lt.term_id = :termId
+                GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
                 {
                     replacements: {
                         termId,
@@ -66,10 +63,12 @@ const getTopics = async (req, res) => {
         //case 2
         else if (lecturerId && termId) {
             topics = await sequelize.query(
-                `SELECT t.id, t.name, t.status, t.quantity_group_max, l.full_name as fullName FROM topics t
+                `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
+                LEFT JOIN group_students gs ON t.id = gs.topic_id
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId
+                GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
                 {
                     replacements: {
                         termId,
