@@ -17,6 +17,7 @@ const {
     updatePassword,
     getMe,
     updateMe,
+    forgotPassword,
     searchLecturer,
 } = require('../controllers/lecturer.controller');
 
@@ -26,6 +27,8 @@ const upload = require('../configs/uploadConfig');
 const router = express.Router();
 
 router.post(APP_ROUTER.LOGIN, login);
+
+router.post(APP_ROUTER.FORGOT_PASSWORD, forgotPassword);
 
 router.delete(APP_ROUTER.LOGOUT, protectLecturer, logout);
 

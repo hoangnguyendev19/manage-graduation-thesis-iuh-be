@@ -34,6 +34,11 @@ router.post(
     createLecturerTerm,
 );
 
-router.delete(APP_ROUTER.INDEX, checkRole(['HEAD_LECTURER', 'HEAD_COURSE']), deleteLecturerTerm);
+router.delete(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    deleteLecturerTerm,
+);
 
 module.exports = router;

@@ -115,7 +115,7 @@ exports.getGroupStudents = async (req, res) => {
 
 exports.getGroupStudentsByLecturer = async (req, res) => {
     try {
-        const { termId } = req.query;
+        const { termId, lecturerId } = req.query;
 
         const groupStudents = await sequelize.query(
             `SELECT gs.id, gs.name, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs
@@ -126,7 +126,7 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
             GROUP BY gs.id`,
             {
                 type: QueryTypes.SELECT,
-                replacements: { termId, lecturerId: req.user.id },
+                replacements: { termId, lecturerId },
             },
         );
 
@@ -173,35 +173,28 @@ exports.getGroupStudentsByTerm = async (req, res) => {
 exports.getGroupStudentById = async (req, res) => {
     try {
         const { id } = req.params;
-        const groupStudent = await GroupStudent.findOne({
-            where: {
-                id: id,
+        const groupStudent = await sequelize.query(
+            `SELECT gs.id, gs.name, gs.topic_id as topicId, gs.created_at as createdAt, tc.name as topicName, tc.description as topicDescription, tc.target as topicTarget, tc.standard_output as topicStandardOutput, tc.require_input as topicRequireInput, tc.expected_result as topicExpectedResult, l.full_name as lecturerName FROM group_students gs
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN topics tc ON gs.topic_id = tc.id
+            LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
+            LEFT JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE gs.id = :id
+            GROUP BY gs.id`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { id },
             },
-            attributes: {
-                exclude: ['term_id', 'updated_at', 'topic_id'],
-            },
-            include: {
-                model: Topic,
-                attributes: [
-                    'id',
-                    'name',
-                    'description',
-                    'target',
-                    'standard_output',
-                    'require_input',
-                ],
-                as: 'topic',
-            },
-        });
+        );
 
-        if (!groupStudent) {
+        if (groupStudent.length === 0) {
             return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get by id success!',
-            groupStudent,
+            groupStudent: groupStudent[0],
         });
     } catch (error) {
         console.log(error);
@@ -578,6 +571,19 @@ exports.addMemberGroupStudent = async (req, res) => {
 
         studentTerm.group_student_id = id;
 
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
+
+        // check if group has no admin
+        if (studentTerms.length === 0) {
+            studentTerm.isAdmin = true;
+        } else {
+            studentTerm.isAdmin = false;
+        }
+
         await studentTerm.save();
 
         res.status(HTTP_STATUS.OK).json({
@@ -607,8 +613,20 @@ exports.deleteMemberGroupStudent = async (req, res) => {
         }
 
         studentTerm.group_student_id = null;
+        studentTerm.isAdmin = false;
 
         await studentTerm.save();
+
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
+
+        if (studentTerms.length === 1) {
+            studentTerms[0].isAdmin = true;
+            await studentTerms[0].save();
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

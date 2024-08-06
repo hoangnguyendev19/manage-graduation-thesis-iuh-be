@@ -18,6 +18,7 @@ const {
     updatePassword,
     getMe,
     updateMe,
+    forgotPassword,
     getStudentsNoHaveGroup,
     getStudentsOfSearch,
 } = require('../controllers/student.controller');
@@ -31,6 +32,8 @@ const router = express.Router();
 router.post(APP_ROUTER.LOGIN, login);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
+
+router.post(APP_ROUTER.FORGOT_PASSWORD, forgotPassword);
 
 router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 

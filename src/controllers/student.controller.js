@@ -12,6 +12,7 @@ const xlsx = require('xlsx');
 const _ = require('lodash');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+const transporter = require('../configs/nodemailer');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -355,14 +356,24 @@ exports.createStudent = async (req, res) => {
 exports.updateStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        let { fullName, gender, phone, dateOfBirth, majorId, typeTraining, clazzName, email } =
-            req.body;
+        let {
+            username,
+            fullName,
+            gender,
+            phone,
+            dateOfBirth,
+            majorId,
+            typeTraining,
+            clazzName,
+            email,
+        } = req.body;
         const student = await Student.findByPk(id);
         if (!student) {
             return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
 
         await student.update({
+            username,
             fullName,
             gender,
             phone,
@@ -711,13 +722,62 @@ exports.getMe = async (req, res) => {
 
 exports.updateMe = async (req, res) => {
     try {
-        const { fullName, email,clazzName, phone, gender } = req.body;
+        const { fullName, email, clazzName, phone, gender } = req.body;
 
-        await Student.update({ fullName, email,clazzName, phone, gender }, { where: { id: req.user.id } });
+        await Student.update(
+            { fullName, email, clazzName, phone, gender },
+            { where: { id: req.user.id } },
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update me success!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { username } = req.body;
+        const student = await Student.findOne({
+            where: { username },
+        });
+
+        if (!student) {
+            return Error.sendNotFound(res, 'Mã sinh viên không tồn tại!');
+        }
+
+        if (!student.email) {
+            return Error.sendNotFound(
+                res,
+                'Tài khoản chưa cập nhật email! Bạn vui lòng liên hệ với giảng viên chủ quản để làm mới mật khẩu!',
+            );
+        }
+
+        const generatePassword = Math.random().toString(36).slice(-8).toUpperCase();
+
+        const newPassword = await hashPassword(generatePassword);
+
+        student.password = newPassword;
+        await student.save();
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: student.email,
+            subject: 'Xác nhận mật khẩu mới',
+            html: `
+            <p>Mật khẩu mới của bạn là: ${generatePassword}</p>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Bạn vui lòng kiểm tra email để nhận mật khẩu mới!',
         });
     } catch (error) {
         console.log(error);
