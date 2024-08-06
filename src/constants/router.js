@@ -14,7 +14,7 @@ const APP_ROUTER = {
     IMPORT: '/import',
     IMPORT_FROM_SELECT: '/import-from-select',
     RESET_PASSWORD: '/reset-password',
-    // FORGOT_PASSWORD: '/forgot-password',
+    FORGOT_PASSWORD: '/forgot-password',
     LOCK: '/lock',
     UNLOCK: '/unlock',
     MEMBER: '/:id/member',
