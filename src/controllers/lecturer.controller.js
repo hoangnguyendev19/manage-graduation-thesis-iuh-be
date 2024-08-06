@@ -12,6 +12,7 @@ const _ = require('lodash');
 const xlsx = require('xlsx');
 const { QueryTypes, where } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+const transporter = require('../configs/nodemailer');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -365,14 +366,22 @@ exports.createLecturer = async (req, res) => {
 exports.updateLecturer = async (req, res) => {
     try {
         const { id } = req.params;
-        const { fullName, gender, phone, email, degree, majorId } = req.body;
+        const { username, fullName, gender, phone, email, degree, majorId } = req.body;
         const lecturer = await Lecturer.findByPk(id);
 
         if (!lecturer) {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
-        await lecturer.update({ fullName, gender, phone, email, degree, major_id: majorId });
+        await lecturer.update({
+            username,
+            fullName,
+            gender,
+            phone,
+            email,
+            degree,
+            major_id: majorId,
+        });
 
         const newLecturer = await Lecturer.findOne({
             where: { id },
@@ -605,6 +614,52 @@ exports.updateMe = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update me success!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { username } = req.body;
+        const lecturer = await Lecturer.findOne({
+            where: { username },
+        });
+
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Mã giảng viên không tồn tại!');
+        }
+
+        if (!lecturer.email) {
+            return Error.sendNotFound(
+                res,
+                'Tài khoản chưa cập nhật email! Bạn vui lòng liên hệ với giảng viên chủ quản để làm mới mật khẩu!',
+            );
+        }
+
+        const generatePassword = Math.random().toString(36).slice(-8).toUpperCase();
+
+        const newPassword = await hashPassword(generatePassword);
+
+        lecturer.password = newPassword;
+        await lecturer.save();
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: lecturer.email,
+            subject: 'Xác nhận mật khẩu mới',
+            html: `
+            <p>Mật khẩu mới của bạn là: ${generatePassword}</p>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Bạn vui lòng kiểm tra email để nhận mật khẩu mới!',
         });
     } catch (error) {
         console.log(error);
