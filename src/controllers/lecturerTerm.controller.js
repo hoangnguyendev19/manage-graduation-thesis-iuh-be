@@ -192,6 +192,7 @@ exports.createLecturerTerm = async (req, res) => {
 exports.deleteLecturerTerm = async (req, res) => {
     const { lecturerId, termId } = req.query;
     try {
+        console.log('vao');
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 lecturer_id: lecturerId,
@@ -199,13 +200,10 @@ exports.deleteLecturerTerm = async (req, res) => {
             },
             attributes: ['id'],
         });
-        console.log('🚀 ~ exports.deleteLecturerTerm ~ lecturerTerm:', lecturerTerm);
         if (lecturerTerm === null) {
             return Error.sendError(res, 'Không tồn tại giảng viên này');
         } else {
             const isDestroy = await lecturerTerm.destroy({ force: true });
-            console.log('🚀 ~ exports.deleteLecturerTerm ~ isDestroy:', isDestroy);
-
             return res.status(HTTP_STATUS.CREATED).json({
                 success: true,
                 message: 'Xóa giảng viên ra khỏi học kì thành công',
