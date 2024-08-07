@@ -201,8 +201,20 @@ const createTopic = async (req, res) => {
                 term_id: termId,
             },
         });
+
         if (!lecturerTerm) {
             return Error.sendNotFound(res, 'Giảng viên không hợp lệ trong học kì này');
+        }
+
+        const existedTopic = await Topic.findOne({
+            where: {
+                name,
+                lecturer_term_id: lecturerTerm.id,
+            },
+        });
+
+        if (existedTopic) {
+            return Error.sendConflict(res, 'Tên đề tài đã tồn tại!');
         }
 
         const topic = await Topic.create({
@@ -347,11 +359,23 @@ const importTopics = async (req, res) => {
                     res,
                     `Mã giảng viên ${username} không tồn tại trong kỳ này.`,
                 );
-            } else {
-                topicToSaved.lecturerTermId = isExistLecturer.id;
-                listTopic.push(topicToSaved);
             }
+
+            const existedTopic = await Topic.findOne({
+                where: {
+                    name: name,
+                    lecturer_term_id: isExistLecturer.id,
+                },
+            });
+
+            if (existedTopic) {
+                return Error.sendConflict(res, `Tên đề tài ${name} đã tồn tại.`);
+            }
+
+            topicToSaved.lecturerTermId = isExistLecturer.id;
+            listTopic.push(topicToSaved);
         }
+
         listTopic.map(
             async ({
                 name,
@@ -388,8 +412,6 @@ const importTopics = async (req, res) => {
 const importTopicsFromTermIdToSelectedTermId = async (req, res) => {
     try {
         const { termId, selectedTermId } = req.body;
-
-        console.log(termId, selectedTermId);
 
         if (termId === selectedTermId) {
             return Error.sendWarning(res, 'Học kì được chọn phải khác học kỳ hiện tại!');

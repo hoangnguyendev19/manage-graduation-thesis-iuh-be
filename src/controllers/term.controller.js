@@ -1,10 +1,10 @@
 const { Term, TermDetail } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Op } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
+const moment = require('moment');
 
 exports.getTerms = async (req, res) => {
     try {
@@ -262,8 +262,22 @@ exports.getTermDetailWithPublicResult = async (req, res) => {
 exports.createTerm = async (req, res) => {
     try {
         const { name, startDate, endDate, majorId } = req.body;
-        // startDate have format 'YYYY-MM-DD' ?
-        // endDate have format 'YYYY-MM-DD' ?
+
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
+        const existedTerm = await Term.findOne({
+            where: {
+                major_id: majorId,
+                name,
+            },
+        });
+
+        if (existedTerm) {
+            return Error.sendConflict(res, 'Tên học kỳ đã tồn tại!');
+        }
 
         const term = await Term.create({ name, startDate, endDate, major_id: majorId });
         await TermDetail.bulkCreate([
@@ -291,9 +305,25 @@ exports.updateTerm = async (req, res) => {
         const { id } = req.params;
         const { name, startDate, endDate } = req.body;
 
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
         const term = await Term.findByPk(id);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const existedTerm = await Term.findOne({
+            where: {
+                major_id: term.major_id,
+                name,
+            },
+        });
+
+        if (existedTerm && existedTerm.id !== term.id) {
+            return Error.sendConflict(res, 'Tên học kỳ đã tồn tại!');
         }
 
         await term.update({ name, startDate, endDate });
@@ -312,12 +342,31 @@ exports.updateChooseGroupTerm = async (req, res) => {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
 
+        const term = await Term.findByPk(id);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
+        // check if startDate and endDate is less than or equal to term start date and end date using moment
+        if (moment(startDate).isBefore(term.startDate) || moment(endDate).isAfter(term.endDate)) {
+            return Error.sendWarning(
+                res,
+                'Ngày bắt đầu và kết thúc phải nằm trong khoảng thời gian của học kỳ!',
+            );
+        }
+
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'CHOOSE_GROUP' },
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
+
         if (!termDetail) {
-            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+            return Error.sendNotFound(res, 'Thời gian chọn nhóm của học kỳ không tồn tại!');
         }
 
         await termDetail.update({ startDate, endDate });
@@ -335,6 +384,24 @@ exports.updatePublicTopicTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
+
+        const term = await Term.findByPk(id);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
+        // check if startDate and endDate is less than or equal to term start date and end date using moment
+        if (moment(startDate).isBefore(term.startDate) || moment(endDate).isAfter(term.endDate)) {
+            return Error.sendWarning(
+                res,
+                'Ngày bắt đầu và kết thúc phải nằm trong khoảng thời gian của học kỳ!',
+            );
+        }
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'PUBLIC_TOPIC' },
@@ -359,6 +426,24 @@ exports.updateChooseTopicTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
+
+        const term = await Term.findByPk(id);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
+        // check if startDate and endDate is less than or equal to term start date and end date using moment
+        if (moment(startDate).isBefore(term.startDate) || moment(endDate).isAfter(term.endDate)) {
+            return Error.sendWarning(
+                res,
+                'Ngày bắt đầu và kết thúc phải nằm trong khoảng thời gian của học kỳ!',
+            );
+        }
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'CHOOSE_TOPIC' },
@@ -385,6 +470,24 @@ exports.updateDiscussionTerm = async (req, res) => {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
 
+        const term = await Term.findByPk(id);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
+        // check if startDate and endDate is less than or equal to term start date and end date using moment
+        if (moment(startDate).isBefore(term.startDate) || moment(endDate).isAfter(term.endDate)) {
+            return Error.sendWarning(
+                res,
+                'Ngày bắt đầu và kết thúc phải nằm trong khoảng thời gian của học kỳ!',
+            );
+        }
+
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'DISCUSSION' },
             attributes: { exclude: ['created_at', 'updatedAt'] },
@@ -410,6 +513,24 @@ exports.updateReportTerm = async (req, res) => {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
 
+        const term = await Term.findByPk(id);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
+        // check if startDate and endDate is less than or equal to term start date and end date using moment
+        if (moment(startDate).isBefore(term.startDate) || moment(endDate).isAfter(term.endDate)) {
+            return Error.sendWarning(
+                res,
+                'Ngày bắt đầu và kết thúc phải nằm trong khoảng thời gian của học kỳ!',
+            );
+        }
+
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'REPORT' },
             attributes: { exclude: ['created_at', 'updatedAt'] },
@@ -433,6 +554,24 @@ exports.updatePublicResultTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
+
+        const term = await Term.findByPk(id);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // check if startDate and endDate is valid using moment
+        if (moment(startDate).isAfter(endDate)) {
+            return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
+        }
+
+        // check if startDate and endDate is less than or equal to term start date and end date using moment
+        if (moment(startDate).isBefore(term.startDate) || moment(endDate).isAfter(term.endDate)) {
+            return Error.sendWarning(
+                res,
+                'Ngày bắt đầu và kết thúc phải nằm trong khoảng thời gian của học kỳ!',
+            );
+        }
 
         const termDetail = await TermDetail.findOne({
             where: { term_id: id, name: 'PUBLIC_RESULT' },
