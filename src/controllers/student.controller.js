@@ -179,6 +179,7 @@ exports.getStudentsOfSearch = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
 exports.getStudents = async (req, res) => {
     try {
         const { termId, majorId, page, limit } = req.query;
@@ -304,6 +305,11 @@ exports.createStudent = async (req, res) => {
             termId,
         } = req.body;
 
+        const existedStudent = await Student.findOne({ where: { username } });
+        if (existedStudent) {
+            return Error.sendConflict(res, 'Mã sinh viên đã tồn tại!');
+        }
+
         const password = await hashPassword('12345678');
 
         const student = await Student.create({
@@ -367,9 +373,17 @@ exports.updateStudent = async (req, res) => {
             clazzName,
             email,
         } = req.body;
+
         const student = await Student.findByPk(id);
+
         if (!student) {
             return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
+        }
+
+        const existedStudent = await Student.findOne({ where: { username } });
+
+        if (existedStudent && existedStudent.id !== student.id) {
+            return Error.sendConflict(res, 'Mã sinh viên không được phép trùng!');
         }
 
         await student.update({

@@ -34,6 +34,12 @@ exports.getMajorById = async (req, res) => {
 exports.createMajor = async (req, res) => {
     try {
         const { name } = req.body;
+
+        const existedMajor = await Major.findOne({ where: { name } });
+        if (existedMajor) {
+            return Error.sendConflict(res, 'Tên chuyên ngành đã tồn tại!');
+        }
+
         const major = await Major.create({ name });
 
         res.status(HTTP_STATUS.CREATED).json({
