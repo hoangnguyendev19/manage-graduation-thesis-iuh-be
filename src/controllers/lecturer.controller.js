@@ -301,7 +301,8 @@ exports.getLecturerById = async (req, res) => {
 
 exports.createLecturer = async (req, res) => {
     try {
-        let { username, fullName, gender, phone, email, degree, majorId, termId } = req.body;
+        let { username, fullName, gender, phone, email, degree, majorId } = req.body;
+
         const password = await hashPassword('12345678');
         const lecturer_id = await Lecturer.findOne({
             where: {
@@ -309,9 +310,11 @@ exports.createLecturer = async (req, res) => {
             },
             attributes: ['id'],
         });
+
         if (lecturer_id) {
             return Error.sendConflict(res, 'Mã giảng viên không được phép trùng.');
         }
+
         const lecturer = await Lecturer.create({
             username,
             fullName,
@@ -355,7 +358,7 @@ exports.createLecturer = async (req, res) => {
             success: true,
             message: 'Create lecturer success!',
             lecturer: newLecturer,
-            roles,
+            roles: roles.map((role) => role.name),
         });
     } catch (error) {
         console.log(error);
@@ -373,6 +376,11 @@ exports.updateLecturer = async (req, res) => {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
         }
 
+        const existedLecturer = await Lecturer.findOne({ where: { username } });
+        if (existedLecturer && existedLecturer.id !== lecturer.id) {
+            return Error.sendConflict(res, 'Mã giảng viên không được phép trùng.');
+        }
+
         await lecturer.update({
             username,
             fullName,
@@ -383,28 +391,9 @@ exports.updateLecturer = async (req, res) => {
             major_id: majorId,
         });
 
-        const newLecturer = await Lecturer.findOne({
-            where: { id },
-            attributes: {
-                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
-                include: [
-                    ['major_id', 'majorId'],
-                    [sequelize.col('major.name'), 'majorName'],
-                ],
-            },
-            include: [
-                {
-                    model: Major,
-                    attributes: [],
-                    as: 'major',
-                },
-            ],
-        });
-
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Update lecturer success!',
-            lecturer: newLecturer,
         });
     } catch (error) {
         console.log(error);
@@ -596,8 +585,8 @@ exports.getMe = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get me success!',
-            roles: roles.map((role) => role.name),
             lecturer,
+            roles: roles.map((role) => role.name),
         });
     } catch (error) {
         console.log(error);
