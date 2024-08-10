@@ -15,7 +15,7 @@ exports.getEvaluations = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy danh sách đánh giá thành công!',
             evaluations,
         });
     } catch (error) {
@@ -37,7 +37,7 @@ exports.getEvaluationsForScoring = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy danh sách đánh giá thành công!',
             evaluations,
         });
     } catch (error) {
@@ -55,7 +55,7 @@ exports.getEvaluationById = async (req, res) => {
         }
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin đánh giá thành công!',
             evaluation,
         });
     } catch (error) {
@@ -78,7 +78,7 @@ exports.createEvaluation = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create success!',
+            message: 'Tạo đánh giá thành công!',
             evaluation,
         });
     } catch (error) {
@@ -121,7 +121,7 @@ exports.importEvaluations = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import success!',
+            message: 'Nhập danh sách đánh giá thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -152,7 +152,7 @@ exports.importEvaluationsFromTermIdToSelectedTermId = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import success!',
+            message: 'Nhập danh sách đánh giá thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -178,7 +178,7 @@ exports.updateEvaluation = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật đánh giá thành công!',
             evaluation,
         });
     } catch (error) {
@@ -199,7 +199,7 @@ exports.deleteEvaluation = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete success!',
+            message: 'Xoá đánh giá thành công!',
         });
     } catch (error) {
         console.log(error);

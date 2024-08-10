@@ -29,7 +29,7 @@ exports.getTranscriptByType = async (req, res) => {
         if (studentTerms.length === 0) {
             return res.status(HTTP_STATUS.OK).json({
                 success: true,
-                message: 'Get success',
+                message: 'Lấy bảng điểm thành công!',
                 transcripts: [],
             });
         }
@@ -86,7 +86,7 @@ exports.getTranscriptByType = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy bảng điểm thành công!',
             transcripts: Object.values(newTranscripts),
         });
     } catch (error) {
@@ -123,7 +123,7 @@ exports.getTranscriptByGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy bảng điểm thành công!',
             transcripts,
         });
     } catch (error) {
@@ -160,7 +160,7 @@ exports.getTranscriptSummary = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy bảng điểm tổng kết thành công!',
             transcripts,
         });
     } catch (error) {
@@ -207,7 +207,7 @@ exports.getTranscriptByStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy bảng điểm thành công!',
             transcript: {
                 transcripts,
                 avgScore,
@@ -266,7 +266,7 @@ exports.createTranscriptList = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Tạo bảng điểm thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -321,7 +321,7 @@ exports.updateTranscriptList = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Cập nhật bảng điểm thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -351,7 +351,7 @@ exports.unTranscriptGroupStudentByLecturerSupport = async (req, res) => {
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success',
+            message: 'Lấy danh sách nhóm sinh viên thành công',
             groupStudents,
         });
     } catch (error) {
@@ -382,7 +382,7 @@ exports.unTranscriptStudentsByType = async (req, res) => {
         if (myIn.length < 1) {
             return res.status(HTTP_STATUS.OK).json({
                 success: true,
-                message: 'Get success',
+                message: 'Lấy danh sách sinh viên thành công',
                 groupStudents: [],
                 totalRows: 0,
             });
@@ -406,7 +406,7 @@ exports.unTranscriptStudentsByType = async (req, res) => {
         });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success',
+            message: 'Lấy danh sách nhóm sinh viên thành công',
             groupStudents,
             totalRows: groupStudents.length,
         });
@@ -450,7 +450,7 @@ exports.getGroupStudentMemberToScoring = async (req, res) => {
         });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success',
+            message: 'Lấy danh sách thành viên nhóm sinh viên thành công',
             groupStudentMembers,
         });
     } catch (error) {

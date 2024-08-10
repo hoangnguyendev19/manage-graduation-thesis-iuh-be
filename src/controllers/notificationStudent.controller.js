@@ -10,7 +10,7 @@ exports.getMyNotification = async (req, res) => {
         });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách thông báo thành công!',
             notificationStudents,
         });
     } catch (error) {
@@ -26,7 +26,7 @@ exports.getNotificationById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get by id success',
+            message: 'Lấy thông báo thành công!',
             notification,
         });
     } catch (error) {
@@ -48,7 +48,7 @@ exports.getNotificationStudents = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách thông báo thành công!',
             notifications: notificationStudents,
         });
     } catch (error) {
@@ -91,7 +91,7 @@ exports.createNotificationStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Tạo thông báo thành công.',
             notificationStudent,
         });
     } catch (error) {
@@ -115,7 +115,7 @@ exports.updateReadStatus = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Cập nhật trạng thái đọc thành công!',
             notificationStudent,
         });
     } catch (error) {
@@ -137,7 +137,7 @@ exports.deleteNotificationStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Xoá thông báo thành công!',
         });
     } catch (error) {
         console.log(error);
