@@ -36,7 +36,7 @@ exports.getRoles = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Roles retrieved successfully',
+            message: 'Lấy danh sách vai trò thành công!',
             roles: Object.values(newRoles),
         });
     } catch (error) {
@@ -56,7 +56,7 @@ exports.getRolesByLecturerId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Roles retrieved successfully',
+            message: 'Lấy danh sách vai trò thành công!',
             roles,
         });
     } catch (error) {
@@ -86,7 +86,7 @@ exports.createRole = async (req, res) => {
         });
 
         if (roleExist) {
-            return Error.sendWarning(res, 'Role đã tồn tại!');
+            return Error.sendWarning(res, 'Vai trò đã tồn tại!');
         }
 
         const role = await Role.create({
@@ -96,7 +96,7 @@ exports.createRole = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Role created successfully',
+            message: 'Tạo vai trò thành công!',
             role,
         });
     } catch (error) {
@@ -110,18 +110,18 @@ exports.deleteRole = async (req, res) => {
         const role = await Role.findByPk(id);
 
         if (!role) {
-            return Error.sendNotFound(res, 'Role không tồn tại!');
+            return Error.sendNotFound(res, 'Vai trò không tồn tại!');
         }
 
         if (role.name === 'LECTURER') {
-            return Error.sendWarning(res, 'Không thể xóa role LECTURER!');
+            return Error.sendWarning(res, 'Không thể xóa vai trò Giảng viên!');
         }
 
         await role.destroy();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Role deleted successfully',
+            message: 'Xoá vai trò thành công!',
         });
     } catch (error) {
         return Error.sendError(res, error);

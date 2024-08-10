@@ -23,7 +23,7 @@ exports.login = async (req, res) => {
         });
 
         if (!student) {
-            return Error.sendNotFound(res, 'Email hoặc mật khẩu không chính xác!');
+            return Error.sendNotFound(res, 'Tên đăng nhập không chính xác!');
         }
         const flag = await comparePassword(password, student.password);
         if (!flag) {
@@ -53,7 +53,7 @@ exports.login = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Login success!',
+            message: 'Đăng nhập thành công!',
             user,
             accessToken,
             refreshToken,
@@ -77,7 +77,7 @@ exports.refreshToken = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Refresh Token success!',
+            message: 'Làm mới token thành công!',
             accessToken,
             refreshToken: newRefreshToken,
         });
@@ -92,7 +92,7 @@ exports.logout = async (req, res) => {
         removeRefreshToken(req.user.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Logout success!',
+            message: 'Đăng xuất thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -166,7 +166,7 @@ exports.getStudentsOfSearch = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all students success!',
+            message: 'Lấy danh sách sinh viên thành công!',
             students,
             params: {
                 page: _.toInteger(page),
@@ -240,7 +240,7 @@ exports.getStudents = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all students success!',
+            message: 'Lấy danh sách sinh viên thành công!',
             students,
             params: {
                 page: _.toInteger(page),
@@ -281,7 +281,7 @@ exports.getStudentById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get student by id success!',
+            message: 'Lấy thông tin sinh viên thành công!',
             student,
         });
     } catch (error) {
@@ -350,7 +350,7 @@ exports.createStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create student success!',
+            message: 'Tạo sinh viên thành công!',
             student: newStudent,
         });
     } catch (error) {
@@ -418,7 +418,7 @@ exports.updateStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update student success!',
+            message: 'Cập nhật sinh viên thành công!',
             student: newStudent,
         });
     } catch (error) {
@@ -518,7 +518,7 @@ exports.importStudents = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import students success!',
+            message: 'Nhập danh sách sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -538,7 +538,7 @@ exports.deleteStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete student success!',
+            message: 'Xoá sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -559,7 +559,7 @@ exports.resetPassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Reset password student success!',
+            message: 'Làm mới mật khẩu sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -579,7 +579,7 @@ exports.lockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lock account student success!',
+            message: 'Khoá tài khoản sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -601,7 +601,7 @@ exports.lockAccounts = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lock accounts student success!',
+            message: 'Khoá danh sách tài khoản sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -621,7 +621,7 @@ exports.unlockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Unlock account student success!',
+            message: 'Mở khoá tài khoản sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -648,7 +648,7 @@ exports.updateStatus = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update status student success!',
+            message: 'Cập nhật trạng thái sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -670,7 +670,7 @@ exports.getStudentsNoHaveGroup = async (req, res) => {
         });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success',
+            message: 'Lấy danh sách sinh viên chưa có nhóm thành công!',
             students,
         });
     } catch (error) {
@@ -696,7 +696,7 @@ exports.updatePassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update password student successfully',
+            message: 'Cập nhật mật khẩu thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -725,7 +725,7 @@ exports.getMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get me success!',
+            message: 'Lấy thông tin sinh viên thành công!',
             user: student,
         });
     } catch (error) {
@@ -745,7 +745,7 @@ exports.updateMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update me success!',
+            message: 'Cập nhật thông tin sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);

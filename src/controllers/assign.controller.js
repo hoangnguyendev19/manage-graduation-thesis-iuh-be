@@ -22,7 +22,7 @@ const getAssigns = async (req, res) => {
         });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all success',
+            message: 'Lấy danh sách phân công thành công!',
             assigns,
         });
     } catch (error) {
@@ -41,7 +41,7 @@ const getAssignById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get assign success',
+            message: 'Lấy thông tin phân công thành công!',
             assigns,
         });
     } catch (error) {
@@ -61,7 +61,7 @@ const getAssignByType = async (req, res) => {
         });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: `Get assign by ${type} success`,
+            message: `Lấy danh sách phân công ${checkTypeGroup(type.toUpperCase())} thành công!`,
             assigns,
         });
     } catch (error) {
@@ -146,7 +146,7 @@ const getAssignByLecturerId = async (req, res) => {
         });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: `Get success`,
+            message: `Lấy danh sách phân công ${checkTypeGroup(type.toUpperCase())} thành công`,
             assigns: assignsByGroupLecturer,
         });
     } catch (error) {

@@ -14,7 +14,7 @@ exports.getAchievements = async (req, res) => {
         });
 
         if (!studentTerm) {
-            return Error.sendNotFound(res, 'Student Term not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ này');
         }
 
         const achievements = await Achievement.findAll({
@@ -25,7 +25,7 @@ exports.getAchievements = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách thành tích thành công!',
             achievements,
         });
     } catch (error) {
@@ -45,12 +45,12 @@ exports.getAchievementById = async (req, res) => {
         });
 
         if (!achievement) {
-            return Error.sendNotFound(res, 'Achievement not found');
+            return Error.sendNotFound(res, 'Thành tích không tồn tại');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lây thông tin thành tích thành công!',
             achievement,
         });
     } catch (error) {
@@ -70,7 +70,7 @@ exports.createAchievement = async (req, res) => {
             },
         });
         if (!studentTerm) {
-            return Error.sendNotFound(res, 'Student Term not found');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ này');
         }
 
         const achievement = await Achievement.create({
@@ -81,7 +81,7 @@ exports.createAchievement = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Tạo thành tích thành công!',
             achievement,
         });
     } catch (error) {
@@ -98,7 +98,7 @@ exports.updateAchievement = async (req, res) => {
         const achievement = await Achievement.findByPk(id);
 
         if (!achievement) {
-            return Error.sendNotFound(res, 'Achievement not found');
+            return Error.sendNotFound(res, 'Thành tích không tồn tại!');
         }
 
         await achievement.update({
@@ -108,7 +108,7 @@ exports.updateAchievement = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Cập nhật thành tích thành công!',
             achievement,
         });
     } catch (error) {
@@ -124,14 +124,14 @@ exports.deleteAchievement = async (req, res) => {
         const achievement = await Achievement.findByPk(id);
 
         if (!achievement) {
-            return Error.sendNotFound(res, 'Achievement not found');
+            return Error.sendNotFound(res, 'Thành tích không tồn tại!');
         }
 
         await achievement.destroy();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Xoá thành tích thành công!',
         });
     } catch (error) {
         console.log(error);

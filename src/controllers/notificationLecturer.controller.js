@@ -10,7 +10,7 @@ exports.getMyNotification = async (req, res) => {
         });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách thông báo thành công!',
             notificationLecturers,
         });
     } catch (error) {
@@ -26,7 +26,7 @@ exports.getNotificationById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get by id success',
+            message: 'Lấy thông báo thành công!',
             notification,
         });
     } catch (error) {
@@ -45,7 +45,7 @@ exports.getNotificationLecturers = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách thông báo thành công!',
             notificationLecturers,
         });
     } catch (error) {
@@ -103,7 +103,7 @@ exports.updateReadStatus = async (req, res) => {
         const notificationLecturer = await NotificationLecturer.findByPk(id);
 
         if (!notificationLecturer) {
-            throw new Error.NotFoundError('NotificationLecturer not found');
+            throw new Error.NotFoundError('Thông báo không tồn tại!');
         }
 
         await notificationLecturer.update({
@@ -112,7 +112,7 @@ exports.updateReadStatus = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update read status Success',
+            message: 'Cập nhật trạng thái đọc thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -126,12 +126,12 @@ exports.deleteNotificationLecturer = async (req, res) => {
         const notificationLecturer = await NotificationLecturer.findByPk(id);
 
         if (!notificationLecturer) {
-            throw new Error.NotFoundError('NotificationLecturer not found');
+            throw new Error.NotFoundError('Thông báo không tồn tại!');
         }
         await notificationLecturer.destroy();
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Xoá thông báo thành công!',
         });
     } catch (error) {
         console.log(error);
