@@ -10,7 +10,7 @@ exports.importLecturerTerms = async (req, res) => {
         const { termId } = req.body;
         const term = await Term.findByPk(termId);
         if (!term) {
-            return Error.sendNotFound(res, 'Học kì không tồn tại');
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
         const lecturers = await Lecturer.findAll({ where: { major_id: term.major_id } });
 
@@ -32,7 +32,7 @@ exports.importLecturerTerms = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import lecturer terms success',
+            message: 'Nhập danh sách giảng viên vào học kì thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -114,7 +114,7 @@ exports.searchLecturerTerms = async (req, res) => {
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Tìm kiếm giảng viên HD thành công',
+            message: 'Tìm kiếm giảng viên hướng dẫn thành công',
             lecturerTerms,
             params: {
                 page: _.toInteger(page),
@@ -151,7 +151,7 @@ exports.getLecturerTermsToAdding = async (req, res) => {
         });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success',
+            message: 'Lấy danh sách giảng viên để thêm vào học kì thành công',
             lecturerTerms: lecturerTerms.map((lec) => ({
                 ...lec,
                 nameSelect: 'GV: ' + lec.fullName + ' - ' + lec.majorName,

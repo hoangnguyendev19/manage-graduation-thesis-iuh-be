@@ -34,7 +34,7 @@ exports.getLecturerNoGroupByType = async (req, res) => {
         });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách giảng viên chưa tham gia nhóm thành công',
             lecturers: lecturerTerm,
             totalRows: lecturerTerm.length,
         });
@@ -94,7 +94,7 @@ exports.getGroupLecturers = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách nhóm giảng viên thành công!',
             groupLecturers: result,
             params: {
                 page: _.toInteger(page),
@@ -160,7 +160,7 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách nhóm giảng viên thành công!',
             groupLecturers: result,
         });
     } catch (error) {
@@ -189,7 +189,7 @@ exports.getGroupLecturerById = async (req, res) => {
         });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy thông tin nhóm giảng viên thành công!',
             groupLecturer: {
                 groupLecturerId: oldGr.id,
                 termId: oldGr.term_id,
@@ -234,7 +234,7 @@ exports.createGroupLecturerByType = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Tạo Nhóm giảng viên mới thành công',
+            message: 'Tạo nhóm giảng viên mới thành công',
             groupLecturer,
         });
     } catch (error) {
@@ -248,7 +248,7 @@ exports.updateGroupLecturer = async (req, res) => {
         const { id } = req.params;
         const groupLecturer = await GroupLecturer.findByPk(id);
         if (!groupLecturer) {
-            return Error.sendNotFound(res, 'Group Lecturer not found');
+            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
         }
         await groupLecturer.update(req.body);
         res.status(HTTP_STATUS.OK).json({
@@ -267,12 +267,12 @@ exports.deleteGroupLecturer = async (req, res) => {
         const { id } = req.params;
         const groupLecturer = await GroupLecturer.findByPk(id);
         if (!groupLecturer) {
-            return Error.sendNotFound(res, 'Group Lecturer not found');
+            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
         }
         await groupLecturer.destroy();
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Xoá nhóm giảng viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -300,7 +300,7 @@ exports.getMemberFromGroupLecturer = async (req, res) => {
         });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy thông tin thành viên nhóm giảng viên thành công!',
             groupLecturerMembers: {
                 groupLecturerId: oldGr.id,
                 termId: oldGr.term_id,
@@ -331,7 +331,7 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
             },
         });
         if (!lecturerTerm) {
-            return Error.sendNotFound(res, 'Không tồn tại giảng viên trong học kì này');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kì này');
         }
         const member = await GroupLecturerMember.findOne({
             where: {
@@ -396,7 +396,7 @@ exports.addMemberToGroupLecturer = async (req, res) => {
         Error.sendError(res, error);
     }
 };
-//Helper
+
 const isExistLecturerInGroup = async (lecturerId, id) => {
     const query =
         'select l.id from lecturers l join lecturer_terms lt on lt.lecturer_id = l.id right join group_lecturer_members glm on glm.lecturer_term_id = lt.id where glm.group_lecturer_id = :id and l.id = :lecturerId';

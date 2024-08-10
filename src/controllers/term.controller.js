@@ -26,7 +26,7 @@ exports.getTerms = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy danh sách học kỳ thành công!',
             terms,
         });
     } catch (error) {
@@ -59,7 +59,7 @@ exports.getTermByMajorId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy danh sách học kỳ theo chuyên ngành thành công!',
             terms,
         });
     } catch (error) {
@@ -95,7 +95,7 @@ exports.getTermById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin học kỳ thành công!',
             term: term[0],
         });
     } catch (error) {
@@ -130,7 +130,7 @@ exports.getTermNow = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin học kỳ hiện tại thành công!',
             term: term[0],
         });
     } catch (error) {
@@ -150,7 +150,7 @@ exports.getTermDetailWithChooseGroup = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin thời gian chọn nhóm thành công!',
             termDetail,
         });
     } catch (error) {
@@ -170,7 +170,7 @@ exports.getTermDetailWithPublicTopic = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin thời gian công bố đề tài thành công!',
             termDetail,
         });
     } catch (error) {
@@ -190,7 +190,7 @@ exports.getTermDetailWithChooseTopic = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin thời gian chọn đề tài thành công!',
             termDetail,
         });
     } catch (error) {
@@ -210,7 +210,7 @@ exports.getTermDetailWithDiscussion = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin thời gian phản biện thành công!',
             termDetail,
         });
     } catch (error) {
@@ -230,7 +230,7 @@ exports.getTermDetailWithReport = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin thời gian báo cáo thành công!',
             termDetail,
         });
     } catch (error) {
@@ -250,7 +250,7 @@ exports.getTermDetailWithPublicResult = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin thời gian công bố kết quả thành công!',
             termDetail,
         });
     } catch (error) {
@@ -291,7 +291,7 @@ exports.createTerm = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create success!',
+            message: 'Tạo học kỳ thành công!',
             term,
         });
     } catch (error) {
@@ -329,7 +329,7 @@ exports.updateTerm = async (req, res) => {
         await term.update({ name, startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật học kỳ thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -372,7 +372,7 @@ exports.updateChooseGroupTerm = async (req, res) => {
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật thời gian chọn nhóm thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -414,7 +414,7 @@ exports.updatePublicTopicTerm = async (req, res) => {
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật thời gian công bố đề tài thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -457,7 +457,7 @@ exports.updateChooseTopicTerm = async (req, res) => {
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật thời gian chọn đề tài thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -500,7 +500,7 @@ exports.updateDiscussionTerm = async (req, res) => {
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật thời gian phản biện thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -542,7 +542,7 @@ exports.updateReportTerm = async (req, res) => {
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật thời gian báo cáo thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -585,7 +585,7 @@ exports.updatePublicResultTerm = async (req, res) => {
         await termDetail.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật thời gian công bố kết quả thành công!',
         });
     } catch (error) {
         console.log(error);

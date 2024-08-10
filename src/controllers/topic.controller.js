@@ -37,7 +37,7 @@ const getTopicOfSearch = async (req, res) => {
         countResult = await sequelize.query(
             `SELECT COUNT(t.id) as total FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            WHERE lt.term_id = :termId`,
+            WHERE lt.term_id = :termId ${searchQuery}`,
             {
                 replacements: {
                     termId,

@@ -99,7 +99,7 @@ exports.getGroupStudents = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all success!',
+            message: 'Lấy danh sách nhóm sinh viên thành công!',
             groupStudents,
             params: {
                 page: _.toInteger(page),
@@ -132,7 +132,7 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all success!',
+            message: 'Lấy danh sách nhóm sinh viên thành công!',
             groupStudents,
         });
     } catch (error) {
@@ -161,7 +161,7 @@ exports.getGroupStudentsByTerm = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lây danh sách nhóm sinh viên thành công!',
             groupStudents,
         });
     } catch (error) {
@@ -193,7 +193,7 @@ exports.getGroupStudentById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get by id success!',
+            message: 'Lấy thông tin nhóm sinh viên thành công!',
             groupStudent: groupStudent[0],
         });
     } catch (error) {
@@ -220,7 +220,7 @@ exports.getGroupStudentMembers = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get members success!',
+            message: 'Lây danh sách thành viên nhóm sinh viên thành công!',
             members,
         });
     } catch (error) {
@@ -270,7 +270,7 @@ exports.getGroupStudentOfSearch = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all success!',
+            message: 'Lấy danh sách nhóm sinh viên thành công!',
             groupStudents,
             params: {
                 page: _.toInteger(page),
@@ -322,7 +322,7 @@ exports.getMembersById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get members success!',
+            message: 'Lấy danh sách thành viên nhóm sinh viên thành công!',
             members: membersWithTranscripts,
         });
     } catch (error) {
@@ -385,7 +385,7 @@ exports.getMyGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get success!',
+            message: 'Lấy thông tin nhóm sinh viên thành công!',
             group: {
                 info: groupStudent,
                 members,
@@ -476,7 +476,7 @@ exports.createGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create success!',
+            message: 'Tạo nhóm sinh viên thành công!',
             groupStudent: groupStudent[0],
         });
     } catch (error) {
@@ -506,7 +506,7 @@ exports.importGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import success!',
+            message: 'Nhập nhóm sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -541,7 +541,7 @@ exports.assignAdminGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update success!',
+            message: 'Cập nhật trưởng nhóm thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -588,7 +588,7 @@ exports.addMemberGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Add member success!',
+            message: 'Thêm thành viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -630,7 +630,7 @@ exports.deleteMemberGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete member success!',
+            message: 'Xoá thành viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -672,7 +672,7 @@ exports.removeMemberGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete success!',
+            message: 'Xoá thành viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -709,7 +709,7 @@ exports.leaveGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Remove success!',
+            message: 'Rời nhóm thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -739,6 +739,11 @@ exports.joinGroupStudent = async (req, res) => {
             },
         });
 
+        // check if group has enough members
+        if (studentTerms.length >= 2) {
+            return Error.sendForbidden(res, 'Nhóm đã đủ thành viên!');
+        }
+
         // check if group has no admin
         if (studentTerms.length === 0) {
             studentTerm.isAdmin = true;
@@ -750,7 +755,7 @@ exports.joinGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Join Success',
+            message: 'Tham gia nhóm thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -764,7 +769,7 @@ exports.assignTopic = async (req, res) => {
         const { topicId } = req.body;
         const groupStudent = await GroupStudent.findByPk(id);
         if (!groupStudent) {
-            Error.sendNotFound(res, 'Group Student not found');
+            Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
         groupStudent.topic_id = topicId;
@@ -772,7 +777,7 @@ exports.assignTopic = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Chọn đề tài thành công!',
             groupStudent,
         });
     } catch (error) {
@@ -793,7 +798,7 @@ exports.deleteGroupStudent = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete success!',
+            message: 'Xoá nhóm sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -808,7 +813,7 @@ exports.chooseTopic = async (req, res) => {
 
         const groupStudent = await GroupStudent.findByPk(id);
         if (!groupStudent) {
-            return Error.sendNotFound(res, 'Group Student not found');
+            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
         const studentTerm = await StudentTerm.findOne({
@@ -819,12 +824,22 @@ exports.chooseTopic = async (req, res) => {
         });
 
         if (!studentTerm.isAdmin) {
-            return Error.sendForbidden(res, 'You are not admin of group');
+            return Error.sendForbidden(res, 'Bạn không phải là trưởng nhóm!');
         }
 
         const topic = await Topic.findByPk(topicId);
         if (!topic) {
-            return Error.sendNotFound(res, 'Topic not found');
+            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
+        }
+
+        const groupStudents = await GroupStudent.findAll({
+            where: {
+                topic_id: topicId,
+            },
+        });
+
+        if (groupStudents.length >= topic.quantityGroupMax) {
+            return Error.sendForbidden(res, 'Số lượng nhóm đã đủ!');
         }
 
         groupStudent.topic_id = topicId;
@@ -832,7 +847,7 @@ exports.chooseTopic = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Choose Topic Success',
+            message: 'Chọn đề tài thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -852,12 +867,12 @@ exports.cancelTopic = async (req, res) => {
         });
 
         if (!studentTerm.isAdmin) {
-            return Error.sendForbidden(res, 'You are not admin of group');
+            return Error.sendForbidden(res, 'Bạn không phải là trưởng nhóm!');
         }
 
         const groupStudent = await GroupStudent.findByPk(id);
         if (!groupStudent) {
-            return Error.sendNotFound(res, 'Group Student not found');
+            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
         groupStudent.topic_id = null;
@@ -865,7 +880,7 @@ exports.cancelTopic = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Cancel Topic Success',
+            message: 'Huỷ chọn đề tài thành công!',
         });
     } catch (error) {
         console.log(error);

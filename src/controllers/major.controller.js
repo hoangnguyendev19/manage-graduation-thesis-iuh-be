@@ -7,7 +7,7 @@ exports.getMajors = async (req, res) => {
         const majors = await Major.findAll();
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách chuyên ngành thành công!',
             majors,
         });
     } catch (error) {
@@ -22,7 +22,7 @@ exports.getMajorById = async (req, res) => {
         const major = await Major.findByPk(id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy thông tin chuyên ngành thành công!',
             major,
         });
     } catch (error) {
@@ -44,7 +44,7 @@ exports.createMajor = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Tạo chuyên ngành thành công!',
             major,
         });
     } catch (error) {
@@ -68,7 +68,7 @@ exports.updateMajor = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update Success',
+            message: 'Cập nhật chuyên ngành thành công!',
             major,
         });
     } catch (error) {
@@ -90,7 +90,7 @@ exports.deleteMajor = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete Success',
+            message: 'Xoá chuyên ngành thành công!',
         });
     } catch (error) {
         console.log(error);

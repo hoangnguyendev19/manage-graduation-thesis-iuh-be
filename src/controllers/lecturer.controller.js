@@ -21,7 +21,7 @@ exports.login = async (req, res) => {
         const lecturer = await Lecturer.findOne({ where: { username } });
 
         if (!lecturer) {
-            return Error.sendNotFound(res, 'Email hoặc mật khẩu không chính xác!');
+            return Error.sendNotFound(res, 'Tên đăng nhập không chính xác!');
         }
         const flag = await comparePassword(password, lecturer.password);
         if (!flag) {
@@ -56,7 +56,7 @@ exports.login = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Login success!',
+            message: 'Đăng nhập thành công!',
             user,
             roles: roles.map((role) => role.name),
             accessToken,
@@ -81,7 +81,7 @@ exports.refreshToken = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Refresh token success!',
+            message: 'Làm mới token thành công!',
             accessToken,
             refreshToken: newRefreshToken,
         });
@@ -97,7 +97,7 @@ exports.logout = async (req, res) => {
         removeRefreshToken(lecturer.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Logout success!',
+            message: 'Đăng xuất thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -223,7 +223,7 @@ exports.getLecturers = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all lecturers success!',
+            message: 'Lấy danh sách giảng viên thành công!',
             lecturers,
             params: {
                 page: _.toInteger(page),
@@ -254,7 +254,7 @@ exports.getLecturersByMajorId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách giảng viên theo chuyên ngành thành công!',
             lecturers,
         });
     } catch (error) {
@@ -290,7 +290,7 @@ exports.getLecturerById = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get lecturer by id success!',
+            message: 'Lấy thông tin giảng viên thành công!',
             lecturer,
         });
     } catch (error) {
@@ -356,7 +356,7 @@ exports.createLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create lecturer success!',
+            message: 'Tạo giảng viên thành công!',
             lecturer: newLecturer,
             roles: roles.map((role) => role.name),
         });
@@ -393,7 +393,7 @@ exports.updateLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update lecturer success!',
+            message: 'Cập nhật giảng viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -444,7 +444,7 @@ exports.importLecturers = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Import lecturers success!',
+            message: 'Nhâp danh sách giảng viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -464,7 +464,7 @@ exports.deleteLecturer = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Delete lecturer success!',
+            message: 'Xoá giảng viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -485,7 +485,7 @@ exports.resetPassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Reset password lecturer success!',
+            message: 'Làm mới mật khẩu thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -505,7 +505,7 @@ exports.lockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lock account success!',
+            message: 'Khoá tài khoản thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -525,7 +525,7 @@ exports.unlockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Unlock account success!',
+            message: 'Mở khoá tài khoản thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -550,7 +550,7 @@ exports.updatePassword = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update password success!',
+            message: 'Cập nhật mật khẩu thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -584,7 +584,7 @@ exports.getMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get me success!',
+            message: 'Lấy thông tin cá nhân thành công!',
             lecturer,
             roles: roles.map((role) => role.name),
         });
@@ -602,7 +602,7 @@ exports.updateMe = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Update me success!',
+            message: 'Cập nhật thông tin cá nhân thành công!',
         });
     } catch (error) {
         console.log(error);
