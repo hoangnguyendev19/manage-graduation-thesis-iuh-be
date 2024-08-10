@@ -8,29 +8,57 @@ const { sequelize } = require('../configs/connectDB');
 
 const getTopicOfSearch = async (req, res) => {
     try {
-        const { termId, keywords, searchField } = req.query;
+        const { termId, keywords, searchField, page, limit } = req.query;
+        let offset = (page - 1) * limit;
+        let topics = [];
+        let total = 0;
+
         let searchQuery = searchField ? `and t.${searchField} LIKE :keywords` : '';
 
-        const topics = await sequelize.query(
+        topics = await sequelize.query(
             `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
             LEFT JOIN group_students gs ON t.id = gs.topic_id
             WHERE lt.term_id = :termId ${searchQuery}
-            GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
+            GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name
+            LIMIT :limit OFFSET :offset`,
             {
                 replacements: {
                     termId,
                     keywords: `%${keywords}%`,
+                    limit: _.toInteger(limit),
+                    offset: _.toInteger(offset),
                 },
                 type: QueryTypes.SELECT,
             },
         );
 
+        countResult = await sequelize.query(
+            `SELECT COUNT(t.id) as total FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: {
+                    termId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        total = countResult[0].total;
+
+        const totalPage = _.ceil(total / _.toInteger(limit));
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get all success!',
             topics,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);
