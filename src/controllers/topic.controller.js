@@ -13,15 +13,22 @@ const getTopicOfSearch = async (req, res) => {
         let topics = [];
         let total = 0;
 
-        let searchQuery = searchField ? `and t.${searchField} LIKE :keywords` : '';
+        let searchQuery = '';
+        let orderBy = 'ORDER BY l.full_name DESC';
+
+        if (searchField === 'lecturerName') {
+            searchQuery += ` AND l.full_name LIKE :keywords `;
+        } else searchQuery += `AND t.${searchField} LIKE :keywords `;
 
         topics = await sequelize.query(
-            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
+            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
+            FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
             LEFT JOIN group_students gs ON t.id = gs.topic_id
             WHERE lt.term_id = :termId ${searchQuery}
             GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name
+            ${orderBy}
             LIMIT :limit OFFSET :offset`,
             {
                 replacements: {
