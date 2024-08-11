@@ -1,4 +1,4 @@
-const { Topic, LecturerTerm, Lecturer, Major, GroupLecturer } = require('../models/index');
+const { Topic, LecturerTerm, Lecturer, Major, GroupLecturer, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
@@ -8,17 +8,32 @@ const { sequelize } = require('../configs/connectDB');
 
 const getTopicOfSearch = async (req, res) => {
     try {
-        const { termId, keywords, searchField, page, limit } = req.query;
-        let offset = (page - 1) * limit;
+        const { termId, keywords, searchField, page, limit, sort } = req.query;
+        const offset = (page - 1) * limit;
         let topics = [];
-        let total = 0;
 
         let searchQuery = '';
-        let orderBy = 'ORDER BY l.full_name DESC';
+        let orderBy = '';
+
+        const allowedFields = ['lecturerName', 'name', 'description', 'quantity_group_max', 'note'];
+        const allowedSorts = ['ASC', 'DESC'];
+
+        // Validate searchField and sort
+        if (!allowedFields.includes(searchField)) {
+            throw new Error(`Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
+        }
+
+        if (!allowedSorts.includes(sort.toUpperCase())) {
+            throw new Error(`Điều kiện sắp xếp ${searchField} không hợp lệ!`);
+        }
 
         if (searchField === 'lecturerName') {
             searchQuery += ` AND l.full_name LIKE :keywords `;
-        } else searchQuery += `AND t.${searchField} LIKE :keywords `;
+            orderBy += `ORDER BY l.full_name ${sort}`;
+        } else {
+            searchQuery += `AND t.${searchField} LIKE :keywords `;
+            orderBy += `ORDER BY t.${searchField} ${sort}`;
+        }
 
         topics = await sequelize.query(
             `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
@@ -41,11 +56,11 @@ const getTopicOfSearch = async (req, res) => {
             },
         );
 
-        countResult = await sequelize.query(
-            `SELECT COUNT(t.id) as total FROM topics t
+        const countResult = await sequelize.query(
+            `SELECT COUNT(t.id) as total
+            FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            LEFT JOIN group_students gs ON t.id = gs.topic_id
             WHERE lt.term_id = :termId ${searchQuery}`,
             {
                 replacements: {
@@ -56,13 +71,13 @@ const getTopicOfSearch = async (req, res) => {
             },
         );
 
-        total = countResult[0].total;
+        const total = countResult[0].total;
 
         const totalPage = _.ceil(total / _.toInteger(limit));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get all success!',
+            message: 'Lấy danh sách đề tài thành công!',
             topics,
             params: {
                 page: _.toInteger(page),
@@ -119,7 +134,7 @@ const getTopics = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách đề tài thành công!',
             topics,
         });
     } catch (error) {
@@ -163,7 +178,7 @@ const getTopicsByGroupLecturerId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy danh sách đề tài thành công!',
             topics: Object.values(newTopics),
         });
     } catch (error) {
@@ -209,7 +224,7 @@ const getTopicById = async (req, res) => {
         }
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Get Success',
+            message: 'Lấy thông tin đề tài thành công!',
             topic,
         });
     } catch (error) {
@@ -268,7 +283,7 @@ const createTopic = async (req, res) => {
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: 'Create Success',
+            message: 'Tạo đề tài thành công!',
             topic,
         });
     } catch (error) {
@@ -357,12 +372,12 @@ const importTopics = async (req, res) => {
         for (const topic of jsonData) {
             const username = topic['Mã giảng viên'];
             const name = topic['Tên đề tài'].trim();
-            const target = topic['MỤC TIÊU ĐỀ TÀI'].trim();
+            const target = topic['Mục tiêu đề tài'].trim();
             const expectedResult =
-                topic['DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG'].trim();
+                topic['Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng'].trim();
             const description = topic['Mô tả'].trim();
             const requireInput = topic['Yêu cầu đầu vào'].trim();
-            const standardOutput = topic['Yêu cầu đầu ra (Output Standards)'].trim();
+            const standardOutput = topic['Yêu cầu đầu ra'].trim();
 
             let topicToSaved = {
                 username: username,
@@ -441,6 +456,55 @@ const importTopics = async (req, res) => {
             success: true,
             message: 'Import danh sách đề tài thành công!',
         });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+const exportTopics = async (req, res) => {
+    try {
+        const { termId } = req.body;
+
+        // check termId is provided
+        if (!termId) {
+            return Error.sendWarning(res, 'Hãy chọn học kì!');
+        }
+
+        // check termId is valid
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        // STT, Mã giảng viên, Tên giảng viên, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra
+        const topics = await sequelize.query(
+            `SELECT l.username as 'Mã giảng viên', l.full_name as 'Tên giảng viên', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'MỤC TIÊU ĐỀ TÀI', t.expected_result as 'DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra'
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: {
+                    termId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        for (let i = 0; i < topics.length; i++) {
+            topics[i]['STT'] = i + 1;
+        }
+
+        const ws = xlsx.utils.json_to_sheet(topics);
+        const wb = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(wb, ws, 'Danh sách đề tài');
+
+        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Disposition', 'attachment; filename=danh-sach-de-tai.xlsx');
+
+        res.status(HTTP_STATUS.OK).send(buffer);
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);
@@ -572,5 +636,6 @@ module.exports = {
     updateStatusTopic,
     deleteTopic,
     importTopics,
+    exportTopics,
     importTopicsFromTermIdToSelectedTermId,
 };

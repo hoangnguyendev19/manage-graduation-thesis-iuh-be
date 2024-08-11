@@ -10,6 +10,7 @@ const {
     createLecturer,
     updateLecturer,
     importLecturers,
+    exportLecturers,
     deleteLecturer,
     resetPassword,
     lockAccount,
@@ -46,6 +47,13 @@ router.post(
     checkRole(['ADMIN', 'HEAD_LECTURER']),
     upload.single('file'),
     importLecturers,
+);
+
+router.post(
+    APP_ROUTER.EXPORT,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER']),
+    exportLecturers,
 );
 
 router.post(
