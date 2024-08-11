@@ -1,4 +1,4 @@
-const { Student, Major, StudentTerm } = require('../models/index');
+const { Student, Major, StudentTerm, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -254,6 +254,48 @@ exports.getStudents = async (req, res) => {
     }
 };
 
+exports.searchStudents = async (req, res) => {
+    try {
+        const { termId, keywords, searchField } = req.query;
+        let students = [];
+
+        const allowedFields = ['studentName', 'groupName'];
+
+        if (!allowedFields.includes(searchField)) {
+            return Error.sendWarning(res, 'Điều kiện tìm kiếm không hợp lệ!');
+        }
+
+        let searchQuery = '';
+
+        if (searchField === 'studentName') {
+            searchQuery = `AND st.full_name like :keywords`;
+        } else {
+            searchQuery = `AND gs.name like :keywords`;
+        }
+
+        students = await sequelize.query(
+            `SELECT st.id as studentId, st.username, st.full_name as studentName, gs.id as groupId, gs.name as groupName
+            FROM students st
+            LEFT JOIN student_terms stt ON st.id = stt.student_id
+            LEFT JOIN group_students gs ON stt.group_student_id = gs.id
+            WHERE stt.term_id = :termId ${searchQuery}`,
+            {
+                replacements: { termId, keywords: `%${keywords}%` },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Tìm kiếm sinh viên thành công!',
+            students,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -439,13 +481,13 @@ exports.importStudents = async (req, res) => {
         const jsonData = xlsx.utils.sheet_to_json(sheet);
         const students = [];
         const password = await hashPassword('12345678');
-        // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Số điện thoại, Mã lớp
+        // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Số điện thoại, Lớp học
         for (const student of jsonData) {
             const username = student['Mã SV'];
             const fullName = `${student['Họ đệm']} ${student['Tên']}`;
             const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
             const phone = student['Số điện thoại'];
-            const clazzName = student['Mã lớp'];
+            const clazzName = student['Lớp học'];
             const major_id = majorId;
 
             students.push({
@@ -520,6 +562,60 @@ exports.importStudents = async (req, res) => {
             success: true,
             message: 'Nhập danh sách sinh viên thành công!',
         });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.exportStudents = async (req, res) => {
+    try {
+        const { termId, majorId } = req.body;
+
+        // check if termId and majorId are provided
+        if (!termId || !majorId) {
+            return Error.sendWarning(res, 'Hãy chọn học kỳ và ngành học!');
+        }
+
+        // check if termId and majorId are valid
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const major = await Major.findByPk(majorId);
+        if (!major) {
+            return Error.sendNotFound(res, 'Ngành học không tồn tại!');
+        }
+
+        // columns: STT, Mã SV, Họ và tên, Giới tính, Ngày sinh, Số điện thoại, Email, Lớp học
+        const students = await sequelize.query(
+            `SELECT st.username as 'Mã SV', st.full_name as 'Họ và tên', st.gender as 'Giới tính', st.phone as 'Số điện thoại', st.email as 'Email', st.clazz_name as 'Lớp học'
+            FROM students st LEFT JOIN student_terms stt ON st.id = stt.student_id
+            WHERE stt.term_id = :termId AND st.major_id = :majorId`,
+            {
+                replacements: {
+                    termId,
+                    majorId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        for (let i = 0; i < students.length; i++) {
+            students[i]['STT'] = i + 1;
+            students[i]['Giới tính'] = students[i]['Giới tính'] === 'MALE' ? 'Nam' : 'Nữ';
+        }
+
+        const ws = xlsx.utils.json_to_sheet(students);
+        const wb = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(wb, ws, 'Danh sách sinh viên');
+
+        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Disposition', 'attachment; filename=danh-sach-sinh-vien.xlsx');
+
+        res.status(HTTP_STATUS.OK).send(buffer);
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);

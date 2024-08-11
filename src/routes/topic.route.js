@@ -13,6 +13,7 @@ const {
     updateStatusTopic,
     deleteTopic,
     importTopics,
+    exportTopics,
     importTopicsFromTermIdToSelectedTermId,
 } = require('../controllers/topic.controller');
 
@@ -31,6 +32,13 @@ router.post(
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     upload.single('file'),
     importTopics,
+);
+
+router.post(
+    APP_ROUTER.EXPORT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    exportTopics,
 );
 
 router.post(

@@ -452,6 +452,52 @@ exports.importLecturers = async (req, res) => {
     }
 };
 
+exports.exportLecturers = async (req, res) => {
+    try {
+        const { majorId } = req.body;
+
+        // check if majorId is provided
+        if (!majorId) {
+            return Error.sendWarning(res, 'Chuyên ngành không được để trống!');
+        }
+
+        // check if majorId is valid
+        const major = await Major.findByPk(majorId);
+        if (!major) {
+            return Error.sendNotFound(res, 'Chuyên ngành không tồn tại!');
+        }
+
+        // STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email, Bằng cấp
+        const lecturers = await sequelize.query(
+            `SELECT l.username as 'Mã GV', l.full_name as 'Họ và tên', l.gender as 'Giới tính', l.phone as 'Số điện thoại', l.email as 'Email', l.degree as 'Bằng cấp'
+            FROM lecturers l
+            WHERE l.major_id = :majorId`,
+            {
+                replacements: { majorId },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        for (let i = 0; i < lecturers.length; i++) {
+            lecturers[i]['STT'] = i + 1;
+            lecturers[i]['Giới tính'] = lecturers[i]['Giới tính'] === 'MALE' ? 'Nam' : 'Nữ';
+        }
+
+        const ws = xlsx.utils.json_to_sheet(lecturers);
+        const wb = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(wb, ws, 'Danh sách giảng viên');
+
+        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Disposition', 'attachment; filename=danh-sach-giang-vien.xlsx');
+
+        res.status(HTTP_STATUS.OK).send(buffer);
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.deleteLecturer = async (req, res) => {
     try {
         const { id } = req.params;

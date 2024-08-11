@@ -20,7 +20,7 @@ exports.getGroupStudents = async (req, res) => {
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
                 GROUP BY gs.id
-                ORDER BY gs.created_at DESC
+                ORDER BY gs.name ASC
                 LIMIT :limit OFFSET :offset`,
                 {
                     type: QueryTypes.SELECT,
@@ -46,7 +46,7 @@ exports.getGroupStudents = async (req, res) => {
                 LEFT JOIN topics tc ON gs.topic_id = tc.id 
                 WHERE gs.term_id = :termId and gs.topic_id = :topicId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
                 GROUP BY gs.id
-                ORDER BY gs.created_at DESC
+                ORDER BY gs.name ASC
                 LIMIT :limit OFFSET :offset`,
                 {
                     type: QueryTypes.SELECT,
@@ -74,7 +74,7 @@ exports.getGroupStudents = async (req, res) => {
                 LEFT JOIN lecturers l ON l.id = lt.lecturer_id
                 WHERE gs.term_id = :termId
                 GROUP BY gs.id
-                ORDER BY gs.created_at DESC
+                ORDER BY gs.name ASC
                 LIMIT :limit OFFSET :offset`,
                 {
                     type: QueryTypes.SELECT,
@@ -123,7 +123,8 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             WHERE gs.term_id = :termId and lt.lecturer_id = :lecturerId
-            GROUP BY gs.id`,
+            GROUP BY gs.id
+            ORDER BY gs.name ASC`,
             {
                 type: QueryTypes.SELECT,
                 replacements: { termId, lecturerId },
@@ -220,7 +221,7 @@ exports.getGroupStudentMembers = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lây danh sách thành viên nhóm sinh viên thành công!',
+            message: 'Lấy danh sách thành viên nhóm sinh viên thành công!',
             members,
         });
     } catch (error) {
@@ -242,7 +243,7 @@ exports.getGroupStudentOfSearch = async (req, res) => {
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             WHERE gs.term_id = :termId ${searchQuery}
             GROUP BY gs.id
-            ORDER BY gs.created_at DESC
+            ORDER BY gs.name ASC
             LIMIT :limit OFFSET :offset`,
             {
                 type: QueryTypes.SELECT,
@@ -767,9 +768,36 @@ exports.assignTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const { topicId } = req.body;
+
         const groupStudent = await GroupStudent.findByPk(id);
         if (!groupStudent) {
             Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        }
+
+        // Check if group has topic
+        if (groupStudent.topic_id) {
+            return Error.sendForbidden(res, 'Nhóm sinh viên đã chọn đề tài!');
+        }
+
+        // Check if topic has enough group
+        const topic = await Topic.findByPk(topicId);
+        if (!topic) {
+            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
+        }
+
+        const groupStudents = await GroupStudent.findAll({
+            where: {
+                topic_id: topicId,
+            },
+        });
+
+        if (groupStudents.length >= topic.quantityGroupMax) {
+            return Error.sendForbidden(res, 'Số lượng nhóm đã đủ!');
+        }
+
+        // Check if topic status is APPROVED
+        if (topic.status !== 'APPROVED') {
+            return Error.sendForbidden(res, 'Đề tài chưa được phê duyệt!');
         }
 
         groupStudent.topic_id = topicId;

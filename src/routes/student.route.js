@@ -8,6 +8,7 @@ const {
     getStudentById,
     createStudent,
     importStudents,
+    exportStudents,
     updateStudent,
     deleteStudent,
     resetPassword,
@@ -21,6 +22,7 @@ const {
     forgotPassword,
     getStudentsNoHaveGroup,
     getStudentsOfSearch,
+    searchStudents,
 } = require('../controllers/student.controller');
 
 const { protectStudent } = require('../middleware/student.middleware');
@@ -39,6 +41,8 @@ router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
 router.get(APP_ROUTER.QUERY, getStudentsOfSearch);
 
+router.get(APP_ROUTER.SEARCH, searchStudents);
+
 router.get(APP_ROUTER.STUDENTS_NO_HAVE_GROUP, protectLecturer, getStudentsNoHaveGroup);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, updatePassword);
@@ -53,6 +57,13 @@ router.post(
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     upload.single('file'),
     importStudents,
+);
+
+router.post(
+    APP_ROUTER.EXPORT,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    exportStudents,
 );
 
 router.post(

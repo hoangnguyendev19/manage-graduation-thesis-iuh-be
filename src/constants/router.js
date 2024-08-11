@@ -18,6 +18,8 @@ const APP_ROUTER = {
     LOCK: '/lock',
     UNLOCK: '/unlock',
     MEMBER: '/:id/member',
+    SEARCH: '/search',
+    EXPORT: '/export',
 
     // UPLOAD
     UPLOAD: '/api/v1/uploads',
@@ -40,7 +42,6 @@ const APP_ROUTER = {
     //STUDENTS
     STUDENT: '/api/v1/students',
     STUDENT_STATUS: '/:id/status',
-    // STUDENT_RESET_PASSWORD: '/:id/reset-password',
     // STUDENT_EXPORT: '/export-transcript',
     STUDENTS_NO_HAVE_GROUP: '/no-have-group',
 
@@ -78,8 +79,6 @@ const APP_ROUTER = {
     GROUP_LECTURER_NO_GROUP: '/:type/no-group',
     GROUP_LECTURER_BY_LECTURERS: '/:type/lecturers',
 
-    // GROUP_LECTURER_BY_LECTURERS: '/:type/lecturers',
-
     //GROUP_STUDENT
     GROUP_STUDENT: '/api/v1/group-students',
     GROUP_STUDENT_BY_LECTURER: '/lecturer',
@@ -94,9 +93,6 @@ const APP_ROUTER = {
     GROUP_STUDENT_CHOOSE_TOPIC: '/:id/choose-topic',
     GROUP_STUDENT_CANCEL_TOPIC: '/:id/cancel-topic',
     GROUP_STUDENT_MEMBER: '/:id/members',
-
-    //test route
-    GROUP_NOTIFICATION: '/:id/notfication',
 
     //NOTIFICATION_STUDENT
     NOTIFICATION_STUDENT: '/api/v1/notification-students',
