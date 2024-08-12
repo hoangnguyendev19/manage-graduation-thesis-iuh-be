@@ -153,10 +153,11 @@ const getTopicApprovedOfSearch = async (req, res) => {
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            WHERE lt.term_id = :termId ${searchQuery}`,
+            WHERE lt.term_id = :termId AND t.status = :status ${searchQuery}`,
             {
                 replacements: {
                     termId,
+                    status: 'APPROVED',
                     keywords: searchKey,
                 },
                 type: QueryTypes.SELECT,
