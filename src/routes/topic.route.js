@@ -6,6 +6,7 @@ const {
     getTopicOfSearch,
     getTopicApprovedOfSearch,
     getTopicsByGroupLecturerId,
+    getTopicByLecturer,
     getTopicById,
     createTopic,
     updateTopic,
@@ -15,7 +16,6 @@ const {
     importTopics,
     exportTopics,
     importTopicsFromTermIdToSelectedTermId,
-    getTopicByLecturer,
 } = require('../controllers/topic.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
