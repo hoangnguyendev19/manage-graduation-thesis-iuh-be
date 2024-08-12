@@ -82,6 +82,7 @@ const APP_ROUTER = {
     //GROUP_STUDENT
     GROUP_STUDENT: '/api/v1/group-students',
     GROUP_STUDENT_BY_LECTURER: '/lecturer',
+    GROUP_STUDENT_BY_TOPIC: '/topic',
     GROUP_STUDENT_BY_TERM: '/term',
     GROUP_STUDENT_ASSIGN_ADMIN: '/:id/assign-admin',
     GROUP_STUDENT_ASSIGN_TOPIC: '/:id/assign-topic',

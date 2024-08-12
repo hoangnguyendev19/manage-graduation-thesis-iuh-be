@@ -4,12 +4,13 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     getGroupStudents,
-    getGroupStudentsByLecturer,
+    getGroupStudentsByLecturerId,
+    getGroupStudentsByTopicId,
     getGroupStudentById,
     getGroupStudentMembers,
     getGroupStudentOfSearch,
     getMembersById,
-    getGroupStudentsByTerm,
+    getGroupStudentsByTermId,
     getMyGroupStudent,
     createGroupStudent,
     importGroupStudent,
@@ -31,9 +32,11 @@ const router = express.Router();
 
 router.get(APP_ROUTER.ME, protectStudent, getMyGroupStudent);
 
-router.get(APP_ROUTER.GROUP_STUDENT_BY_TERM, protectStudent, getGroupStudentsByTerm);
+router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, getGroupStudentsByLecturerId);
 
-router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, getGroupStudentsByLecturer);
+router.get(APP_ROUTER.GROUP_STUDENT_BY_TOPIC, getGroupStudentsByTopicId);
+
+router.get(APP_ROUTER.GROUP_STUDENT_BY_TERM, protectStudent, getGroupStudentsByTermId);
 
 router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, getGroupStudentMembers);
 

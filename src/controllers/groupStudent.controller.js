@@ -113,7 +113,7 @@ exports.getGroupStudents = async (req, res) => {
     }
 };
 
-exports.getGroupStudentsByLecturer = async (req, res) => {
+exports.getGroupStudentsByLecturerId = async (req, res) => {
     try {
         const { termId, lecturerId } = req.query;
 
@@ -142,7 +142,54 @@ exports.getGroupStudentsByLecturer = async (req, res) => {
     }
 };
 
-exports.getGroupStudentsByTerm = async (req, res) => {
+exports.getGroupStudentsByTopicId = async (req, res) => {
+    try {
+        const { termId, topicId } = req.query;
+
+        let groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name, s.username, s.full_name as fullName FROM group_students gs
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN students s ON st.student_id = s.id
+            WHERE gs.term_id = :termId and gs.topic_id = :topicId
+            ORDER BY gs.name ASC`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId, topicId },
+            },
+        );
+
+        groupStudents = groupStudents.reduce((acc, group) => {
+            const { id, name, username, fullName } = group;
+
+            const groupIndex = acc.findIndex((item) => item.id === id);
+
+            if (groupIndex === -1) {
+                acc.push({
+                    id,
+                    name,
+                    members: [{ username, fullName }],
+                });
+            }
+
+            if (groupIndex !== -1) {
+                acc[groupIndex].members.push({ username, fullName });
+            }
+
+            return acc;
+        }, []);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách nhóm sinh viên thành công!',
+            groupStudents,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getGroupStudentsByTermId = async (req, res) => {
     try {
         const { termId } = req.query;
 
