@@ -280,7 +280,7 @@ exports.searchStudents = async (req, res) => {
             LEFT JOIN group_students gs ON stt.group_student_id = gs.id
             WHERE stt.term_id = :termId ${searchQuery}`,
             {
-                replacements: { termId, keywords: `%${keywords}%` },
+                replacements: { termId, keywords: `%${keywords}` },
                 type: QueryTypes.SELECT,
             },
         );

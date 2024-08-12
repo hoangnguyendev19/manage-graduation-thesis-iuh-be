@@ -94,51 +94,88 @@ const getTopicOfSearch = async (req, res) => {
     }
 };
 
-const getTopics = async (req, res) => {
+const getTopicApprovedOfSearch = async (req, res) => {
     try {
-        const { lecturerId, termId } = req.query;
-        let topics = null;
+        const { termId, keywords, searchField, page, limit, sort } = req.query;
+        const offset = (page - 1) * limit;
+        let topics = [];
 
-        //case 1
-        if (!lecturerId && termId) {
-            topics = await sequelize.query(
-                `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
-                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                LEFT JOIN group_students gs ON t.id = gs.topic_id
-                WHERE lt.term_id = :termId
-                GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
-                {
-                    replacements: {
-                        termId,
-                    },
-                    type: QueryTypes.SELECT,
-                },
-            );
+        let searchQuery = '';
+        let orderBy = '';
+        let searchKey = '';
+
+        const allowedFields = ['lecturerName', 'name'];
+        const allowedSorts = ['ASC', 'DESC'];
+
+        // Validate searchField and sort
+        if (!allowedFields.includes(searchField)) {
+            throw new Error(`Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
         }
-        //case 2
-        else if (lecturerId && termId) {
-            topics = await sequelize.query(
-                `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
-                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                LEFT JOIN group_students gs ON t.id = gs.topic_id
-                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId
-                GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
-                {
-                    replacements: {
-                        termId,
-                        lecturerId,
-                    },
-                    type: QueryTypes.SELECT,
-                },
-            );
+
+        if (!allowedSorts.includes(sort.toUpperCase())) {
+            throw new Error(`Điều kiện sắp xếp ${searchField} không hợp lệ!`);
         }
+
+        if (searchField === 'lecturerName') {
+            searchQuery = ` AND l.full_name LIKE :keywords `;
+            orderBy = `ORDER BY l.full_name ${sort}`;
+            searchKey = `%${keywords}`;
+        } else {
+            searchQuery = `AND t.${searchField} LIKE :keywords `;
+            orderBy = `ORDER BY t.${searchField} ${sort}`;
+            searchKey = `%${keywords}%`;
+        }
+
+        topics = await sequelize.query(
+            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            LEFT JOIN group_students gs ON t.id = gs.topic_id
+            WHERE lt.term_id = :termId AND t.status = :status ${searchQuery}
+            GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name
+            ${orderBy}
+            LIMIT :limit OFFSET :offset`,
+            {
+                replacements: {
+                    termId,
+                    status: 'APPROVED',
+                    keywords: searchKey,
+                    limit: _.toInteger(limit),
+                    offset: _.toInteger(offset),
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const countResult = await sequelize.query(
+            `SELECT COUNT(t.id) as total
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE lt.term_id = :termId ${searchQuery}`,
+            {
+                replacements: {
+                    termId,
+                    keywords: searchKey,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const total = countResult[0].total;
+
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách đề tài thành công!',
             topics,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log(error);
@@ -630,7 +667,7 @@ const deleteTopic = async (req, res) => {
 
 module.exports = {
     getTopicOfSearch,
-    getTopics,
+    getTopicApprovedOfSearch,
     getTopicsByGroupLecturerId,
     getTopicById,
     createTopic,

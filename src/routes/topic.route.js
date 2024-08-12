@@ -4,7 +4,7 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     getTopicOfSearch,
-    getTopics,
+    getTopicApprovedOfSearch,
     getTopicsByGroupLecturerId,
     getTopicById,
     createTopic,
@@ -68,7 +68,7 @@ router.put(APP_ROUTER.ID, protectLecturer, updateTopic);
 
 router.delete(APP_ROUTER.ID, protectLecturer, deleteTopic);
 
-router.get(APP_ROUTER.INDEX, getTopics);
+router.get(APP_ROUTER.INDEX, getTopicApprovedOfSearch);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, createTopic);
 
