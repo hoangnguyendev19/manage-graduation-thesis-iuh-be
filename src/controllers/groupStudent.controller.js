@@ -497,10 +497,12 @@ exports.importGroupStudent = async (req, res) => {
         });
 
         const numberOfGroups = Math.ceil(studentTermCount / 2);
+        const numberOfDigits = numberOfGroups.toString().length;
 
         for (let i = 0; i < numberOfGroups; i++) {
+            const groupNumber = (i + 1).toString().padStart(numberOfDigits, '0');
             await GroupStudent.create({
-                name: `Nhóm số ${i + 1}`,
+                name: `Nhóm số ${groupNumber}`,
                 term_id: termId,
             });
         }

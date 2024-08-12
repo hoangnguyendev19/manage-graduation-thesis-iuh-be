@@ -74,7 +74,7 @@ exports.searchLecturerTerms = async (req, res) => {
         const { termId, limit, page, searchField, keywords } = req.query;
 
         let replacements = {
-            keywords: `%${keywords}%`,
+            keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
             limit: _.toInteger(limit),
             termId: termId,
             offset: (page - 1) * limit,
