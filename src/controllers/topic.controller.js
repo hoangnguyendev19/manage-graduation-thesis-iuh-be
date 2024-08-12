@@ -14,8 +14,9 @@ const getTopicOfSearch = async (req, res) => {
 
         let searchQuery = '';
         let orderBy = '';
+        let searchKey = '';
 
-        const allowedFields = ['lecturerName', 'name', 'description', 'quantity_group_max', 'note'];
+        const allowedFields = ['lecturerName', 'name'];
         const allowedSorts = ['ASC', 'DESC'];
 
         // Validate searchField and sort
@@ -28,11 +29,13 @@ const getTopicOfSearch = async (req, res) => {
         }
 
         if (searchField === 'lecturerName') {
-            searchQuery += ` AND l.full_name LIKE :keywords `;
-            orderBy += `ORDER BY l.full_name ${sort}`;
+            searchQuery = ` AND l.full_name LIKE :keywords `;
+            orderBy = `ORDER BY l.full_name ${sort}`;
+            searchKey = `%${keywords}`;
         } else {
-            searchQuery += `AND t.${searchField} LIKE :keywords `;
-            orderBy += `ORDER BY t.${searchField} ${sort}`;
+            searchQuery = `AND t.${searchField} LIKE :keywords `;
+            orderBy = `ORDER BY t.${searchField} ${sort}`;
+            searchKey = `%${keywords}%`;
         }
 
         topics = await sequelize.query(
@@ -48,7 +51,7 @@ const getTopicOfSearch = async (req, res) => {
             {
                 replacements: {
                     termId,
-                    keywords: `%${keywords}%`,
+                    keywords: searchKey,
                     limit: _.toInteger(limit),
                     offset: _.toInteger(offset),
                 },
@@ -65,7 +68,7 @@ const getTopicOfSearch = async (req, res) => {
             {
                 replacements: {
                     termId,
-                    keywords: `%${keywords}%`,
+                    keywords: searchKey,
                 },
                 type: QueryTypes.SELECT,
             },

@@ -110,7 +110,7 @@ exports.getStudentsOfSearch = async (req, res) => {
 
         let replacements = {
             termId: termId,
-            keywords: `%${keywords}%`,
+            keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
             limit: _.toInteger(limit),
             offset: offset,
         };

@@ -114,7 +114,7 @@ exports.searchLecturer = async (req, res) => {
         let offset = (page - 1) * limit;
 
         let replacements = {
-            keywords: `%${keywords}%`,
+            keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
             limit: _.toInteger(limit),
             majorId: majorId,
             offset: offset,
