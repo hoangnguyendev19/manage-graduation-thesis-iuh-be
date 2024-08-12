@@ -21,11 +21,11 @@ const getTopicOfSearch = async (req, res) => {
 
         // Validate searchField and sort
         if (!allowedFields.includes(searchField)) {
-            throw new Error(`Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
+            Error.sendNotFound(res, `Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
         }
 
         if (!allowedSorts.includes(sort.toUpperCase())) {
-            throw new Error(`Điều kiện sắp xếp ${searchField} không hợp lệ!`);
+            Error.sendNotFound(res, `Điều kiện sắp xếp ${searchField} không hợp lệ!`);
         }
 
         if (searchField === 'lecturerName') {
@@ -140,11 +140,11 @@ const getTopicApprovedOfSearch = async (req, res) => {
 
         // Validate searchField and sort
         if (!allowedFields.includes(searchField)) {
-            throw new Error(`Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
+            return Error.sendNotFound(res, `Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
         }
 
         if (!allowedSorts.includes(sort.toUpperCase())) {
-            throw new Error(`Điều kiện sắp xếp ${searchField} không hợp lệ!`);
+            return Error.sendNotFound(res, `Điều kiện sắp xếp ${searchField} không hợp lệ!`);
         }
 
         if (searchField === 'lecturerName') {
