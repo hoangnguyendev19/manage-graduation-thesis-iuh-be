@@ -94,6 +94,37 @@ const getTopicOfSearch = async (req, res) => {
     }
 };
 
+const getTopicByLecturer = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const { lecturerId } = req.params;
+        let topics = null;
+        topics = await sequelize.query(
+            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
+                    INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                    INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                    LEFT JOIN group_students gs ON t.id = gs.topic_id
+                    WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId
+                    GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
+            {
+                replacements: {
+                    termId,
+                    lecturerId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get Success',
+            topics,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 const getTopicApprovedOfSearch = async (req, res) => {
     try {
         const { termId, keywords, searchField, page, limit, sort } = req.query;
@@ -668,6 +699,7 @@ const deleteTopic = async (req, res) => {
 
 module.exports = {
     getTopicOfSearch,
+    getTopicByLecturer,
     getTopicApprovedOfSearch,
     getTopicsByGroupLecturerId,
     getTopicById,

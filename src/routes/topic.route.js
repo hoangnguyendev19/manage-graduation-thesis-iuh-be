@@ -15,12 +15,15 @@ const {
     importTopics,
     exportTopics,
     importTopicsFromTermIdToSelectedTermId,
+    getTopicByLecturer,
 } = require('../controllers/topic.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 
 const upload = require('../configs/uploadConfig');
 const router = express.Router();
+
+router.get(APP_ROUTER.TOPIC_BY_LECTURER, protectLecturer, getTopicByLecturer);
 
 router.get(APP_ROUTER.TOPIC_BY_GROUP_LECTURER, getTopicsByGroupLecturerId);
 
