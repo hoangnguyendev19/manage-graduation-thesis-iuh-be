@@ -13,8 +13,17 @@ const app = express();
 
 // Security Middlewares
 app.use(helmet());
-// app.use(cors({ origin: ['https://iuh.io.vn:5000', 'https://iuh.io.vn:5001'] }));
-app.use(cors({ origin: '*' }));
+app.use(
+    cors({
+        origin: [
+            'https://iuh.io.vn:5000',
+            'https://iuh.io.vn:5001',
+            'http://localhost:5000',
+            'http://localhost:5001',
+        ],
+    }),
+);
+// app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -22,8 +31,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rate Limiting
 const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // limit each IP to 1000 requests per windowMs (approximately 67 requests per minute)
+    handler: (req, res) => {
+        res.status(429).json({
+            error: 'Too many requests, please try again later.',
+        });
+    },
 });
 app.use(limiter);
 
