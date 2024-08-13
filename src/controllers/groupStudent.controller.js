@@ -449,6 +449,11 @@ exports.createGroupStudent = async (req, res) => {
     try {
         const { termId, studentIds } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         let group = null;
         // Get number of group student
         const groupStudents = await GroupStudent.findAll({
@@ -863,6 +868,35 @@ exports.assignTopic = async (req, res) => {
     }
 };
 
+exports.removeTopic = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { topicId } = req.body;
+
+        const groupStudent = await GroupStudent.findByPk(id);
+
+        if (!groupStudent) {
+            Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        }
+
+        if (groupStudent.topic_id !== topicId) {
+            return Error.sendForbidden(res, 'Nhóm sinh viên không chọn đề tài này!');
+        }
+
+        groupStudent.topic_id = null;
+
+        await groupStudent.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Huỷ chọn đề tài thành công!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.deleteGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
@@ -891,6 +925,19 @@ exports.chooseTopic = async (req, res) => {
         const groupStudent = await GroupStudent.findByPk(id);
         if (!groupStudent) {
             return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        }
+
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
+
+        if (studentTerms.length < 2) {
+            return Error.sendForbidden(
+                res,
+                'Bạn cần có ít nhất 2 thành viên trong nhóm mới có thể chọn đề tài!',
+            );
         }
 
         const studentTerm = await StudentTerm.findOne({

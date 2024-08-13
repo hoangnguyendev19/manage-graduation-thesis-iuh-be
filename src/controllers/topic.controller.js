@@ -306,18 +306,22 @@ const getTopicById = async (req, res) => {
 };
 
 const createTopic = async (req, res) => {
-    const {
-        name,
-        description,
-        quantityGroupMax,
-        target,
-        expectedResult,
-        standardOutput,
-        requireInput,
-    } = req.body;
-    const { termId } = req.query;
-
     try {
+        const {
+            name,
+            description,
+            quantityGroupMax,
+            target,
+            expectedResult,
+            standardOutput,
+            requireInput,
+        } = req.body;
+        const { termId } = req.query;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
         const lecturer_id = req.user.id;
 
         const lecturerTerm = await LecturerTerm.findOne({
@@ -376,6 +380,12 @@ const updateTopic = async (req, res) => {
             quantityGroupMax,
             requireInput,
         } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');

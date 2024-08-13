@@ -61,6 +61,12 @@ exports.createAllNotificationStudentTerms = async (req, res) => {
     try {
         const { termId } = req.query;
         const { message } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const studentTerms = await StudentTerm.findAll({
             where: { term_id: termId },
         });
@@ -84,6 +90,12 @@ exports.createAllNotificationStudentTerms = async (req, res) => {
 exports.createNotificationStudent = async (req, res) => {
     try {
         const { message, studentId } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const notificationStudent = await NotificationStudent.create({
             message,
             student_id: studentId,

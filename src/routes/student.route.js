@@ -27,15 +27,21 @@ const {
 
 const { protectStudent } = require('../middleware/student.middleware');
 const { checkRole, protectLecturer } = require('../middleware/lecturer.middleware');
+const {
+    validateLogin,
+    validateUpdatePassword,
+    validateForgotPassword,
+    validateStudent,
+} = require('../middleware/validation.middleware');
 const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
 
-router.post(APP_ROUTER.LOGIN, login);
+router.post(APP_ROUTER.LOGIN, validateLogin, login);
 
 router.post(APP_ROUTER.REFRESH_TOKEN, refreshToken);
 
-router.post(APP_ROUTER.FORGOT_PASSWORD, forgotPassword);
+router.post(APP_ROUTER.FORGOT_PASSWORD, validateForgotPassword, forgotPassword);
 
 router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
@@ -45,7 +51,7 @@ router.get(APP_ROUTER.SEARCH, searchStudents);
 
 router.get(APP_ROUTER.STUDENTS_NO_HAVE_GROUP, protectLecturer, getStudentsNoHaveGroup);
 
-router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, updatePassword);
+router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, validateUpdatePassword, updatePassword);
 
 router.get(APP_ROUTER.ME, protectStudent, getMe);
 
@@ -123,6 +129,7 @@ router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    validateStudent,
     createStudent,
 );
 
