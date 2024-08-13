@@ -830,7 +830,7 @@ exports.assignTopic = async (req, res) => {
         }
 
         // Check if group has topic
-        if (groupStudent.topic_id) {
+        if (groupStudent.topic_id !== null) {
             return Error.sendForbidden(res, 'Nhóm sinh viên đã chọn đề tài!');
         }
 
@@ -861,7 +861,6 @@ exports.assignTopic = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Chọn đề tài thành công!',
-            groupStudent,
         });
     } catch (error) {
         console.log(error);
@@ -872,16 +871,11 @@ exports.assignTopic = async (req, res) => {
 exports.removeTopic = async (req, res) => {
     try {
         const { id } = req.params;
-        const { topicId } = req.body;
 
         const groupStudent = await GroupStudent.findByPk(id);
 
         if (!groupStudent) {
             Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
-        }
-
-        if (groupStudent.topic_id !== topicId) {
-            return Error.sendForbidden(res, 'Nhóm sinh viên không chọn đề tài này!');
         }
 
         groupStudent.topic_id = null;
