@@ -10,17 +10,18 @@ const {
 } = require('../controllers/major.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+const { validateMajor } = require('../middleware/validation.middleware');
 
 const router = express.Router();
 
 router.get(APP_ROUTER.ID, getMajorById);
 
-router.put(APP_ROUTER.ID, protectLecturer, checkRole(['ADMIN']), updateMajor);
+router.put(APP_ROUTER.ID, protectLecturer, checkRole(['ADMIN']), validateMajor, updateMajor);
 
 router.delete(APP_ROUTER.ID, protectLecturer, checkRole(['ADMIN']), deleteMajor);
 
 router.get(APP_ROUTER.INDEX, getMajors);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, checkRole(['ADMIN']), createMajor);
+router.post(APP_ROUTER.INDEX, protectLecturer, checkRole(['ADMIN']), validateMajor, createMajor);
 
 module.exports = router;

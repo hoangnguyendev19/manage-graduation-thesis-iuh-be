@@ -1,7 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
+// const rateLimit = require('express-rate-limit');
 // const csurf = require('csurf');
 const bodyParser = require('body-parser');
 const router = require('./routes/index');
@@ -30,16 +30,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rate Limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // limit each IP to 1000 requests per windowMs (approximately 67 requests per minute)
-    handler: (req, res) => {
-        res.status(429).json({
-            error: 'Too many requests, please try again later.',
-        });
-    },
-});
-app.use(limiter);
+// const limiter = rateLimit({
+//     windowMs: 15 * 60 * 1000, // 15 minutes
+//     max: 1000, // limit each IP to 1000 requests per windowMs (approximately 67 requests per minute)
+//     handler: (req, res) => {
+//         res.status(429).json({
+//             error: 'Too many requests, please try again later.',
+//         });
+//     },
+// });
+// app.use(limiter);
 
 // CSRF Protection
 // const csrfProtection = csurf({ cookie: true });

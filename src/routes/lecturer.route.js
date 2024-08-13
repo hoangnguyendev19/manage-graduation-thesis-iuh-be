@@ -23,13 +23,19 @@ const {
 } = require('../controllers/lecturer.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+const {
+    validateLogin,
+    validateUpdatePassword,
+    validateForgotPassword,
+    validateLecturer,
+} = require('../middleware/validation.middleware');
 const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
 
-router.post(APP_ROUTER.LOGIN, login);
+router.post(APP_ROUTER.LOGIN, validateLogin, login);
 
-router.post(APP_ROUTER.FORGOT_PASSWORD, forgotPassword);
+router.post(APP_ROUTER.FORGOT_PASSWORD, validateForgotPassword, forgotPassword);
 
 router.delete(APP_ROUTER.LOGOUT, protectLecturer, logout);
 
@@ -74,7 +80,7 @@ router.post(
 
 router.put(APP_ROUTER.ME, protectLecturer, updateMe);
 
-router.put(APP_ROUTER.UPDATE_PASSWORD, protectLecturer, updatePassword);
+router.put(APP_ROUTER.UPDATE_PASSWORD, protectLecturer, validateUpdatePassword, updatePassword);
 
 router.put(APP_ROUTER.ID, protectLecturer, checkRole(['ADMIN', 'HEAD_LECTURER']), updateLecturer);
 
@@ -93,6 +99,7 @@ router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER']),
+    validateLecturer,
     createLecturer,
 );
 

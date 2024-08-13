@@ -13,11 +13,18 @@ const _ = require('lodash');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const transporter = require('../configs/nodemailer');
+const { validationResult } = require('express-validator');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const student = await Student.findOne({
             where: { username },
         });
@@ -346,6 +353,11 @@ exports.createStudent = async (req, res) => {
             majorId,
             termId,
         } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const existedStudent = await Student.findOne({ where: { username } });
         if (existedStudent) {
@@ -781,6 +793,11 @@ exports.updatePassword = async (req, res) => {
     try {
         let { password, newPassword } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const flag = await comparePassword(password, req.user.password);
         if (!flag) {
             return Error.sendWarning(res, 'Mật khẩu không chính xác!');
@@ -852,6 +869,12 @@ exports.updateMe = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const { username } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const student = await Student.findOne({
             where: { username },
         });

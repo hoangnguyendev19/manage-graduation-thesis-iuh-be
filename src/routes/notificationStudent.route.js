@@ -12,6 +12,10 @@ const {
 } = require('../controllers/notificationStudent.controller');
 const { protectStudent } = require('../middleware/student.middleware');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+const {
+    validateNotificationStudent,
+    validateNotification,
+} = require('../middleware/validation.middleware');
 
 const router = express.Router();
 
@@ -21,6 +25,7 @@ router.post(
     APP_ROUTER.NOTIFICATION_STUDENT_TERM,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateNotification,
     createAllNotificationStudentTerms,
 );
 
@@ -34,6 +39,7 @@ router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    validateNotificationStudent,
     createNotificationStudent,
 );
 

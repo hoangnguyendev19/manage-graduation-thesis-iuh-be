@@ -13,6 +13,7 @@ const {
     getEvaluationsForScoring,
 } = require('../controllers/evaluation.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+const { validateEvaluation } = require('../middleware/validation.middleware');
 const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
@@ -40,6 +41,7 @@ router.put(
     APP_ROUTER.ID,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateEvaluation,
     updateEvaluation,
 );
 
@@ -56,6 +58,7 @@ router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateEvaluation,
     createEvaluation,
 );
 

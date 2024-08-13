@@ -35,6 +35,11 @@ exports.createMajor = async (req, res) => {
     try {
         const { name } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const existedMajor = await Major.findOne({ where: { name } });
         if (existedMajor) {
             return Error.sendConflict(res, 'Tên chuyên ngành đã tồn tại!');
@@ -57,6 +62,12 @@ exports.updateMajor = async (req, res) => {
     try {
         const { id } = req.params;
         const { name } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const major = await Major.findByPk(id);
 
         if (!major) {

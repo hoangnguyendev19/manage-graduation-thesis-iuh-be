@@ -11,7 +11,10 @@ const {
     getNotificationById,
 } = require('../controllers/notificationLecturer.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
-
+const {
+    validateNotificationLecturer,
+    validateNotification,
+} = require('../middleware/validation.middleware');
 const router = express.Router();
 
 router.get(APP_ROUTER.ME, protectLecturer, getMyNotification);
@@ -20,6 +23,7 @@ router.post(
     APP_ROUTER.NOTIFICATION_LECTURER_TERM,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateNotification,
     createAllNotificationLecturerTerms,
 );
 
@@ -27,6 +31,7 @@ router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER']),
+    validateNotificationLecturer,
     createNotificationLecturer,
 );
 

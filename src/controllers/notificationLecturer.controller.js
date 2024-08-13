@@ -58,6 +58,12 @@ exports.createAllNotificationLecturerTerms = async (req, res) => {
     try {
         const { termId } = req.query;
         const { message } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const lecturerTerms = await LecturerTerm.findAll({
             where: { term_id: termId },
         });
@@ -81,6 +87,12 @@ exports.createAllNotificationLecturerTerms = async (req, res) => {
 exports.createNotificationLecturer = async (req, res) => {
     try {
         const { message, lecturerId } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const notificationLecturer = await NotificationLecturer.create({
             message,
             lecturer_id: lecturerId,

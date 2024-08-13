@@ -209,6 +209,11 @@ exports.createGroupLecturerByType = async (req, res) => {
         const { type } = req.params;
         const { termId, lecturers } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const countGr = (await GroupLecturer.count()) + 1;
         const name = checkTypeGroup(type.toUpperCase()) + countGr;
 

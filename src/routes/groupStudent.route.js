@@ -21,6 +21,7 @@ const {
     leaveGroupStudent,
     joinGroupStudent,
     assignTopic,
+    removeTopic,
     deleteGroupStudent,
     chooseTopic,
     cancelTopic,
@@ -28,6 +29,7 @@ const {
 } = require('../controllers/groupStudent.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
+const { validateGroupStudent } = require('../middleware/validation.middleware');
 const router = express.Router();
 
 router.get(APP_ROUTER.ME, protectStudent, getMyGroupStudent);
@@ -86,6 +88,13 @@ router.put(
     assignTopic,
 );
 
+router.put(
+    APP_ROUTER.GROUP_STUDENT_REMOVE_TOPIC,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    removeTopic,
+);
+
 router.get(APP_ROUTER.ID, getGroupStudentById);
 
 router.delete(
@@ -101,6 +110,7 @@ router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateGroupStudent,
     createGroupStudent,
 );
 
