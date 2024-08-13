@@ -4,6 +4,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+const { validationResult } = require('express-validator');
 
 exports.importLecturerTerms = async (req, res) => {
     try {

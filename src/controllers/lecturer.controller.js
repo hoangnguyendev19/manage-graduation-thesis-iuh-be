@@ -10,9 +10,10 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const _ = require('lodash');
 const xlsx = require('xlsx');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const transporter = require('../configs/nodemailer');
+const { validationResult } = require('express-validator');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {

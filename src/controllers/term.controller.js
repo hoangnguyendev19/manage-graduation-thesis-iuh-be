@@ -5,6 +5,7 @@ const { sequelize } = require('../configs/connectDB');
 const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
 const moment = require('moment');
+const { validationResult } = require('express-validator');
 
 exports.getTerms = async (req, res) => {
     try {

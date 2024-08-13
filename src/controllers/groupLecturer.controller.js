@@ -2,8 +2,9 @@ const { GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
+const { validationResult } = require('express-validator');
 
 const checkTypeGroup = (value) => {
     switch (value) {
