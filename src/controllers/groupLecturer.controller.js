@@ -2,8 +2,9 @@ const { GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
+const { validationResult } = require('express-validator');
 
 const checkTypeGroup = (value) => {
     switch (value) {
@@ -208,6 +209,11 @@ exports.createGroupLecturerByType = async (req, res) => {
     try {
         const { type } = req.params;
         const { termId, lecturers } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const countGr = (await GroupLecturer.count()) + 1;
         const name = checkTypeGroup(type.toUpperCase()) + countGr;

@@ -16,6 +16,7 @@ const {
 } = require('../controllers/groupLecturer.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+const { validateGroupLecturer } = require('../middleware/validation.middleware');
 
 const router = express.Router();
 
@@ -29,6 +30,7 @@ router.post(
     APP_ROUTER.GROUP_LECTURER_BY_TYPE,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateGroupLecturer,
     createGroupLecturerByType,
 );
 

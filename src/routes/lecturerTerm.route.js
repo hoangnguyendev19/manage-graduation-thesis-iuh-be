@@ -12,6 +12,7 @@ const {
 } = require('../controllers/lecturerTerm.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+const { validateLecturerTerm } = require('../middleware/validation.middleware');
 
 const router = express.Router();
 
@@ -27,10 +28,12 @@ router.get(APP_ROUTER.LIST, protectLecturer, getLecturerTermsList);
 router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturerTerms);
 
 router.get(APP_ROUTER.LECTURER_TERM_TO_ADDING, protectLecturer, getLecturerTermsToAdding);
+
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateLecturerTerm,
     createLecturerTerm,
 );
 

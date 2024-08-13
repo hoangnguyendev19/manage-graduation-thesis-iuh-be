@@ -5,6 +5,7 @@ const { QueryTypes } = require('sequelize');
 const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
+const { validationResult } = require('express-validator');
 
 const getTopicOfSearch = async (req, res) => {
     try {
@@ -21,11 +22,11 @@ const getTopicOfSearch = async (req, res) => {
 
         // Validate searchField and sort
         if (!allowedFields.includes(searchField)) {
-            throw new Error(`Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
+            Error.sendNotFound(res, `Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
         }
 
         if (!allowedSorts.includes(sort.toUpperCase())) {
-            throw new Error(`Điều kiện sắp xếp ${searchField} không hợp lệ!`);
+            Error.sendNotFound(res, `Điều kiện sắp xếp ${searchField} không hợp lệ!`);
         }
 
         if (searchField === 'lecturerName') {
@@ -140,11 +141,11 @@ const getTopicApprovedOfSearch = async (req, res) => {
 
         // Validate searchField and sort
         if (!allowedFields.includes(searchField)) {
-            throw new Error(`Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
+            return Error.sendNotFound(res, `Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
         }
 
         if (!allowedSorts.includes(sort.toUpperCase())) {
-            throw new Error(`Điều kiện sắp xếp ${searchField} không hợp lệ!`);
+            return Error.sendNotFound(res, `Điều kiện sắp xếp ${searchField} không hợp lệ!`);
         }
 
         if (searchField === 'lecturerName') {
@@ -306,18 +307,22 @@ const getTopicById = async (req, res) => {
 };
 
 const createTopic = async (req, res) => {
-    const {
-        name,
-        description,
-        quantityGroupMax,
-        target,
-        expectedResult,
-        standardOutput,
-        requireInput,
-    } = req.body;
-    const { termId } = req.query;
-
     try {
+        const {
+            name,
+            description,
+            quantityGroupMax,
+            target,
+            expectedResult,
+            standardOutput,
+            requireInput,
+        } = req.body;
+        const { termId } = req.query;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
         const lecturer_id = req.user.id;
 
         const lecturerTerm = await LecturerTerm.findOne({
@@ -376,6 +381,12 @@ const updateTopic = async (req, res) => {
             quantityGroupMax,
             requireInput,
         } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');

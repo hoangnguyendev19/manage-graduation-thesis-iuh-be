@@ -1,6 +1,7 @@
 const { Major } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
+const { validationResult } = require('express-validator');
 
 exports.getMajors = async (req, res) => {
     try {
@@ -35,6 +36,11 @@ exports.createMajor = async (req, res) => {
     try {
         const { name } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const existedMajor = await Major.findOne({ where: { name } });
         if (existedMajor) {
             return Error.sendConflict(res, 'Tên chuyên ngành đã tồn tại!');
@@ -57,6 +63,12 @@ exports.updateMajor = async (req, res) => {
     try {
         const { id } = req.params;
         const { name } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const major = await Major.findByPk(id);
 
         if (!major) {

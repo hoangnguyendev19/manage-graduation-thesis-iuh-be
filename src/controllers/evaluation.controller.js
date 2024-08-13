@@ -2,6 +2,7 @@ const { Evaluation, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const xlsx = require('xlsx');
+const { validationResult } = require('express-validator');
 
 exports.getEvaluations = async (req, res) => {
     try {
@@ -67,6 +68,11 @@ exports.getEvaluationById = async (req, res) => {
 exports.createEvaluation = async (req, res) => {
     try {
         const { name, scoreMax, type, termId, description } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const evaluation = await Evaluation.create({
             name,
@@ -164,6 +170,11 @@ exports.updateEvaluation = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, scoreMax, type, description } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const evaluation = await Evaluation.findByPk(id);
         if (!evaluation) {

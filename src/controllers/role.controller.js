@@ -2,6 +2,7 @@ const { Role, Lecturer } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
+const { validationResult } = require('express-validator');
 
 exports.getRoles = async (req, res) => {
     try {
@@ -68,8 +69,9 @@ exports.createRole = async (req, res) => {
     try {
         const { name, lecturerId } = req.body;
 
-        if (!name || !lecturerId) {
-            return Error.sendWarning(res, 'Thiếu thông tin cần thiết!');
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
         }
 
         const lecturerExist = await Lecturer.findByPk(lecturerId);

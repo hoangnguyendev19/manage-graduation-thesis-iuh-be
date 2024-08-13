@@ -10,14 +10,21 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const _ = require('lodash');
 const xlsx = require('xlsx');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const transporter = require('../configs/nodemailer');
+const { validationResult } = require('express-validator');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const lecturer = await Lecturer.findOne({ where: { username } });
 
         if (!lecturer) {
@@ -303,6 +310,11 @@ exports.createLecturer = async (req, res) => {
     try {
         let { username, fullName, gender, phone, email, degree, majorId } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const password = await hashPassword('12345678');
         const lecturer_id = await Lecturer.findOne({
             where: {
@@ -585,6 +597,11 @@ exports.updatePassword = async (req, res) => {
     try {
         let { password, newPassword } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const flag = await comparePassword(password, req.user.password);
         if (!flag) {
             return Error.sendWarning(res, 'Mật khẩu không chính xác!');
@@ -659,6 +676,12 @@ exports.updateMe = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const { username } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const lecturer = await Lecturer.findOne({
             where: { username },
         });

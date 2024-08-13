@@ -6,6 +6,7 @@ const {
     getTopicOfSearch,
     getTopicApprovedOfSearch,
     getTopicsByGroupLecturerId,
+    getTopicByLecturer,
     getTopicById,
     createTopic,
     updateTopic,
@@ -15,11 +16,10 @@ const {
     importTopics,
     exportTopics,
     importTopicsFromTermIdToSelectedTermId,
-    getTopicByLecturer,
 } = require('../controllers/topic.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
-
+const { validateTopic } = require('../middleware/validation.middleware');
 const upload = require('../configs/uploadConfig');
 const router = express.Router();
 
@@ -67,12 +67,12 @@ router.put(
 
 router.get(APP_ROUTER.ID, getTopicById);
 
-router.put(APP_ROUTER.ID, protectLecturer, updateTopic);
+router.put(APP_ROUTER.ID, protectLecturer, validateTopic, updateTopic);
 
 router.delete(APP_ROUTER.ID, protectLecturer, deleteTopic);
 
 router.get(APP_ROUTER.INDEX, getTopicApprovedOfSearch);
 
-router.post(APP_ROUTER.INDEX, protectLecturer, createTopic);
+router.post(APP_ROUTER.INDEX, protectLecturer, validateTopic, createTopic);
 
 module.exports = router;

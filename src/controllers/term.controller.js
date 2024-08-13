@@ -5,6 +5,7 @@ const { sequelize } = require('../configs/connectDB');
 const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
 const moment = require('moment');
+const { validationResult } = require('express-validator');
 
 exports.getTerms = async (req, res) => {
     try {
@@ -263,6 +264,11 @@ exports.createTerm = async (req, res) => {
     try {
         const { name, startDate, endDate, majorId } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         // check if startDate and endDate is valid using moment
         if (moment(startDate).isAfter(endDate)) {
             return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
@@ -305,6 +311,11 @@ exports.updateTerm = async (req, res) => {
         const { id } = req.params;
         const { name, startDate, endDate } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         // check if startDate and endDate is valid using moment
         if (moment(startDate).isAfter(endDate)) {
             return Error.sendWarning(res, 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc!');
@@ -341,6 +352,11 @@ exports.updateChooseGroupTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -385,6 +401,11 @@ exports.updatePublicTopicTerm = async (req, res) => {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const term = await Term.findByPk(id);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
@@ -426,6 +447,11 @@ exports.updateChooseTopicTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -470,6 +496,11 @@ exports.updateDiscussionTerm = async (req, res) => {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const term = await Term.findByPk(id);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
@@ -513,6 +544,11 @@ exports.updateReportTerm = async (req, res) => {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const term = await Term.findByPk(id);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
@@ -554,6 +590,11 @@ exports.updatePublicResultTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const term = await Term.findByPk(id);
         if (!term) {

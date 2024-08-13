@@ -4,6 +4,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+const { validationResult } = require('express-validator');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
@@ -167,6 +168,12 @@ exports.getLecturerTermsToAdding = async (req, res) => {
 exports.createLecturerTerm = async (req, res) => {
     try {
         const { lecturerId, termId } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const lecturer = await Lecturer.findByPk(lecturerId);
         if (!lecturer) {
             return Error.sendNotFound(res, 'Giảng viên không hợp lệ.');
