@@ -1,6 +1,7 @@
 const { NotificationLecturer, LecturerTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
+const { validationResult } = require('express-validator');
 
 exports.getMyNotification = async (req, res) => {
     try {

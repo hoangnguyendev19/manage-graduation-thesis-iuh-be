@@ -1,6 +1,7 @@
 const { Major } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
+const { validationResult } = require('express-validator');
 
 exports.getMajors = async (req, res) => {
     try {

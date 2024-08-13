@@ -5,6 +5,7 @@ const { QueryTypes } = require('sequelize');
 const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
+const { validationResult } = require('express-validator');
 
 const getTopicOfSearch = async (req, res) => {
     try {

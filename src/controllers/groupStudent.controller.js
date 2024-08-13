@@ -1,9 +1,10 @@
 const { GroupStudent, StudentTerm, Student, Topic } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const _ = require('lodash');
+const { validationResult } = require('express-validator');
 
 exports.getGroupStudents = async (req, res) => {
     try {

@@ -2,6 +2,7 @@ const { Evaluation, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const xlsx = require('xlsx');
+const { validationResult } = require('express-validator');
 
 exports.getEvaluations = async (req, res) => {
     try {
