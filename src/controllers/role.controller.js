@@ -68,8 +68,9 @@ exports.createRole = async (req, res) => {
     try {
         const { name, lecturerId } = req.body;
 
-        if (!name || !lecturerId) {
-            return Error.sendWarning(res, 'Thiếu thông tin cần thiết!');
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
         }
 
         const lecturerExist = await Lecturer.findByPk(lecturerId);

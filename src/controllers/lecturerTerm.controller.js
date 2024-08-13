@@ -167,6 +167,12 @@ exports.getLecturerTermsToAdding = async (req, res) => {
 exports.createLecturerTerm = async (req, res) => {
     try {
         const { lecturerId, termId } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const lecturer = await Lecturer.findByPk(lecturerId);
         if (!lecturer) {
             return Error.sendNotFound(res, 'Giảng viên không hợp lệ.');

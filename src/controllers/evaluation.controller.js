@@ -68,6 +68,11 @@ exports.createEvaluation = async (req, res) => {
     try {
         const { name, scoreMax, type, termId, description } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const evaluation = await Evaluation.create({
             name,
             scoreMax,
@@ -164,6 +169,11 @@ exports.updateEvaluation = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, scoreMax, type, description } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
 
         const evaluation = await Evaluation.findByPk(id);
         if (!evaluation) {
