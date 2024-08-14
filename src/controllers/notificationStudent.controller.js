@@ -1,18 +1,27 @@
-const { NotificationStudent, StudentTerm } = require('../models/index');
+const { NotificationStudent, StudentTerm, Notification } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { validationResult } = require('express-validator');
+const { sequelize } = require('../configs/connectDB');
 
 exports.getMyNotification = async (req, res) => {
     try {
-        const { user } = req;
-        const notificationStudents = await NotificationStudent.findAll({
-            where: { student_id: user.id },
-        });
+        const notifications = await sequelize.query(
+            `SELECT ns.id, ns.is_read as isRead, n.created_at as createdAt, n.title
+            FROM notification_students ns
+            INNER JOIN notifications n ON ns.notification_id = n.id
+            WHERE ns.student_id = :studentId
+            ORDER BY n.created_at DESC`,
+            {
+                replacements: { studentId: req.user.id },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách thông báo thành công!',
-            notificationStudents,
+            notifications,
         });
     } catch (error) {
         console.log('🚀 ~ exports.getMyNotification= ~ error:', error);
@@ -23,7 +32,17 @@ exports.getMyNotification = async (req, res) => {
 exports.getNotificationById = async (req, res) => {
     try {
         const { id } = req.params;
-        const notification = await NotificationStudent.findByPk(id);
+        const notification = await sequelize.query(
+            `SELECT ns.id, ns.is_read as isRead, n.created_at as createdAt, n.title, n.content, l.full_name as createdBy
+            FROM notification_students ns
+            INNER JOIN notifications n ON ns.notification_id = n.id
+            INNER JOIN lecturers l ON n.created_by = l.id
+            WHERE ns.id = :id`,
+            {
+                replacements: { id },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -36,32 +55,9 @@ exports.getNotificationById = async (req, res) => {
     }
 };
 
-exports.getNotificationStudents = async (req, res) => {
-    try {
-        const notificationStudents = await NotificationStudent.findAll({
-            where: {
-                student_id: req.user.id,
-            },
-            attributes: {
-                exclude: ['student_id'],
-            },
-        });
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Lấy danh sách thông báo thành công!',
-            notifications: notificationStudents,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.createAllNotificationStudentTerms = async (req, res) => {
     try {
-        const { termId } = req.query;
-        const { message } = req.body;
+        const { title, content, termId } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -72,15 +68,26 @@ exports.createAllNotificationStudentTerms = async (req, res) => {
             where: { term_id: termId },
         });
 
+        if (studentTerms.length === 0) {
+            return Error.sendNotFound(res, 'Không tìm thấy sinh viên nào trong kỳ học này!');
+        }
+
+        const notification = await Notification.create({
+            title,
+            content,
+            created_by: req.user.id,
+        });
+
         const studentConvert = studentTerms.map((lt) => ({
             student_id: lt.student_id,
-            message: message,
+            notification_id: notification.id,
         }));
+
         await NotificationStudent.bulkCreate(studentConvert);
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
-            message: `Gửi thông báo đến toàn bộ Sinh viên thành công.`,
+            message: `Gửi thông báo đến toàn bộ sinh viên thành công.`,
         });
     } catch (error) {
         console.log('🚀 ~ exports.createAllNotificationStudentTerms= ~ error:', error);
@@ -90,22 +97,35 @@ exports.createAllNotificationStudentTerms = async (req, res) => {
 
 exports.createNotificationStudent = async (req, res) => {
     try {
-        const { message, studentId } = req.body;
+        const { title, content, studentId } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return Error.sendWarning(res, errors.array()[0].msg);
         }
 
-        const notificationStudent = await NotificationStudent.create({
-            message,
+        const studentTerm = await StudentTerm.findOne({
+            where: { student_id: studentId },
+        });
+
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+        }
+
+        const notification = await Notification.create({
+            title,
+            content,
+            created_by: req.user.id,
+        });
+
+        await NotificationStudent.create({
             student_id: studentId,
+            notification_id: notification.id,
         });
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Tạo thông báo thành công.',
-            notificationStudent,
         });
     } catch (error) {
         console.log(error);
@@ -119,7 +139,7 @@ exports.updateReadStatus = async (req, res) => {
         const notificationStudent = await NotificationStudent.findByPk(id);
 
         if (!notificationStudent) {
-            throw new Error.NotFoundError('NotificationStudent not found');
+            return Error.sendNotFound(res, 'Thông báo không tồn tại!');
         }
 
         await notificationStudent.update({
@@ -129,28 +149,6 @@ exports.updateReadStatus = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Cập nhật trạng thái đọc thành công!',
-            notificationStudent,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.deleteNotificationStudent = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const notificationStudent = await NotificationStudent.findByPk(id);
-
-        if (!notificationStudent) {
-            throw new Error.NotFoundError('NotificationStudent not found');
-        }
-
-        await notificationStudent.destroy();
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Xoá thông báo thành công!',
         });
     } catch (error) {
         console.log(error);

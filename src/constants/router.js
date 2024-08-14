@@ -73,14 +73,14 @@ const APP_ROUTER = {
     TOPIC_BY_GROUP_LECTURER: '/group-lecturer/:id',
     TOPIC_BY_LECTURER: '/lecturer/:lecturerId',
 
-    //GROUP_LECTURER
+    //GROUP_LECTURERS
     GROUP_LECTURER: '/api/v1/group-lecturers',
     GROUP_LECTURER_MEMBER: '/:id/members',
     GROUP_LECTURER_BY_TYPE: '/:type',
     GROUP_LECTURER_NO_GROUP: '/:type/no-group',
     GROUP_LECTURER_BY_LECTURERS: '/:type/lecturers',
 
-    //GROUP_STUDENT
+    //GROUP_STUDENTS
     GROUP_STUDENT: '/api/v1/group-students',
     GROUP_STUDENT_BY_LECTURER: '/lecturer',
     GROUP_STUDENT_BY_TOPIC: '/topic',
@@ -97,12 +97,15 @@ const APP_ROUTER = {
     GROUP_STUDENT_CANCEL_TOPIC: '/:id/cancel-topic',
     GROUP_STUDENT_MEMBER: '/:id/members',
 
-    //NOTIFICATION_STUDENT
+    //NOTIFICATIONS
+    NOTIFICATION: '/api/v1/notifications',
+
+    //NOTIFICATION_STUDENTS
     NOTIFICATION_STUDENT: '/api/v1/notification-students',
     NOTIFICATION_STUDENT_TERM: '/terms',
     NOTIFICATION_STUDENT_READ: '/:id/read',
 
-    //NOTIFICATION_LECTURER
+    //NOTIFICATION_LECTURERS
     NOTIFICATION_LECTURER: '/api/v1/notification-lecturers',
     NOTIFICATION_LECTURER_TERM: '/terms',
     NOTIFICATION_LECTURER_READ: '/:id/read',
