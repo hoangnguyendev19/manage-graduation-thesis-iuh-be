@@ -205,6 +205,24 @@ exports.getGroupLecturerById = async (req, res) => {
     }
 };
 
+exports.countGroupLecturersByTermId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const count = await GroupLecturer.count({
+            where: { term_id: termId },
+        });
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng nhóm giảng viên trong học kì thành công!',
+            count,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.countLecturerTermsByTermId= ~ error:', error);
+        return Error.sendError(res, error);
+    }
+};
+
 exports.createGroupLecturerByType = async (req, res) => {
     try {
         const { type } = req.params;

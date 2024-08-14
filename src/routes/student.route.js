@@ -23,6 +23,7 @@ const {
     getStudentsNoHaveGroup,
     getStudentsOfSearch,
     searchStudents,
+    countStudentsByTermId,
 } = require('../controllers/student.controller');
 
 const { protectStudent } = require('../middleware/student.middleware');
@@ -50,6 +51,8 @@ router.get(APP_ROUTER.QUERY, getStudentsOfSearch);
 router.get(APP_ROUTER.SEARCH, searchStudents);
 
 router.get(APP_ROUTER.STUDENTS_NO_HAVE_GROUP, protectLecturer, getStudentsNoHaveGroup);
+
+router.get(APP_ROUTER.COUNT, countStudentsByTermId);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, validateUpdatePassword, updatePassword);
 

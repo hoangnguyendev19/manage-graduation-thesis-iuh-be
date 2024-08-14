@@ -922,6 +922,13 @@ exports.chooseTopic = async (req, res) => {
             return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
+        if (groupStudent.topic_id) {
+            return Error.sendForbidden(
+                res,
+                'Nhóm sinh viên đã chọn đề tài! Vui lòng huỷ đề tài hiện tại trước khi chọn đề tài mới!',
+            );
+        }
+
         const studentTerms = await StudentTerm.findAll({
             where: {
                 group_student_id: id,

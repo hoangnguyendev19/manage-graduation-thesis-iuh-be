@@ -19,6 +19,7 @@ const AssignModel = require('./assign.model');
 const StudentTermModel = require('./studentTerm.model');
 const NotificationStudentModel = require('./notificationStudent.model');
 const NotificationLecturerModel = require('./notificationLecturer.model');
+const NotificationModel = require('./notification.model');
 
 // Models
 const Major = MajorModel(sequelize, DataTypes);
@@ -39,6 +40,7 @@ const Assign = AssignModel(sequelize, DataTypes);
 const StudentTerm = StudentTermModel(sequelize, DataTypes);
 const NotificationStudent = NotificationStudentModel(sequelize, DataTypes);
 const NotificationLecturer = NotificationLecturerModel(sequelize, DataTypes);
+const Notification = NotificationModel(sequelize, DataTypes);
 
 // Associations
 Major.hasMany(Student, {
@@ -271,6 +273,16 @@ NotificationStudent.belongsTo(Student, {
     as: 'student',
 });
 
+Notification.hasMany(NotificationStudent, {
+    foreignKey: 'notification_id',
+    as: 'notificationStudents',
+});
+
+NotificationStudent.belongsTo(Notification, {
+    foreignKey: 'notification_id',
+    as: 'notification',
+});
+
 Lecturer.hasMany(NotificationLecturer, {
     foreignKey: 'lecturer_id',
     as: 'notificationLecturers',
@@ -278,6 +290,26 @@ Lecturer.hasMany(NotificationLecturer, {
 
 NotificationLecturer.belongsTo(Lecturer, {
     foreignKey: 'lecturer_id',
+    as: 'lecturer',
+});
+
+Notification.hasMany(NotificationLecturer, {
+    foreignKey: 'notification_id',
+    as: 'notificationLecturers',
+});
+
+NotificationLecturer.belongsTo(Notification, {
+    foreignKey: 'notification_id',
+    as: 'notification',
+});
+
+Lecturer.hasMany(Notification, {
+    foreignKey: 'created_by',
+    as: 'notifications',
+});
+
+Notification.belongsTo(Lecturer, {
+    foreignKey: 'created_by',
     as: 'lecturer',
 });
 
@@ -312,5 +344,6 @@ module.exports = {
     Evaluation,
     NotificationStudent,
     NotificationLecturer,
+    Notification,
     Transcript,
 };

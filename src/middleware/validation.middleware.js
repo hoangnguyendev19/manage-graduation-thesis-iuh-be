@@ -41,6 +41,14 @@ exports.validateStudent = [
         .isLength({ min: 5 })
         .withMessage('Tên phải có ít nhất 5 ký tự!'),
 
+    check('dateOfBirth')
+        .notEmpty()
+        .withMessage('Ngày sinh không được để trống!')
+        .isDate({
+            format: 'YYYY-MM-DD',
+        })
+        .withMessage('Ngày sinh không hợp lệ!'),
+
     check('clazzName')
         .notEmpty()
         .withMessage('Lớp danh nghĩa không được để trống!')
@@ -242,7 +250,13 @@ exports.validateEvaluation = [
 ];
 
 exports.validateNotificationStudent = [
-    check('message')
+    check('title')
+        .notEmpty()
+        .withMessage('Tiêu đề thông báo không được để trống!')
+        .isLength({ min: 5 })
+        .withMessage('Tiêu đề thông báo phải có ít nhất 5 ký tự!'),
+
+    check('content')
         .notEmpty()
         .withMessage('Nội dung thông báo không được để trống!')
         .isLength({ min: 10 })
@@ -256,7 +270,13 @@ exports.validateNotificationStudent = [
 ];
 
 exports.validateNotificationLecturer = [
-    check('message')
+    check('title')
+        .notEmpty()
+        .withMessage('Tiêu đề thông báo không được để trống!')
+        .isLength({ min: 5 })
+        .withMessage('Tiêu đề thông báo phải có ít nhất 5 ký tự!'),
+
+    check('content')
         .notEmpty()
         .withMessage('Nội dung thông báo không được để trống!')
         .isLength({ min: 10 })
@@ -270,11 +290,23 @@ exports.validateNotificationLecturer = [
 ];
 
 exports.validateNotification = [
-    check('message')
+    check('title')
+        .notEmpty()
+        .withMessage('Tiêu đề thông báo không được để trống!')
+        .isLength({ min: 5 })
+        .withMessage('Tiêu đề thông báo phải có ít nhất 5 ký tự!'),
+
+    check('content')
         .notEmpty()
         .withMessage('Nội dung thông báo không được để trống!')
         .isLength({ min: 10 })
         .withMessage('Nội dung thông báo phải có ít nhất 10 ký tự!'),
+
+    check('termId')
+        .notEmpty()
+        .withMessage('ID học kỳ không được để trống!')
+        .isUUID()
+        .withMessage('ID học kỳ không hợp lệ!'),
 ];
 
 exports.validateRole = [
@@ -284,7 +316,7 @@ exports.validateRole = [
         .isLength({ min: 5 })
         .withMessage('Tên quyền phải có ít nhất 5 ký tự!'),
 
-    check('lectureId')
+    check('lecturerId')
         .notEmpty()
         .withMessage('ID giảng viên không được để trống!')
         .isUUID()
