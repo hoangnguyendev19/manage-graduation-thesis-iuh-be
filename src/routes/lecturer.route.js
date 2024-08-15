@@ -20,6 +20,7 @@ const {
     updateMe,
     forgotPassword,
     searchLecturer,
+    countLecturersByMajorId,
 } = require('../controllers/lecturer.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
@@ -46,6 +47,8 @@ router.get(APP_ROUTER.ME, protectLecturer, getMe);
 router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturer);
 
 router.get(APP_ROUTER.LECTURER_BY_MAJOR, getLecturersByMajorId);
+
+router.get(APP_ROUTER.COUNT, countLecturersByMajorId);
 
 router.post(
     APP_ROUTER.IMPORT,

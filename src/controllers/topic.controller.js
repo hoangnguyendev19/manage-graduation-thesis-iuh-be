@@ -306,6 +306,30 @@ const getTopicById = async (req, res) => {
     }
 };
 
+const countTopicsByTermId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const count = await Topic.count({
+            include: {
+                model: LecturerTerm,
+                where: {
+                    term_id: termId,
+                },
+                as: 'lecturerTerm',
+            },
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng đề tài trong học kỳ thành công!',
+            count,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 const createTopic = async (req, res) => {
     try {
         const {
@@ -714,6 +738,7 @@ module.exports = {
     getTopicApprovedOfSearch,
     getTopicsByGroupLecturerId,
     getTopicById,
+    countTopicsByTermId,
     createTopic,
     updateTopic,
     updateQuantityGroupMax,

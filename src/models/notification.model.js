@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define(
-        'NotificationStudent',
+        'Notification',
         {
             id: {
                 type: DataTypes.UUID,
@@ -10,15 +10,17 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 defaultValue: () => uuidv4(),
             },
-            isRead: {
-                type: DataTypes.BOOLEAN,
+            title: {
+                type: DataTypes.STRING,
                 allowNull: false,
-                defaultValue: false,
-                field: 'is_read',
+            },
+            content: {
+                type: DataTypes.TEXT('medium'),
+                allowNull: false,
             },
         },
         {
-            tableName: 'notification_students',
+            tableName: 'notifications',
             createdAt: 'created_at',
             updatedAt: 'updated_at',
         },

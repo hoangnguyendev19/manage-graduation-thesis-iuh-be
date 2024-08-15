@@ -10,10 +10,6 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 defaultValue: () => uuidv4(),
             },
-            message: {
-                type: DataTypes.TEXT('medium'),
-                allowNull: false,
-            },
             isRead: {
                 type: DataTypes.BOOLEAN,
                 allowNull: false,

@@ -9,6 +9,7 @@ const {
     getLecturerTermsToAdding,
     createLecturerTerm,
     searchLecturerTerms,
+    countLecturerTermsByTermId,
 } = require('../controllers/lecturerTerm.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
@@ -28,6 +29,8 @@ router.get(APP_ROUTER.LIST, protectLecturer, getLecturerTermsList);
 router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturerTerms);
 
 router.get(APP_ROUTER.LECTURER_TERM_TO_ADDING, protectLecturer, getLecturerTermsToAdding);
+
+router.get(APP_ROUTER.COUNT, countLecturerTermsByTermId);
 
 router.post(
     APP_ROUTER.INDEX,

@@ -591,6 +591,22 @@ exports.unlockAccount = async (req, res) => {
     }
 };
 
+exports.countLecturersByMajorId = async (req, res) => {
+    try {
+        const { majorId } = req.query;
+        const count = await Lecturer.count({ where: { major_id: majorId } });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng giảng viên của chuyên ngành thành công!',
+            count,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 // ----------------- Lecturer -----------------
 
 exports.updatePassword = async (req, res) => {
