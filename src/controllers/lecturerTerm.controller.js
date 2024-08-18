@@ -4,6 +4,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+const { validationResult } = require('express-validator');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
@@ -160,6 +161,24 @@ exports.getLecturerTermsToAdding = async (req, res) => {
         });
     } catch (error) {
         console.log('🚀 ~ export.getLecturerTermsToAdding= ~ error:', error);
+        return Error.sendError(res, error);
+    }
+};
+
+exports.countLecturerTermsByTermId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const count = await LecturerTerm.count({
+            where: { term_id: termId },
+        });
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng giảng viên trong học kì thành công!',
+            count,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.countLecturerTermsByTermId= ~ error:', error);
         return Error.sendError(res, error);
     }
 };

@@ -2,8 +2,9 @@ const { GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
+const { validationResult } = require('express-validator');
 
 const checkTypeGroup = (value) => {
     switch (value) {
@@ -201,6 +202,24 @@ exports.getGroupLecturerById = async (req, res) => {
     } catch (error) {
         console.log('🚀 ~ exports.getMemberFromGroupLecturer= ~ error:', error);
         Error.sendError(res, error);
+    }
+};
+
+exports.countGroupLecturersByTermId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const count = await GroupLecturer.count({
+            where: { term_id: termId },
+        });
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng nhóm giảng viên trong học kì thành công!',
+            count,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.countLecturerTermsByTermId= ~ error:', error);
+        return Error.sendError(res, error);
     }
 };
 

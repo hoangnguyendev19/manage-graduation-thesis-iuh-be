@@ -10,9 +10,10 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const _ = require('lodash');
 const xlsx = require('xlsx');
-const { QueryTypes, where } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const transporter = require('../configs/nodemailer');
+const { validationResult } = require('express-validator');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -583,6 +584,22 @@ exports.unlockAccount = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Mở khoá tài khoản thành công!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.countLecturersByMajorId = async (req, res) => {
+    try {
+        const { majorId } = req.query;
+        const count = await Lecturer.count({ where: { major_id: majorId } });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng giảng viên của chuyên ngành thành công!',
+            count,
         });
     } catch (error) {
         console.log(error);

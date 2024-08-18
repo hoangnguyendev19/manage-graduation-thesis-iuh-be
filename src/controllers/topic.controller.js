@@ -5,6 +5,7 @@ const { QueryTypes } = require('sequelize');
 const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
+const { validationResult } = require('express-validator');
 
 const getTopicOfSearch = async (req, res) => {
     try {
@@ -298,6 +299,30 @@ const getTopicById = async (req, res) => {
             success: true,
             message: 'Lấy thông tin đề tài thành công!',
             topic,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+const countTopicsByTermId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const count = await Topic.count({
+            include: {
+                model: LecturerTerm,
+                where: {
+                    term_id: termId,
+                },
+                as: 'lecturerTerm',
+            },
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng đề tài trong học kỳ thành công!',
+            count,
         });
     } catch (error) {
         console.log(error);
@@ -713,6 +738,7 @@ module.exports = {
     getTopicApprovedOfSearch,
     getTopicsByGroupLecturerId,
     getTopicById,
+    countTopicsByTermId,
     createTopic,
     updateTopic,
     updateQuantityGroupMax,

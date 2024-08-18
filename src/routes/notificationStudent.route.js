@@ -2,11 +2,9 @@ const express = require('express');
 const { APP_ROUTER } = require('../constants/router');
 
 const {
-    getNotificationStudents,
     createNotificationStudent,
-    updateReadStatus,
-    deleteNotificationStudent,
     createAllNotificationStudentTerms,
+    updateReadStatus,
     getMyNotification,
     getNotificationById,
 } = require('../controllers/notificationStudent.controller');
@@ -24,7 +22,7 @@ router.get(APP_ROUTER.ME, protectStudent, getMyNotification);
 router.post(
     APP_ROUTER.NOTIFICATION_STUDENT_TERM,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateNotification,
     createAllNotificationStudentTerms,
 );
@@ -33,8 +31,6 @@ router.put(APP_ROUTER.NOTIFICATION_STUDENT_READ, protectStudent, updateReadStatu
 
 router.get(APP_ROUTER.ID, protectStudent, getNotificationById);
 
-router.delete(APP_ROUTER.ID, protectStudent, deleteNotificationStudent);
-
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
@@ -42,7 +38,5 @@ router.post(
     validateNotificationStudent,
     createNotificationStudent,
 );
-
-router.get(APP_ROUTER.INDEX, protectStudent, getNotificationStudents);
 
 module.exports = router;

@@ -14,6 +14,7 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const transporter = require('../configs/nodemailer');
 const { validationResult } = require('express-validator');
+const moment = require('moment');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -124,7 +125,7 @@ exports.getStudentsOfSearch = async (req, res) => {
 
         let searchQuery = searchField ? `AND st.${searchField} like :keywords` : '';
 
-        let initQUery = `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+        let initQUery = `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
                 FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
                 WHERE m.id = :majorId AND stt.term_id = :termId ${searchQuery}
                 ORDER BY st.created_at DESC
@@ -197,7 +198,7 @@ exports.getStudents = async (req, res) => {
 
         if (majorId) {
             students = await sequelize.query(
-                `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+                `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
                 FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
                 WHERE m.id = :majorId AND stt.term_id = :termId
                 ORDER BY st.created_at DESC
@@ -220,7 +221,7 @@ exports.getStudents = async (req, res) => {
             });
         } else {
             students = await sequelize.query(
-                `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
+                `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
                 FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
                 WHERE stt.term_id = :termId
                 ORDER BY st.created_at DESC
@@ -428,6 +429,11 @@ exports.updateStudent = async (req, res) => {
             email,
         } = req.body;
 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
         const student = await Student.findByPk(id);
 
         if (!student) {
@@ -473,7 +479,6 @@ exports.updateStudent = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Cập nhật sinh viên thành công!',
-            student: newStudent,
         });
     } catch (error) {
         console.log(error);
@@ -492,22 +497,22 @@ exports.importStudents = async (req, res) => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
         const students = [];
-        const password = await hashPassword('12345678');
-        // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Số điện thoại, Lớp học
+        // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Lớp học
         for (const student of jsonData) {
             const username = student['Mã SV'];
             const fullName = `${student['Họ đệm']} ${student['Tên']}`;
             const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
-            const phone = student['Số điện thoại'];
+            const dateOfBirth = student['Ngày sinh']; // 19/10/2000
             const clazzName = student['Lớp học'];
             const major_id = majorId;
+            const password = await hashPassword(dateOfBirth.split('/').join('')); // 19102000
 
             students.push({
                 username,
                 password,
                 fullName,
                 gender,
-                phone,
+                dateOfBirth: moment(dateOfBirth, 'DD/MM/YYYY').format('YYYY-MM-DD'),
                 clazzName,
                 major_id,
             });
@@ -602,7 +607,7 @@ exports.exportStudents = async (req, res) => {
 
         // columns: STT, Mã SV, Họ và tên, Giới tính, Ngày sinh, Số điện thoại, Email, Lớp học
         const students = await sequelize.query(
-            `SELECT st.username as 'Mã SV', st.full_name as 'Họ và tên', st.gender as 'Giới tính', st.phone as 'Số điện thoại', st.email as 'Email', st.clazz_name as 'Lớp học'
+            `SELECT st.username as 'Mã SV', st.full_name as 'Họ và tên', st.gender as 'Giới tính', st.date_of_birth as 'Ngày sinh', st.email as 'Email', st.clazz_name as 'Lớp học'
             FROM students st LEFT JOIN student_terms stt ON st.id = stt.student_id
             WHERE stt.term_id = :termId AND st.major_id = :majorId`,
             {
@@ -787,6 +792,24 @@ exports.getStudentsNoHaveGroup = async (req, res) => {
     }
 };
 
+exports.countStudentsByTermId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+        const count = await StudentTerm.count({
+            where: { term_id: termId },
+        });
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng sinh viên theo học kỳ thành công!',
+            count,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.countStudentsByTermId= ~ error:', error);
+        return Error.sendError(res, error);
+    }
+};
+
 // ----------------- Student -----------------
 
 exports.updatePassword = async (req, res) => {
@@ -849,10 +872,10 @@ exports.getMe = async (req, res) => {
 
 exports.updateMe = async (req, res) => {
     try {
-        const { fullName, email, clazzName, phone, gender } = req.body;
+        const { fullName, email, phone, gender, dateOfBirth } = req.body;
 
         await Student.update(
-            { fullName, email, clazzName, phone, gender },
+            { fullName, email, phone, gender, dateOfBirth },
             { where: { id: req.user.id } },
         );
 

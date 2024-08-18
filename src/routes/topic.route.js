@@ -8,6 +8,7 @@ const {
     getTopicsByGroupLecturerId,
     getTopicByLecturer,
     getTopicById,
+    countTopicsByTermId,
     createTopic,
     updateTopic,
     updateQuantityGroupMax,
@@ -28,6 +29,8 @@ router.get(APP_ROUTER.TOPIC_BY_LECTURER, protectLecturer, getTopicByLecturer);
 router.get(APP_ROUTER.TOPIC_BY_GROUP_LECTURER, getTopicsByGroupLecturerId);
 
 router.get(APP_ROUTER.QUERY, getTopicOfSearch);
+
+router.get(APP_ROUTER.COUNT, countTopicsByTermId);
 
 router.post(
     APP_ROUTER.IMPORT,
