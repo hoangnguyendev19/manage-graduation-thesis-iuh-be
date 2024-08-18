@@ -6,6 +6,7 @@ const {
     createNotification,
     updateNotification,
     deleteNotification,
+    getNotificationById,
 } = require('../controllers/notification.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { validateNotification } = require('../middleware/validation.middleware');
@@ -30,6 +31,13 @@ router.get(
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     getNotifications,
+);
+
+router.get(
+    APP_ROUTER.ID,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    getNotificationById,
 );
 
 router.post(
