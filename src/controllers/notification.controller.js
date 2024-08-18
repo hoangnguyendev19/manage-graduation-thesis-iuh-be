@@ -20,7 +20,7 @@ exports.getNotifications = async (req, res) => {
         let searchQuery = '';
         let searchKey = '';
 
-        if (searchField === 'full_name') {
+        if (searchField === 'senderName') {
             searchQuery = `WHERE l.full_name LIKE :keywords`;
             searchKey = `%${keywords}`;
         } else {
@@ -29,7 +29,7 @@ exports.getNotifications = async (req, res) => {
         }
 
         const notifications = await sequelize.query(
-            `SELECT n.id, n.title, n.content, n.created_at as createdAt, l.full_name as createdBy
+            `SELECT n.id, n.title, n.created_at as createdAt, l.full_name as senderName
             FROM notifications n
             INNER JOIN lecturers l ON n.created_by = l.id
             ${searchQuery}
@@ -71,6 +71,31 @@ exports.getNotifications = async (req, res) => {
                 limit: _.toInteger(limit),
                 totalPage,
             },
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getNotifications= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getNotificationById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const notification = await sequelize.query(
+            `SELECT n.id, n.created_at as createdAt, n.title, n.content
+            FROM notifications n
+            WHERE n.id = :id`,
+            {
+                type: sequelize.QueryTypes.SELECT,
+                replacements: {
+                    id: id,
+                },
+            },
+        );
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy thông báo thành công!',
+            notification: notification[0],
         });
     } catch (error) {
         console.log('🚀 ~ exports.getNotifications= ~ error:', error);

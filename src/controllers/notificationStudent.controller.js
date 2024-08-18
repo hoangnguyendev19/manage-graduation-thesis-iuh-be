@@ -47,7 +47,7 @@ exports.getNotificationById = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông báo thành công!',
-            notification,
+            notification: notification[0],
         });
     } catch (error) {
         console.log('🚀 ~ exports.getNotificationById= ~ error:', error);
