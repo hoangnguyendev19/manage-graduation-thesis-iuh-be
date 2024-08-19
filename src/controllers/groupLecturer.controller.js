@@ -234,7 +234,7 @@ exports.createGroupLecturerByType = async (req, res) => {
         }
 
         const countGr = (await GroupLecturer.count()) + 1;
-        const name = checkTypeGroup(type.toUpperCase()) + countGr;
+        const name = checkTypeGroup(type.toUpperCase()) + ' ' + countGr;
 
         const groupLecturer = await GroupLecturer.create({
             name: name,

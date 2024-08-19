@@ -3,6 +3,8 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     createNotificationStudent,
+    createNotificationGroupStudent,
+    createAllNotificationGroupStudentOfMyInstructor,
     createAllNotificationStudentTerms,
     updateReadStatus,
     getMyNotification,
@@ -12,12 +14,20 @@ const { protectStudent } = require('../middleware/student.middleware');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const {
     validateNotificationStudent,
+    validateNotificationGroupStudent,
     validateNotification,
 } = require('../middleware/validation.middleware');
 
 const router = express.Router();
 
 router.get(APP_ROUTER.ME, protectStudent, getMyNotification);
+
+router.post(
+    APP_ROUTER.NOTIFICATION_GROUP_STUDENT_MY_INSTRUCTOR,
+    protectLecturer,
+    validateNotification,
+    createAllNotificationGroupStudentOfMyInstructor,
+);
 
 router.post(
     APP_ROUTER.NOTIFICATION_STUDENT_TERM,
@@ -27,16 +37,22 @@ router.post(
     createAllNotificationStudentTerms,
 );
 
-router.put(APP_ROUTER.NOTIFICATION_STUDENT_READ, protectStudent, updateReadStatus);
-
-router.get(APP_ROUTER.ID, protectStudent, getNotificationById);
+router.post(
+    APP_ROUTER.NOTIFICATION_GROUP_STUDENT,
+    protectLecturer,
+    validateNotificationGroupStudent,
+    createNotificationGroupStudent,
+);
 
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateNotificationStudent,
     createNotificationStudent,
 );
+
+router.put(APP_ROUTER.NOTIFICATION_STUDENT_READ, protectStudent, updateReadStatus);
+
+router.get(APP_ROUTER.ID, protectStudent, getNotificationById);
 
 module.exports = router;

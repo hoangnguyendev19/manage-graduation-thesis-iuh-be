@@ -4,6 +4,9 @@ const {
     Notification,
     LecturerTerm,
     StudentTerm,
+    Student,
+    Lecturer,
+    GroupStudent,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
@@ -29,7 +32,7 @@ exports.getNotifications = async (req, res) => {
         }
 
         const notifications = await sequelize.query(
-            `SELECT n.id, n.title, n.created_at as createdAt, l.full_name as senderName
+            `SELECT n.id, n.title, n.type, n.created_at as createdAt, l.full_name as senderName
             FROM notifications n
             INNER JOIN lecturers l ON n.created_by = l.id
             ${searchQuery}
@@ -82,8 +85,9 @@ exports.getNotificationById = async (req, res) => {
     try {
         const { id } = req.params;
         const notification = await sequelize.query(
-            `SELECT n.id, n.created_at as createdAt, n.title, n.content
+            `SELECT n.id, n.created_at as createdAt, n.title, n.content, n.type, l.full_name as senderName
             FROM notifications n
+            INNER JOIN lecturers l ON n.created_by = l.id
             WHERE n.id = :id`,
             {
                 type: sequelize.QueryTypes.SELECT,
@@ -92,10 +96,80 @@ exports.getNotificationById = async (req, res) => {
                 },
             },
         );
+
+        let details = [];
+
+        if (notification[0].type === 'STUDENT') {
+            const notificationStudents = await NotificationStudent.findAll({
+                where: { notification_id: id },
+            });
+
+            details = await Promise.all(
+                notificationStudents.map(async (item) => {
+                    const student = await Student.findOne({
+                        where: { id: item.student_id },
+                        attributes: ['username', 'full_name'],
+                    });
+
+                    return student;
+                }),
+            );
+        } else if (notification[0].type === 'LECTURER') {
+            const notificationLecturers = await NotificationLecturer.findAll({
+                where: { notification_id: id },
+            });
+
+            details = await Promise.all(
+                notificationLecturers.map(async (item) => {
+                    const lecturer = await Lecturer.findOne({
+                        where: { id: item.lecturer_id },
+                        attributes: ['username', 'full_name'],
+                    });
+
+                    return lecturer;
+                }),
+            );
+        } else if (notification[0].type === 'GROUP_STUDENT') {
+            const notificationStudents = await NotificationStudent.findAll({
+                where: { notification_id: id },
+            });
+
+            details = await Promise.all(
+                notificationStudents.map(async (item) => {
+                    const studentTerm = await StudentTerm.findOne({
+                        where: { student_id: item.student_id },
+                        attributes: ['group_student_id'],
+                    });
+
+                    const groupStudent = await GroupStudent.findOne({
+                        where: { id: studentTerm.group_student_id },
+                        attributes: ['id', 'name'],
+                    });
+
+                    return { ...groupStudent.dataValues };
+                }),
+            );
+
+            details = details.reduce((acc, item) => {
+                const group = acc.find((group) => group.id === item.id);
+
+                if (!group) {
+                    acc.push({ id: item.id, name: item.name });
+                }
+
+                return acc;
+            }, []);
+        } else if (notification[0].type === 'GROUP_LECTURER') {
+            details = [];
+        } else if (notification[0].type === 'ALL') {
+            details = [];
+        }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông báo thành công!',
             notification: notification[0],
+            details,
         });
     } catch (error) {
         console.log('🚀 ~ exports.getNotifications= ~ error:', error);
@@ -115,6 +189,7 @@ exports.createNotification = async (req, res) => {
         const notification = await Notification.create({
             title,
             content,
+            type: 'ALL',
             created_by: req.user.id,
         });
 

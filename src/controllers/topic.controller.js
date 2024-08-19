@@ -477,7 +477,22 @@ const importTopics = async (req, res) => {
 
         let listTopic = [];
         for (const topic of jsonData) {
-            const username = topic['Mã giảng viên'];
+            if (
+                !topic['Mã giảng viên'] ||
+                !topic['Tên đề tài'] ||
+                !topic['Mục tiêu đề tài'] ||
+                !topic['Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng'] ||
+                !topic['Mô tả'] ||
+                !topic['Yêu cầu đầu vào'] ||
+                !topic['Yêu cầu đầu ra']
+            ) {
+                return Error.sendWarning(
+                    res,
+                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
+                );
+            }
+
+            const username = topic['Mã giảng viên'].trim();
             const name = topic['Tên đề tài'].trim();
             const target = topic['Mục tiêu đề tài'].trim();
             const expectedResult =

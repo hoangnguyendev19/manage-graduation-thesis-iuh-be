@@ -101,13 +101,27 @@ exports.importEvaluations = async (req, res) => {
             return Error.sendWarning(res, 'Hãy chọn file để import!');
         }
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-        const sheetName = workbook.SheetNames[0]; // get the first sheet name
+        const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
 
-        const evaluations = [];
-        // STT	LO	A-Failed	B-Fair	C-Accepted	D-Excellent	Max grade
-        jsonData.forEach(async (evaluation) => {
+        let evaluations = [];
+        // STT	LO	A-Failed B-Fair	C-Accepted	D-Excellent	Max grade
+        for (const evaluation of jsonData) {
+            if (
+                !evaluation['LO'] ||
+                !evaluation['Max grade'] ||
+                !evaluation['A-Failed'] ||
+                !evaluation['B-Fair'] ||
+                !evaluation['C-Accepted'] ||
+                !evaluation['D-Excellent']
+            ) {
+                return Error.sendWarning(
+                    res,
+                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
+                );
+            }
+
             const name = evaluation['LO'];
             const scoreMax = Number(evaluation['Max grade'].toString().trim());
             const description =
@@ -121,7 +135,7 @@ exports.importEvaluations = async (req, res) => {
             const term_id = termId;
 
             evaluations.push({ name, scoreMax, type, description, term_id });
-        });
+        }
 
         await Evaluation.bulkCreate(evaluations);
 

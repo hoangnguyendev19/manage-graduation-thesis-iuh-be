@@ -1,19 +1,32 @@
-const { NotificationLecturer, LecturerTerm, Notification } = require('../models/index');
+const {
+    NotificationLecturer,
+    LecturerTerm,
+    Notification,
+    GroupLecturerMember,
+    Term,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { validationResult } = require('express-validator');
 const { sequelize } = require('../configs/connectDB');
+const _ = require('lodash');
 
 exports.getMyNotification = async (req, res) => {
     try {
+        const { limit } = req.query;
+
         const notifications = await sequelize.query(
             `SELECT nl.id, nl.is_read as isRead, n.created_at as createdAt, n.title
             FROM notification_lecturers nl
             INNER JOIN notifications n ON nl.notification_id = n.id
             WHERE nl.lecturer_id = :lecturerId
-            ORDER BY n.created_at DESC`,
+            ORDER BY n.created_at DESC
+            LIMIT :limit`,
             {
-                replacements: { lecturerId: req.user.id },
+                replacements: {
+                    lecturerId: req.user.id,
+                    limit: _.toInteger(limit),
+                },
                 type: sequelize.QueryTypes.SELECT,
             },
         );
@@ -33,7 +46,7 @@ exports.getNotificationById = async (req, res) => {
     try {
         const { id } = req.params;
         const notification = await sequelize.query(
-            `SELECT nl.id, nl.is_read as isRead, n.created_at as createdAt, n.title, n.content, l.full_name as createdBy
+            `SELECT nl.id, nl.is_read as isRead, n.created_at as createdAt, n.title, n.content, n.type, l.full_name as senderName
             FROM notification_lecturers nl
             INNER JOIN notifications n ON nl.notification_id = n.id
             INNER JOIN lecturers l ON n.created_by = l.id
@@ -47,7 +60,7 @@ exports.getNotificationById = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông báo thành công!',
-            notification : notification[0],
+            notification: notification[0],
         });
     } catch (error) {
         console.log('🚀 ~ exports.getNotificationById= ~ error:', error);
@@ -64,6 +77,11 @@ exports.createAllNotificationLecturerTerms = async (req, res) => {
             return Error.sendWarning(res, errors.array()[0].msg);
         }
 
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Không tìm thấy kỳ học này!');
+        }
+
         const lecturerTerms = await LecturerTerm.findAll({
             where: { term_id: termId },
         });
@@ -75,13 +93,18 @@ exports.createAllNotificationLecturerTerms = async (req, res) => {
         const notification = await Notification.create({
             title,
             content,
+            type: 'LECTURER',
             created_by: req.user.id,
         });
 
-        const lecturerConvert = lecturerTerms.map((lt) => ({
-            lecturer_id: lt.lecturer_id,
-            notification_id: notification.id,
-        }));
+        const lecturerConvert = lecturerTerms.map((lt) => {
+            if (lt.lecturer_id !== req.user.id) {
+                return {
+                    lecturer_id: lt.lecturer_id,
+                    notification_id: notification.id,
+                };
+            }
+        });
 
         await NotificationLecturer.bulkCreate(lecturerConvert);
 
@@ -97,31 +120,75 @@ exports.createAllNotificationLecturerTerms = async (req, res) => {
 
 exports.createNotificationLecturer = async (req, res) => {
     try {
-        const { title, content, lecturerId } = req.body;
+        const { title, content, lecturerIds } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return Error.sendWarning(res, errors.array()[0].msg);
         }
 
-        const lecturerTerm = await LecturerTerm.findOne({
-            where: { lecturer_id: lecturerId },
+        const notification = await Notification.create({
+            title,
+            content,
+            type: 'LECTURER',
+            created_by: req.user.id,
         });
 
-        if (!lecturerTerm) {
-            return Error.sendNotFound(res, 'Giảng viên không tồn tại trong kỳ học!');
+        const lecturerConvert = lecturerIds.map((lt) => ({
+            lecturer_id: lt,
+            notification_id: notification.id,
+        }));
+
+        await NotificationLecturer.bulkCreate(lecturerConvert);
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Gửi thông báo thành công.',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.createNotificationGroupLecturer = async (req, res) => {
+    try {
+        const { title, content, groupLecturerIds } = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return Error.sendWarning(res, errors.array()[0].msg);
         }
 
         const notification = await Notification.create({
             title,
             content,
+            type: 'GROUP_LECTURER',
             created_by: req.user.id,
         });
 
-        await NotificationLecturer.create({
-            lecturer_id: lecturerId,
-            notification_id: notification.id,
-        });
+        for (const groupLecturerId of groupLecturerIds) {
+            const lecturerTermIds = await GroupLecturerMember.findAll({
+                where: { group_lecturer_id: groupLecturerId },
+                attributes: ['lecturer_term_id'],
+            });
+
+            if (lecturerTermIds.length === 0) {
+                return Error.sendNotFound(res, 'Không tìm thấy giảng viên nào trong nhóm này.');
+            }
+
+            for (const lecturerTermId of lecturerTermIds) {
+                const lecturerId = await LecturerTerm.findOne({
+                    where: { id: lecturerTermId.lecturer_term_id },
+                    attributes: ['lecturer_id'],
+                });
+
+                await NotificationLecturer.create({
+                    lecturer_id: lecturerId.lecturer_id,
+                    notification_id: notification.id,
+                });
+            }
+        }
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,

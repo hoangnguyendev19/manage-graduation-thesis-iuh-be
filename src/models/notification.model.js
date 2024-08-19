@@ -18,6 +18,16 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.TEXT('medium'),
                 allowNull: false,
             },
+            type: {
+                type: DataTypes.ENUM(
+                    'LECTURER',
+                    'STUDENT',
+                    'GROUP_STUDENT',
+                    'GROUP_LECTURER',
+                    'ALL',
+                ),
+                allowNull: false,
+            },
         },
         {
             tableName: 'notifications',
