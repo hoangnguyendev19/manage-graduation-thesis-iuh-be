@@ -365,7 +365,8 @@ exports.createStudent = async (req, res) => {
             return Error.sendConflict(res, 'Mã sinh viên đã tồn tại!');
         }
 
-        const password = await hashPassword('12345678');
+        // 2000-10-19 => 19102000
+        const password = await hashPassword(dateOfBirth.split('-').reverse().join(''));
 
         const student = await Student.create({
             username,
@@ -499,6 +500,20 @@ exports.importStudents = async (req, res) => {
         const students = [];
         // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Lớp học
         for (const student of jsonData) {
+            if (
+                !student['Mã SV'] ||
+                !student['Họ đệm'] ||
+                !student['Tên'] ||
+                !student['Giới tính'] ||
+                !student['Ngày sinh'] ||
+                !student['Lớp học']
+            ) {
+                return Error.sendWarning(
+                    res,
+                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
+                );
+            }
+
             const username = student['Mã SV'];
             const fullName = `${student['Họ đệm']} ${student['Tên']}`;
             const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
@@ -645,6 +660,14 @@ exports.deleteStudent = async (req, res) => {
         const student = await Student.findByPk(id);
         if (!student) {
             return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
+        }
+
+        const studentTerms = await StudentTerm.findAll({
+            where: { student_id: id },
+        });
+
+        for (let i = 0; i < studentTerms.length; i++) {
+            await studentTerms[i].destroy();
         }
 
         await student.destroy();

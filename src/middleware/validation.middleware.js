@@ -213,7 +213,10 @@ exports.validateGroupLecturer = [
     check('lecturers')
         .notEmpty()
         .withMessage('Danh sách ID giảng viên không được để trống!')
-        .isArray()
+        .isArray({
+            min: 2,
+            max: 3,
+        })
         .withMessage('Danh sách ID giảng viên phải là mảng!'),
 ];
 
@@ -262,11 +265,31 @@ exports.validateNotificationStudent = [
         .isLength({ min: 10 })
         .withMessage('Nội dung thông báo phải có ít nhất 10 ký tự!'),
 
-    check('studentId')
+    check('studentIds')
         .notEmpty()
-        .withMessage('ID sinh viên không được để trống!')
-        .isUUID()
-        .withMessage('ID sinh viên không hợp lệ!'),
+        .withMessage('Danh sách ID sinh viên không được để trống!')
+        .isArray()
+        .withMessage('Danh sách ID sinh viên phải là mảng!'),
+];
+
+exports.validateNotificationGroupStudent = [
+    check('title')
+        .notEmpty()
+        .withMessage('Tiêu đề thông báo không được để trống!')
+        .isLength({ min: 5 })
+        .withMessage('Tiêu đề thông báo phải có ít nhất 5 ký tự!'),
+
+    check('content')
+        .notEmpty()
+        .withMessage('Nội dung thông báo không được để trống!')
+        .isLength({ min: 10 })
+        .withMessage('Nội dung thông báo phải có ít nhất 10 ký tự!'),
+
+    check('groupStudentIds')
+        .notEmpty()
+        .withMessage('Danh sách ID nhóm sinh viên không được để trống!')
+        .isArray()
+        .withMessage('Danh sách ID nhóm sinh viên phải là mảng!'),
 ];
 
 exports.validateNotificationLecturer = [
@@ -282,11 +305,31 @@ exports.validateNotificationLecturer = [
         .isLength({ min: 10 })
         .withMessage('Nội dung thông báo phải có ít nhất 10 ký tự!'),
 
-    check('lecturerId')
+    check('lecturerIds')
         .notEmpty()
-        .withMessage('ID giảng viên không được để trống!')
-        .isUUID()
-        .withMessage('ID giảng viên không hợp lệ!'),
+        .withMessage('Danh sách ID giảng viên không được để trống!')
+        .isArray()
+        .withMessage('Danh sách ID giảng viên phải là mảng!'),
+];
+
+exports.validateNotificationGroupLecturer = [
+    check('title')
+        .notEmpty()
+        .withMessage('Tiêu đề thông báo không được để trống!')
+        .isLength({ min: 5 })
+        .withMessage('Tiêu đề thông báo phải có ít nhất 5 ký tự!'),
+
+    check('content')
+        .notEmpty()
+        .withMessage('Nội dung thông báo không được để trống!')
+        .isLength({ min: 10 })
+        .withMessage('Nội dung thông báo phải có ít nhất 10 ký tự!'),
+
+    check('groupLecturerIds')
+        .notEmpty()
+        .withMessage('Danh sách ID nhóm giảng viên không được để trống!')
+        .isArray()
+        .withMessage('Danh sách ID nhóm giảng viên phải là mảng!'),
 ];
 
 exports.validateNotification = [

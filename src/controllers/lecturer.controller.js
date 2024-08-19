@@ -427,6 +427,19 @@ exports.importLecturers = async (req, res) => {
         const password = await hashPassword('12345678');
         // columns: STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
         for (const lecturer of jsonData) {
+            if (
+                !lecturer['Mã GV'] ||
+                !lecturer['Họ và tên'] ||
+                !lecturer['Giới tính'] ||
+                !lecturer['Số điện thoại'] ||
+                !lecturer['Email']
+            ) {
+                return Error.sendWarning(
+                    res,
+                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
+                );
+            }
+
             const username = lecturer['Mã GV'];
             const fullName = `${lecturer['Họ và tên']}`;
             const gender = lecturer['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';

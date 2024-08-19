@@ -3,11 +3,7 @@ const {
     StudentTerm,
     LecturerTerm,
     Evaluation,
-    Lecturer,
-    Achievement,
     GroupLecturerMember,
-    Assign,
-    GroupStudent,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
