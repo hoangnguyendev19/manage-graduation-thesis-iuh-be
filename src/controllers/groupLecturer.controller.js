@@ -47,11 +47,19 @@ exports.getLecturerNoGroupByType = async (req, res) => {
 
 exports.getGroupLecturers = async (req, res) => {
     try {
-        const { termId, type, limit, page } = req.query;
-        let groupLecturers = null;
-        let offset = (page - 1) * limit;
+        const { termId, type, limit = 10, page = 1 } = req.query;
+        const offset = (page - 1) * limit;
 
-        if (termId && !type) {
+        let groupLecturers = await GroupLecturer.findAll({
+            where: {
+                term_id: termId,
+                ...(type && { type: type.toUpperCase() }), // If type is provided, add it to the where clause
+            },
+            limit: parseInt(limit),
+            offset,
+        });
+
+        if (!type) {
             groupLecturers = await GroupLecturer.findAll({
                 where: {
                     term_id: termId,
@@ -59,38 +67,39 @@ exports.getGroupLecturers = async (req, res) => {
             });
         }
 
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.gender, m.name as majorName
-        FROM lecturers l  JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
-        ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
-        WHERE gl.id = :id;
+        const lecturerQuery = `
+            SELECT l.id, l.username, l.full_name AS fullName, l.gender, m.name AS majorName
+            FROM lecturers l
+            JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+            JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id
+            JOIN group_lecturers gl ON glm.group_lecturer_id = gl.id
+            JOIN majors m ON l.major_id = m.id
+            WHERE gl.id = :id;
         `;
 
-        groupLecturers = await GroupLecturer.findAll({
+        const result = await Promise.all(
+            groupLecturers.map(async (groupLecturer) => {
+                const members = await sequelize.query(lecturerQuery, {
+                    type: QueryTypes.SELECT,
+                    replacements: { id: groupLecturer.id },
+                });
+
+                return {
+                    groupLecturerId: groupLecturer.id,
+                    name: groupLecturer.name,
+                    type: groupLecturer.type,
+                    members,
+                };
+            }),
+        );
+
+        const total = await GroupLecturer.count({
             where: {
                 term_id: termId,
-                type: type.toUpperCase(),
+                ...(type && { type: type.toUpperCase() }),
             },
-            limit: parseInt(limit),
-            offset,
         });
 
-        const result = [];
-        for (let i = 0; i < groupLecturers.length; i++) {
-            let id = groupLecturers[i].id;
-            const groupLecturerMembers = await sequelize.query(query, {
-                type: QueryTypes.SELECT,
-                replacements: {
-                    id,
-                },
-            });
-            result.push({
-                groupLecturerId: id,
-                name: groupLecturers[i].name,
-                type: groupLecturers[i].type,
-                members: groupLecturerMembers,
-            });
-        }
-        const total = await GroupLecturer.count();
         const totalPage = _.ceil(total / _.toInteger(limit));
 
         res.status(HTTP_STATUS.OK).json({
@@ -104,7 +113,7 @@ exports.getGroupLecturers = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        console.log('🚀 ~ getGroupLecturers ~ error:', error);
         Error.sendError(res, error);
     }
 };
@@ -201,6 +210,34 @@ exports.getGroupLecturerById = async (req, res) => {
         });
     } catch (error) {
         console.log('🚀 ~ exports.getMemberFromGroupLecturer= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.searchGroupLecturerByName = async (req, res) => {
+    try {
+        const { termId, name } = req.query;
+
+        const groupLecturers = await sequelize.query(
+            `SELECT gl.id, gl.name FROM group_lecturers gl
+            WHERE gl.term_id = :termId AND gl.name LIKE :name
+            ORDER BY gl.name ASC`,
+            {
+                replacements: {
+                    termId,
+                    name: `%${name}%`,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Tìm kiếm nhóm giảng viên thành công!',
+            groupLecturers,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.searchGroupLecturerByName= ~ error:', error);
         Error.sendError(res, error);
     }
 };

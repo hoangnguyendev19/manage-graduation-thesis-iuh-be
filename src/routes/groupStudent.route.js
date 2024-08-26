@@ -26,6 +26,7 @@ const {
     chooseTopic,
     cancelTopic,
     countOfGroupStudent,
+    searchGroupStudentByName,
 } = require('../controllers/groupStudent.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -45,6 +46,8 @@ router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, getGroupStudentMembers);
 router.get(APP_ROUTER.QUERY, getGroupStudentOfSearch);
 
 router.get(APP_ROUTER.COUNT, countOfGroupStudent);
+
+router.get(APP_ROUTER.SEARCH, searchGroupStudentByName);
 
 router.get(APP_ROUTER.MEMBER, getMembersById);
 

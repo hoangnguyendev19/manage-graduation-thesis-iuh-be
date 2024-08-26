@@ -280,52 +280,103 @@ exports.getGroupStudentMembers = async (req, res) => {
 
 exports.getGroupStudentOfSearch = async (req, res) => {
     try {
-        const { termId, page, limit, keywords, searchField } = req.query;
-        let offset = (page - 1) * limit;
-        let total = 0;
+        const {
+            termId,
+            page = 1,
+            limit = 10,
+            keywords = '',
+            searchField = '',
+            sort = 'ASC',
+        } = req.query;
 
-        let searchQuery = searchField ? `and ${searchField} LIKE :keywords` : '';
+        const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
+        const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
+        const offset = (validPage - 1) * validLimit;
+
+        const allowedSorts = ['ASC', 'DESC'];
+        if (!allowedSorts.includes(sort.toUpperCase())) {
+            return Error.sendNotFound(res, `Sort order "${sort}" không hợp lệ!!`);
+        }
+
+        let searchQuery = '';
+        let orderBy = '';
+        if (searchField === 'name') {
+            searchQuery = `AND gs.name LIKE :keywords`;
+            orderBy = `ORDER BY gs.name ${sort.toUpperCase()}`;
+        } else if (searchField === 'fullName') {
+            searchQuery = `AND s.full_name LIKE :keywords`;
+            orderBy = `ORDER BY s.full_name ${sort.toUpperCase()}`;
+        }
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs 
+            `SELECT gs.id, gs.name, count(st.student_id) as numOfMembers 
+            FROM group_students gs 
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN students s ON st.student_id = s.id
             WHERE gs.term_id = :termId ${searchQuery}
-            GROUP BY gs.id
-            ORDER BY gs.name ASC
+            GROUP BY gs.id, gs.name
+            ${orderBy}
             LIMIT :limit OFFSET :offset`,
             {
                 type: QueryTypes.SELECT,
                 replacements: {
                     termId,
-                    keywords: `%${keywords}%`,
-                    limit: parseInt(limit),
+                    keywords: `%${keywords}`,
+                    limit: validLimit,
                     offset,
                 },
             },
         );
 
-        total = await sequelize.query(
-            `SELECT COUNT(gs.id) as total FROM group_students gs 
+        const countResult = await sequelize.query(
+            `SELECT COUNT(DISTINCT gs.id) AS total 
+            FROM group_students gs 
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN students s ON st.student_id = s.id
             WHERE gs.term_id = :termId ${searchQuery}`,
             {
                 type: QueryTypes.SELECT,
-                replacements: { termId, keywords: `%${keywords}%` },
+                replacements: { termId, keywords: `%${keywords}` },
             },
         );
 
-        total = total[0].total;
-
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        const total = countResult[0].total;
+        const totalPage = _.ceil(total / validLimit);
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách nhóm sinh viên thành công!',
             groupStudents,
             params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
+                page: validPage,
+                limit: validLimit,
                 totalPage,
             },
+        });
+    } catch (error) {
+        console.log('🚀 ~ getGroupStudentOfSearch ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.searchGroupStudentByName = async (req, res) => {
+    try {
+        const { termId, name } = req.query;
+
+        const groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name FROM group_students gs
+            WHERE gs.term_id = :termId and gs.name LIKE :name
+            ORDER BY gs.name ASC`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId, name: `%${name}` },
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách nhóm sinh viên thành công!',
+            groupStudents,
         });
     } catch (error) {
         console.log(error);

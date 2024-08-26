@@ -9,38 +9,27 @@ const { validationResult } = require('express-validator');
 
 const getTopicOfSearch = async (req, res) => {
     try {
-        const { termId, keywords, searchField, page, limit, sort } = req.query;
-        const offset = (page - 1) * limit;
-        let topics = [];
+        const { termId, keywords = '', searchField, page = 1, limit = 10, sort } = req.query;
+
+        const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
+        const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
+        const offset = (validPage - 1) * validLimit;
 
         let searchQuery = '';
         let orderBy = '';
-        let searchKey = '';
-
-        const allowedFields = ['lecturerName', 'name'];
-        const allowedSorts = ['ASC', 'DESC'];
-
-        // Validate searchField and sort
-        if (!allowedFields.includes(searchField)) {
-            Error.sendNotFound(res, `Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
-        }
-
-        if (!allowedSorts.includes(sort.toUpperCase())) {
-            Error.sendNotFound(res, `Điều kiện sắp xếp ${searchField} không hợp lệ!`);
-        }
+        let searchKey = `%${keywords}%`;
 
         if (searchField === 'lecturerName') {
-            searchQuery = ` AND l.full_name LIKE :keywords `;
-            orderBy = `ORDER BY l.full_name ${sort}`;
-            searchKey = `%${keywords}`;
+            searchQuery = `AND l.full_name LIKE :keywords`;
+            orderBy = `ORDER BY l.full_name ${sort.toUpperCase()}`;
         } else {
-            searchQuery = `AND t.${searchField} LIKE :keywords `;
-            orderBy = `ORDER BY t.${searchField} ${sort}`;
-            searchKey = `%${keywords}%`;
+            searchQuery = `AND t.${searchField} LIKE :keywords`;
+            orderBy = `ORDER BY t.${searchField} ${sort.toUpperCase()}`;
         }
 
-        topics = await sequelize.query(
-            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
+        let topics = await sequelize.query(
+            `SELECT t.id, t.name, t.status, t.quantity_group_max AS quantityGroupMax, 
+                    l.full_name AS fullName, COUNT(gs.id) AS quantityGroup
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -53,15 +42,15 @@ const getTopicOfSearch = async (req, res) => {
                 replacements: {
                     termId,
                     keywords: searchKey,
-                    limit: _.toInteger(limit),
-                    offset: _.toInteger(offset),
+                    limit: validLimit,
+                    offset: offset,
                 },
                 type: QueryTypes.SELECT,
             },
         );
 
         const countResult = await sequelize.query(
-            `SELECT COUNT(t.id) as total
+            `SELECT COUNT(DISTINCT t.id) AS total
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -76,21 +65,20 @@ const getTopicOfSearch = async (req, res) => {
         );
 
         const total = countResult[0].total;
-
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        const totalPage = _.ceil(total / validLimit);
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách đề tài thành công!',
             topics,
             params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
+                page: validPage,
+                limit: validLimit,
                 totalPage,
             },
         });
     } catch (error) {
-        console.log(error);
+        console.log('🚀 ~ getTopicOfSearch ~ error:', error);
         Error.sendError(res, error);
     }
 };
