@@ -111,79 +111,80 @@ exports.logout = async (req, res) => {
 // ----------------- Admin -----------------
 exports.getStudentsOfSearch = async (req, res) => {
     try {
-        const { termId, majorId, page, limit, keywords, searchField } = req.query;
-        let offset = (page - 1) * limit;
-        let students = [];
-        let total = 0;
+        const { termId, page = 1, limit = 10, keywords, searchField, sort = 'ASC' } = req.query;
 
-        let replacements = {
-            termId: termId,
-            keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
-            limit: _.toInteger(limit),
-            offset: offset,
-        };
+        const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
+        const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
+        const offset = (validPage - 1) * validLimit;
 
-        let searchQuery = searchField ? `AND st.${searchField} like :keywords` : '';
-
-        let initQUery = `SELECT st.id, st.username, st.full_name as fullName, st.phone, st.email, st.gender, st.date_of_birth as dateOfBirth, st.clazz_name as clazzName, st.type_training as typeTraining, st.is_active as isActive, st.major_id as majorId, m.name as majorName
-                FROM students st LEFT JOIN majors m ON st.major_id = m.id LEFT JOIN student_terms stt ON st.id = stt.student_id
-                WHERE m.id = :majorId AND stt.term_id = :termId ${searchQuery}
-                ORDER BY st.created_at DESC
-                LIMIT :limit OFFSET :offset`;
-        let countQuery = `
-        SELECT COUNT(*) as count
-        FROM students st
-        LEFT JOIN majors m ON st.major_id = m.id
-        LEFT JOIN student_terms stt ON st.id = stt.student_id
-        WHERE stt.term_id = :termId ${searchQuery}
-        `;
-
-        if (majorId) {
-            students = await sequelize.query(initQUery, {
-                replacements: { ...replacements, majorId: majorId },
-                type: QueryTypes.SELECT,
-            });
-
-            let countResult = await sequelize.query(countQuery, {
-                replacements: { ...replacements, majorId: majorId },
-                type: QueryTypes.SELECT,
-            });
-            total = countResult[0].count;
-        } else {
-            let searchQuery = searchField ? `AND st.${searchField} like :keywords` : '';
-
-            students = await sequelize.query(initQUery, {
-                replacements: replacements,
-                type: QueryTypes.SELECT,
-            });
-            let countResult = await sequelize.query(countQuery, {
-                replacements: replacements,
-                type: QueryTypes.SELECT,
-            });
-            total = countResult[0].count;
+        const allowedSorts = ['ASC', 'DESC'];
+        if (!allowedSorts.includes(sort.toUpperCase())) {
+            return Error.sendNotFound(res, `Sort order "${sort}" không hợp lệ!!`);
         }
 
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        let searchQuery = '';
+        if (searchField && keywords) {
+            searchQuery = `AND st.${searchField} LIKE :keywords`;
+        }
 
-        students = students.map((stu) => {
-            return {
-                ...stu,
-                isActive: Boolean(stu.isActive),
-            };
-        });
+        const orderBy = sort ? `ORDER BY st.${searchField} ${sort}` : 'ORDER BY st.created_at DESC';
+
+        let students = await sequelize.query(
+            `SELECT st.id, st.username, st.full_name AS fullName, st.phone, st.email, st.gender, 
+                    st.date_of_birth AS dateOfBirth, st.clazz_name AS clazzName, st.type_training AS typeTraining, 
+                    st.is_active AS isActive, st.major_id AS majorId, m.name AS majorName
+            FROM students st 
+            LEFT JOIN majors m ON st.major_id = m.id 
+            LEFT JOIN student_terms stt ON st.id = stt.student_id
+            WHERE stt.term_id = :termId ${searchQuery}
+            ${orderBy}
+            LIMIT :limit OFFSET :offset`,
+            {
+                replacements: {
+                    termId,
+                    keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
+                    limit: validLimit,
+                    offset,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const countResult = await sequelize.query(
+            `SELECT COUNT(*) AS total 
+            FROM students st
+            LEFT JOIN majors m ON st.major_id = m.id
+            LEFT JOIN student_terms stt ON st.id = stt.student_id
+            WHERE stt.term_id = :termId ${searchQuery}`,
+            {
+                replacements: {
+                    termId,
+                    keywords: searchField === 'full_name' ? `%${keywords}%` : `${keywords}%`,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const total = countResult[0].total;
+        const totalPage = _.ceil(total / validLimit);
+
+        students = students.map((stu) => ({
+            ...stu,
+            isActive: Boolean(stu.isActive),
+        }));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách sinh viên thành công!',
             students,
             params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
+                page: validPage,
+                limit: validLimit,
                 totalPage,
             },
         });
     } catch (error) {
-        console.log(error);
+        console.log('🚀 ~ getStudentsOfSearch ~ error:', error);
         Error.sendError(res, error);
     }
 };

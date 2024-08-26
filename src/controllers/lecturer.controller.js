@@ -116,50 +116,66 @@ exports.logout = async (req, res) => {
 
 exports.searchLecturer = async (req, res) => {
     try {
-        const { majorId, limit, page, searchField, keywords } = req.query;
+        const { majorId, limit = 10, page = 1, searchField, keywords, sort = 'ASC' } = req.query;
 
-        let offset = (page - 1) * limit;
+        const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
+        const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
+        const offset = (validPage - 1) * validLimit;
 
-        let replacements = {
-            keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
-            limit: _.toInteger(limit),
-            majorId: majorId,
-            offset: offset,
-        };
+        const allowedSorts = ['ASC', 'DESC'];
+        if (!allowedSorts.includes(sort.toUpperCase())) {
+            return Error.sendNotFound(res, `Sort order "${sort}" không hợp lệ!`);
+        }
 
-        let searchQuery = searchField ? ` AND l.${searchField} like :keywords` : '';
-        let countSearchQuery = searchField ? `WHERE  l.${searchField} like :keywords` : '';
-        let initQuery = `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
-            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id
-            WHERE m.id = :majorId   ${searchQuery}
-            ORDER BY l.created_at DESC
-            LIMIT :limit OFFSET :offset`;
+        let searchQuery = '';
+        if (searchField && keywords) {
+            searchQuery = `AND l.${searchField} LIKE :keywords`;
+        }
 
-        let countQuery = `
-            SELECT COUNT(*) as count
-            FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id
-            ${countSearchQuery}
-            ORDER BY l.created_at DESC`;
+        const orderBy = sort ? `ORDER BY l.${searchField} ${sort}` : 'ORDER BY l.created_at DESC';
 
-        const lecturers = await sequelize.query(initQuery, {
-            replacements: replacements,
-            type: QueryTypes.SELECT,
-        });
-        const countLec = await sequelize.query(countQuery, {
-            replacements: replacements,
-            type: QueryTypes.SELECT,
-        });
+        const lecturers = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name AS fullName, l.phone, l.email, l.gender, l.degree, l.is_active AS isActive, l.major_id AS majorId, m.name AS majorName
+            FROM lecturers l
+            LEFT JOIN majors m ON l.major_id = m.id
+            WHERE l.major_id = :majorId ${searchQuery} 
+            ${orderBy}
+            LIMIT :limit OFFSET :offset`,
+            {
+                replacements: {
+                    majorId: majorId,
+                    keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
+                    limit: validLimit,
+                    offset: offset,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
 
-        const total = countLec[0].count;
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        const countResult = await sequelize.query(
+            `SELECT COUNT(*) AS total
+            FROM lecturers l
+            LEFT JOIN majors m ON l.major_id = m.id
+            WHERE l.major_id = :majorId ${searchQuery}`,
+            {
+                replacements: {
+                    majorId: majorId,
+                    keywords: searchField === 'full_name' ? `%${keywords}%` : `${keywords}%`,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const total = countResult[0].total;
+        const totalPage = _.ceil(total / validLimit);
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Tìm kiếm giảng viên thành công',
             lecturers,
             params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
+                page: validPage,
+                limit: validLimit,
                 totalPage,
             },
         });

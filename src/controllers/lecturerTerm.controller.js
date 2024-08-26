@@ -72,54 +72,88 @@ exports.getLecturerTermsList = async (req, res) => {
 
 exports.searchLecturerTerms = async (req, res) => {
     try {
-        const { termId, limit, page, searchField, keywords } = req.query;
+        const { termId, limit = 10, page = 1, searchField, keywords, sort = 'ASC' } = req.query;
 
-        let replacements = {
-            keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
-            limit: _.toInteger(limit),
-            termId: termId,
-            offset: (page - 1) * limit,
-        };
+        const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
+        const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
+        const offset = (validPage - 1) * validLimit;
 
-        let searchQuery = searchField
-            ? `lt.term_id = :termId AND l.${searchField} like :keywords`
-            : 'lt.term_id = :termId ';
-        let initQuery = `SELECT l.id, l.username, l.full_name as fullName, l.phone, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majorId, m.name as majorName
+        const allowedSorts = ['ASC', 'DESC'];
+        if (!allowedSorts.includes(sort.toUpperCase())) {
+            return Error.sendNotFound(res, `Sort order "${sort}" không hợp lệ!!`);
+        }
+
+        let searchQuery = '';
+        if (searchField && keywords) {
+            searchQuery = `AND l.${searchField} LIKE :keywords`;
+        }
+
+        const orderBy = sort ? `ORDER BY l.${searchField} ${sort}` : 'ORDER BY l.created_at DESC';
+
+        const lecturerTerms = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name AS fullName,
+                (SELECT COUNT(t.id)
+                FROM topics t
+                INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
+                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS totalTopics,
+                (SELECT COUNT(gs.id)
+                FROM group_students gs
+                INNER JOIN topics t ON t.id = gs.topic_id
+                INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
+                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS totalGroupStudents,
+                (SELECT COUNT(glm.id)
+                FROM group_lecturer_members glm
+                INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id
+                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS totalGroupLecturers
             FROM lecturers l
-            LEFT JOIN majors m ON l.major_id = m.id
-            RIGHT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id
-            WHERE  ${searchQuery}
-            ORDER BY l.created_at DESC
-            LIMIT :limit OFFSET :offset`;
-
-        let countQuery = `
-            SELECT COUNT(*) as count
-            FROM lecturers l 
-            LEFT JOIN majors m ON l.major_id = m.id
-            LEFT JOIN lecturer_terms lt ON lt.lecturer_id  = l.id
-            WHERE
+            WHERE EXISTS (
+                SELECT 1
+                FROM lecturer_terms lt
+                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId
+            )
             ${searchQuery}
-            ORDER BY l.created_at DESC`;
+            GROUP BY l.id, l.username, l.full_name
+            ${orderBy}
+            LIMIT :limit OFFSET :offset`,
+            {
+                replacements: {
+                    termId: termId,
+                    keywords: searchField === 'full_name' ? `%${keywords}` : `${keywords}%`,
+                    limit: validLimit,
+                    offset: offset,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
 
-        const lecturerTerms = await sequelize.query(initQuery, {
-            replacements: replacements,
-            type: QueryTypes.SELECT,
-        });
-        const countLec = await sequelize.query(countQuery, {
-            replacements: replacements,
-            type: QueryTypes.SELECT,
-        });
+        const countResult = await sequelize.query(
+            `SELECT COUNT(DISTINCT l.id) AS total
+            FROM lecturers l
+            WHERE EXISTS (
+                SELECT 1
+                FROM lecturer_terms lt
+                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId
+            )
+            ${searchQuery}`,
+            {
+                replacements: {
+                    termId: termId,
+                    keywords: searchField === 'full_name' ? `%${keywords}%` : `${keywords}%`,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
 
-        const total = countLec[0].count;
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        const total = countResult[0].total;
+        const totalPage = _.ceil(total / validLimit);
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Tìm kiếm giảng viên hướng dẫn thành công',
             lecturerTerms,
             params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
+                page: validPage,
+                limit: validLimit,
                 totalPage,
             },
         });
