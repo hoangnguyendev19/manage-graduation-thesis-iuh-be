@@ -33,7 +33,8 @@ exports.verifyAccessToken = async (token) => {
         if (error.name == 'TokenExpiredError') {
             return { payload: jwt.decode(token), expired: true };
         }
-        throw error;
+
+        return Error.sendError(res, error);
     }
 };
 
