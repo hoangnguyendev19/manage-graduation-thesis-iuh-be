@@ -7,7 +7,7 @@ const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
 const { validationResult } = require('express-validator');
 
-const getTopicOfSearch = async (req, res) => {
+exports.getTopicOfSearch = async (req, res) => {
     try {
         const { termId, keywords = '', searchField, page = 1, limit = 10, sort } = req.query;
 
@@ -28,8 +28,7 @@ const getTopicOfSearch = async (req, res) => {
         }
 
         let topics = await sequelize.query(
-            `SELECT t.id, t.name, t.status, t.quantity_group_max AS quantityGroupMax, 
-                    l.full_name AS fullName, COUNT(gs.id) AS quantityGroup
+            `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max AS quantityGroupMax, l.full_name AS fullName, COUNT(gs.id) AS quantityGroup
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -83,18 +82,19 @@ const getTopicOfSearch = async (req, res) => {
     }
 };
 
-const getTopicByLecturer = async (req, res) => {
+exports.getTopicByLecturer = async (req, res) => {
     try {
         const { termId } = req.query;
         const { lecturerId } = req.params;
+
         let topics = null;
         topics = await sequelize.query(
-            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup FROM topics t
-                    INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                    INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                    LEFT JOIN group_students gs ON t.id = gs.topic_id
-                    WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId
-                    GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name`,
+            `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max as quantityGroupMax, COUNT(gs.id) as quantityGroup FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            LEFT JOIN group_students gs ON t.id = gs.topic_id
+            WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId
+            GROUP BY t.id, t.key, t.name, t.status, t.quantity_group_max`,
             {
                 replacements: {
                     termId,
@@ -114,7 +114,7 @@ const getTopicByLecturer = async (req, res) => {
     }
 };
 
-const getTopicApprovedOfSearch = async (req, res) => {
+exports.getTopicApprovedOfSearch = async (req, res) => {
     try {
         const { termId, keywords, searchField, page, limit, sort } = req.query;
         const offset = (page - 1) * limit;
@@ -127,7 +127,6 @@ const getTopicApprovedOfSearch = async (req, res) => {
         const allowedFields = ['lecturerName', 'name'];
         const allowedSorts = ['ASC', 'DESC'];
 
-        // Validate searchField and sort
         if (!allowedFields.includes(searchField)) {
             return Error.sendNotFound(res, `Điều kiện tìm kiếm ${searchField} không hợp lệ!`);
         }
@@ -137,7 +136,7 @@ const getTopicApprovedOfSearch = async (req, res) => {
         }
 
         if (searchField === 'lecturerName') {
-            searchQuery = ` AND l.full_name LIKE :keywords `;
+            searchQuery = `AND l.full_name LIKE :keywords `;
             orderBy = `ORDER BY l.full_name ${sort}`;
             searchKey = `%${keywords}`;
         } else {
@@ -147,13 +146,13 @@ const getTopicApprovedOfSearch = async (req, res) => {
         }
 
         topics = await sequelize.query(
-            `SELECT t.id, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
+            `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
             LEFT JOIN group_students gs ON t.id = gs.topic_id
             WHERE lt.term_id = :termId AND t.status = :status ${searchQuery}
-            GROUP BY t.id, t.name, t.status, t.quantity_group_max, l.full_name
+            GROUP BY t.id, t.key, t.name, t.status, t.quantity_group_max, l.full_name
             ${orderBy}
             LIMIT :limit OFFSET :offset`,
             {
@@ -204,7 +203,7 @@ const getTopicApprovedOfSearch = async (req, res) => {
     }
 };
 
-const getTopicsByGroupLecturerId = async (req, res) => {
+exports.getTopicsByGroupLecturerId = async (req, res) => {
     try {
         const { id } = req.params;
         const groupLecturer = await GroupLecturer.findByPk(id);
@@ -213,7 +212,7 @@ const getTopicsByGroupLecturerId = async (req, res) => {
         }
 
         const topics = await sequelize.query(
-            `SELECT t.id, t.name FROM assigns a
+            `SELECT t.id, t.key, t.name FROM assigns a
             INNER JOIN group_students gs ON a.group_student_id = gs.id
             INNER JOIN topics t ON gs.topic_id = t.id
             WHERE a.group_lecturer_id = :id`,
@@ -248,7 +247,7 @@ const getTopicsByGroupLecturerId = async (req, res) => {
     }
 };
 
-const getTopicById = async (req, res) => {
+exports.getTopicById = async (req, res) => {
     try {
         const { id } = req.params;
         const topic = await Topic.findOne({
@@ -294,7 +293,7 @@ const getTopicById = async (req, res) => {
     }
 };
 
-const countTopicsByTermId = async (req, res) => {
+exports.countTopicsByTermId = async (req, res) => {
     try {
         const { termId } = req.query;
         const count = await Topic.count({
@@ -318,7 +317,7 @@ const countTopicsByTermId = async (req, res) => {
     }
 };
 
-const createTopic = async (req, res) => {
+exports.createTopic = async (req, res) => {
     try {
         const {
             name,
@@ -335,6 +334,7 @@ const createTopic = async (req, res) => {
         if (!errors.isEmpty()) {
             return Error.sendWarning(res, errors.array()[0].msg);
         }
+
         const lecturer_id = req.user.id;
 
         const lecturerTerm = await LecturerTerm.findOne({
@@ -359,7 +359,24 @@ const createTopic = async (req, res) => {
             return Error.sendConflict(res, 'Tên đề tài đã tồn tại!');
         }
 
+        const topics = await sequelize.query(
+            `SELECT count(t.id) as total 
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: {
+                    termId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const numberOfDigits = topics[0].total.toString().length;
+        const key = `#${(i + 1).toString().padStart(numberOfDigits, '0')}`;
+
         const topic = await Topic.create({
+            key,
             name,
             description,
             quantityGroupMax,
@@ -381,7 +398,7 @@ const createTopic = async (req, res) => {
     }
 };
 
-const updateTopic = async (req, res) => {
+exports.updateTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const {
@@ -424,24 +441,24 @@ const updateTopic = async (req, res) => {
     }
 };
 
-const updateQuantityGroupMax = async (req, res) => {
+exports.updateQuantityGroupMax = async (req, res) => {
     try {
         const { termId } = req.query;
         const { quantityGroupMax } = req.body;
 
-        const query = `
-        UPDATE topics t
+        const query = `UPDATE topics t
         JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
         SET t.quantity_group_max = :quantityGroupMax
-        WHERE lt.term_id = :termId
-        `;
-        const rs = await sequelize.query(query, {
+        WHERE lt.term_id = :termId`;
+
+        await sequelize.query(query, {
             type: QueryTypes.BULKUPDATE,
             replacements: {
                 quantityGroupMax: quantityGroupMax,
                 termId: termId,
             },
         });
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Cập nhật số lượng thành công!',
@@ -452,7 +469,7 @@ const updateQuantityGroupMax = async (req, res) => {
     }
 };
 
-const importTopics = async (req, res) => {
+exports.importTopics = async (req, res) => {
     try {
         const { termId } = req.body;
         if (!req.file) {
@@ -539,8 +556,24 @@ const importTopics = async (req, res) => {
             listTopic.push(topicToSaved);
         }
 
-        listTopic.map(
-            async ({
+        const topics = await sequelize.query(
+            `SELECT count(t.id) as total 
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: {
+                    termId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const numberOfDigits = topics[0].total.toString().length;
+        const key = `#${(i + 1).toString().padStart(numberOfDigits, '0')}`;
+
+        for (const topic of listTopic) {
+            const {
                 name,
                 description,
                 target,
@@ -548,19 +581,20 @@ const importTopics = async (req, res) => {
                 standardOutput,
                 requireInput,
                 lecturerTermId,
-            }) => {
-                await Topic.create({
-                    name,
-                    description,
-                    quantityGroupMax: 5,
-                    target,
-                    expectedResult,
-                    standardOutput,
-                    requireInput,
-                    lecturer_term_id: lecturerTermId,
-                });
-            },
-        );
+            } = topic;
+
+            await Topic.create({
+                key,
+                name,
+                description,
+                quantityGroupMax: 2,
+                target,
+                expectedResult,
+                standardOutput,
+                requireInput,
+                lecturer_term_id: lecturerTermId,
+            });
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -572,24 +606,22 @@ const importTopics = async (req, res) => {
     }
 };
 
-const exportTopics = async (req, res) => {
+exports.exportTopics = async (req, res) => {
     try {
         const { termId } = req.body;
 
-        // check termId is provided
         if (!termId) {
             return Error.sendWarning(res, 'Hãy chọn học kì!');
         }
 
-        // check termId is valid
         const term = await Term.findByPk(termId);
         if (!term) {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
-        // STT, Mã giảng viên, Tên giảng viên, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra
-        const topics = await sequelize.query(
-            `SELECT l.username as 'Mã giảng viên', l.full_name as 'Tên giảng viên', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'MỤC TIÊU ĐỀ TÀI', t.expected_result as 'DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra'
+        // collumns: Mã GV, Tên GV, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra
+        let topics = await sequelize.query(
+            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'MỤC TIÊU ĐỀ TÀI', t.expected_result as 'DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra'
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -606,22 +638,18 @@ const exportTopics = async (req, res) => {
             topics[i]['STT'] = i + 1;
         }
 
-        const ws = xlsx.utils.json_to_sheet(topics);
-        const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, 'Danh sách đề tài');
-
-        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-        res.setHeader('Content-Disposition', 'attachment; filename=danh-sach-de-tai.xlsx');
-
-        res.status(HTTP_STATUS.OK).send(buffer);
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách đề tài thành công!',
+            topics,
+        });
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);
     }
 };
 
-const importTopicsFromTermIdToSelectedTermId = async (req, res) => {
+exports.importTopicsFromTermIdToSelectedTermId = async (req, res) => {
     try {
         const { termId, selectedTermId } = req.body;
 
@@ -695,7 +723,7 @@ const importTopicsFromTermIdToSelectedTermId = async (req, res) => {
     }
 };
 
-const updateStatusTopic = async (req, res) => {
+exports.updateStatusTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const { status, note } = req.body;
@@ -717,7 +745,7 @@ const updateStatusTopic = async (req, res) => {
     }
 };
 
-const deleteTopic = async (req, res) => {
+exports.deleteTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const topic = await Topic.findByPk(id);
@@ -733,21 +761,4 @@ const deleteTopic = async (req, res) => {
         console.log(error);
         Error.sendError(res, error);
     }
-};
-
-module.exports = {
-    getTopicOfSearch,
-    getTopicByLecturer,
-    getTopicApprovedOfSearch,
-    getTopicsByGroupLecturerId,
-    getTopicById,
-    countTopicsByTermId,
-    createTopic,
-    updateTopic,
-    updateQuantityGroupMax,
-    updateStatusTopic,
-    deleteTopic,
-    importTopics,
-    exportTopics,
-    importTopicsFromTermIdToSelectedTermId,
 };

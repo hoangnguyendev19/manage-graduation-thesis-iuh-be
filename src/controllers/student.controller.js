@@ -622,8 +622,8 @@ exports.exportStudents = async (req, res) => {
         }
 
         // columns: STT, Mã SV, Họ và tên, Giới tính, Ngày sinh, Số điện thoại, Email, Lớp học
-        const students = await sequelize.query(
-            `SELECT st.username as 'Mã SV', st.full_name as 'Họ và tên', st.gender as 'Giới tính', st.date_of_birth as 'Ngày sinh', st.email as 'Email', st.clazz_name as 'Lớp học'
+        let students = await sequelize.query(
+            `SELECT st.username as 'Mã SV', st.full_name as 'Họ và tên', st.gender as 'Giới tính', st.date_of_birth as 'Ngày sinh', st.email as 'Email', st.clazz_name as 'Lớp học', st.phone as 'Số điện thoại'
             FROM students st LEFT JOIN student_terms stt ON st.id = stt.student_id
             WHERE stt.term_id = :termId AND st.major_id = :majorId`,
             {
@@ -640,15 +640,11 @@ exports.exportStudents = async (req, res) => {
             students[i]['Giới tính'] = students[i]['Giới tính'] === 'MALE' ? 'Nam' : 'Nữ';
         }
 
-        const ws = xlsx.utils.json_to_sheet(students);
-        const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, 'Danh sách sinh viên');
-
-        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-        res.setHeader('Content-Disposition', 'attachment; filename=danh-sach-sinh-vien.xlsx');
-
-        res.status(HTTP_STATUS.OK).send(buffer);
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách sinh viên thành công!',
+            students,
+        });
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);

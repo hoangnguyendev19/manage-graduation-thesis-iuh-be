@@ -121,8 +121,7 @@ exports.getGroupLecturers = async (req, res) => {
 exports.getGroupLecturersByLecturerId = async (req, res) => {
     try {
         const { termId, lecturerId } = req.query;
-        const { type } = req.params;
-        let groupLecturers = null;
+
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 lecturer_id: lecturerId,
@@ -131,42 +130,48 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
             attributes: ['id'],
         });
 
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.gender, m.name as majorName
-        FROM lecturers l  JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
-        ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
-        WHERE gl.id = :id;
-        `;
-        const query2 = `select gr.id as id, gr.name, gr.type from group_lecturers gr 
-        left join group_lecturer_members grm
-        on gr.id = grm.group_lecturer_id
-        where grm.lecturer_term_id = :lecturerTermId 
-        and gr.type = :type
-        `;
-        groupLecturers = await sequelize.query(query2, {
-            replacements: {
-                lecturerTermId: lecturerTerm.id,
-                type: type,
-            },
-            type: QueryTypes.SELECT,
-            attributes: ['id', 'name', 'type'],
-        });
-
-        const result = [];
-        for (let i = 0; i < groupLecturers.length; i++) {
-            let id = groupLecturers[i].id;
-            const groupLecturerMembers = await sequelize.query(query, {
-                type: QueryTypes.SELECT,
-                replacements: {
-                    id,
-                },
-            });
-            result.push({
-                groupLecturerId: id,
-                name: groupLecturers[i].name,
-                type: groupLecturers[i].type,
-                members: groupLecturerMembers,
-            });
+        if (!lecturerTerm) {
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kì này');
         }
+
+        const groupLecturers = await sequelize.query(
+            `SELECT gr.id as groupLecturerId, gr.name, gr.type 
+            FROM group_lecturers gr
+            LEFT JOIN group_lecturer_members grm ON gr.id = grm.group_lecturer_id
+            WHERE grm.lecturer_term_id = :lecturerTermId`,
+            {
+                replacements: {
+                    lecturerTermId: lecturerTerm.id,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const result = await Promise.all(
+            groupLecturers.map(async (groupLecturer) => {
+                const members = await sequelize.query(
+                    `SELECT l.id, l.username, l.full_name as fullName, l.gender, m.name as majorName
+                    FROM lecturers l
+                    JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+                    JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id
+                    JOIN majors m ON l.major_id = m.id
+                    WHERE glm.group_lecturer_id = :groupLecturerId`,
+                    {
+                        type: QueryTypes.SELECT,
+                        replacements: {
+                            groupLecturerId: groupLecturer.groupLecturerId,
+                        },
+                    },
+                );
+
+                return {
+                    groupLecturerId: groupLecturer.groupLecturerId,
+                    name: groupLecturer.name,
+                    type: groupLecturer.type,
+                    members,
+                };
+            }),
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -174,7 +179,7 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
             groupLecturers: result,
         });
     } catch (error) {
-        console.log(error);
+        console.error('🚀 ~ getGroupLecturersByLecturerId ~ error:', error);
         Error.sendError(res, error);
     }
 };

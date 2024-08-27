@@ -14,6 +14,7 @@ const {
     getMyGroupStudent,
     createGroupStudent,
     importGroupStudent,
+    exportGroupStudent,
     assignAdminGroupStudent,
     addMemberGroupStudent,
     deleteMemberGroupStudent,
@@ -56,6 +57,13 @@ router.post(
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     importGroupStudent,
+);
+
+router.post(
+    APP_ROUTER.EXPORT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    exportGroupStudent,
 );
 
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);

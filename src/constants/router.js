@@ -78,7 +78,7 @@ const APP_ROUTER = {
     GROUP_LECTURER_MEMBER: '/:id/members',
     GROUP_LECTURER_BY_TYPE: '/:type',
     GROUP_LECTURER_NO_GROUP: '/:type/no-group',
-    GROUP_LECTURER_BY_LECTURERS: '/:type/lecturers',
+    GROUP_LECTURER_BY_LECTURER: '/lecturer',
 
     //GROUP_STUDENTS
     GROUP_STUDENT: '/api/v1/group-students',

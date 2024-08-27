@@ -114,7 +114,7 @@ exports.validateTerm = [
         .notEmpty()
         .withMessage('Ngày bắt đầu không được để trống!')
         .isDate({
-            format: 'YYYY-MM-DD',
+            format: 'YYYY-MM-DD HH:mm:ss',
         })
         .withMessage('Ngày bắt đầu không hợp lệ!'),
 
@@ -122,7 +122,7 @@ exports.validateTerm = [
         .notEmpty()
         .withMessage('Ngày kết thúc không được để trống!')
         .isDate({
-            format: 'YYYY-MM-DD',
+            format: 'YYYY-MM-DD HH:mm:ss',
         })
         .withMessage('Ngày kết thúc không hợp lệ!'),
 ];
@@ -132,7 +132,7 @@ exports.validateTermDetail = [
         .notEmpty()
         .withMessage('Ngày bắt đầu không được để trống!')
         .isDate({
-            format: 'YYYY-MM-DD',
+            format: 'YYYY-MM-DD HH:mm:ss',
         })
         .withMessage('Ngày bắt đầu không hợp lệ!'),
 
@@ -140,7 +140,7 @@ exports.validateTermDetail = [
         .notEmpty()
         .withMessage('Ngày kết thúc không được để trống!')
         .isDate({
-            format: 'YYYY-MM-DD',
+            format: 'YYYY-MM-DD HH:mm:ss',
         })
         .withMessage('Ngày kết thúc không hợp lệ!'),
 ];

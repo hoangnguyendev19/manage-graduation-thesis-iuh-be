@@ -1,4 +1,4 @@
-const { GroupStudent, StudentTerm, Student, Topic } = require('../models/index');
+const { GroupStudent, StudentTerm, Student, Topic, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
@@ -507,16 +507,19 @@ exports.createGroupStudent = async (req, res) => {
         }
 
         let group = null;
-        // Get number of group student
-        const groupStudents = await GroupStudent.findAll({
+
+        const groupStudentCount = await GroupStudent.count({
             where: {
                 term_id: termId,
             },
         });
 
+        const numberOfDigits = groupStudentCount.toString().length;
+        const groupNumber = (i + 1).toString().padStart(numberOfDigits, '0');
+
         if (studentIds.length === 0) {
             group = await GroupStudent.create({
-                name: `Nhóm số ${groupStudents.length + 1}`,
+                name: `Nhóm số ${groupNumber}`,
                 term_id: termId,
             });
 
@@ -545,7 +548,7 @@ exports.createGroupStudent = async (req, res) => {
         }
 
         group = await GroupStudent.create({
-            name: `Nhóm số ${groupStudents.length + 1}`,
+            name: `Nhóm số ${groupNumber}`,
             term_id: termId,
         });
 
@@ -614,6 +617,51 @@ exports.importGroupStudent = async (req, res) => {
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Nhập nhóm sinh viên thành công!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.exportGroupStudent = async (req, res) => {
+    try {
+        const { termId } = req.body;
+
+        if (!termId) {
+            return Error.sendBadRequest(res, 'Thiếu thông tin học kỳ!');
+        }
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, Mã đề tài, Tên đề tài
+        let groupStudents = await sequelize.query(
+            `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', t.key as 'Mã đề tài', t.name as 'Tên đề tài'
+            FROM group_students gs
+            INNER JOIN student_terms st ON gs.id = st.group_student_id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE gs.term_id = :termId
+            ORDER BY gs.name ASC`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId },
+            },
+        );
+
+        for (let i = 0; i < groupStudents.length; i++) {
+            groupStudents[i]['STT'] = i + 1;
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách nhóm sinh viên thành công!',
+            groupStudents,
         });
     } catch (error) {
         console.log(error);

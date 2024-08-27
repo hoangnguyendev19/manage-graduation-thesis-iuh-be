@@ -24,7 +24,7 @@ const router = express.Router();
 
 router.get(APP_ROUTER.GROUP_LECTURER_NO_GROUP, getLecturerNoGroupByType);
 
-router.get(APP_ROUTER.GROUP_LECTURER_BY_LECTURERS, protectLecturer, getGroupLecturersByLecturerId);
+router.get(APP_ROUTER.GROUP_LECTURER_BY_LECTURER, protectLecturer, getGroupLecturersByLecturerId);
 
 router.get(APP_ROUTER.GROUP_LECTURER_MEMBER, getMemberFromGroupLecturer);
 

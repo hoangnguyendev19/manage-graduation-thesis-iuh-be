@@ -1,8 +1,15 @@
-const { Assign, GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/index');
+const {
+    Assign,
+    GroupLecturer,
+    LecturerTerm,
+    GroupLecturerMember,
+    Term,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { Sequelize, QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
+
 const checkTypeGroup = (value) => {
     switch (value) {
         case 'REVIEWER':
@@ -13,7 +20,8 @@ const checkTypeGroup = (value) => {
             return 'Nhóm chấm hội đồng';
     }
 };
-const getAssigns = async (req, res) => {
+
+exports.getAssigns = async (req, res) => {
     try {
         const assigns = await Assign.findAll({
             attributes: {
@@ -30,7 +38,52 @@ const getAssigns = async (req, res) => {
     }
 };
 
-const getAssignById = async (req, res) => {
+exports.exportAssigns = async (req, res) => {
+    try {
+        const { termId } = req.body;
+
+        if (!termId) {
+            return Error.sendBadRequest(res, 'Thiếu thông tin học kỳ!');
+        }
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV1, HD TV2, Thư ký, Ghi chú
+        let assigns = await sequelize.query(
+            `SELECT gs.name as 'STT Nhóm', s.id as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as fullName, a.type as 'Ghi chú'
+            FROM assigns a
+            INNER JOIN group_students gs ON a.group_student_id = gs.id
+            INNER JOIN student_terms st ON st.group_student_id = gs.id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
+            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: { termId },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        for (let i = 0; i < assigns.length; i++) {
+            assigns[i]['STT'] = i + 1;
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách phân công thành công!',
+            assigns,
+        });
+    } catch (error) {
+        Error.sendError(res, error);
+    }
+};
+
+exports.getAssignById = async (req, res) => {
     try {
         const { id } = req.params;
         const assigns = await Assign.findByPk(id, {
@@ -48,7 +101,8 @@ const getAssignById = async (req, res) => {
         Error.sendError(res, error);
     }
 };
-const getAssignByType = async (req, res) => {
+
+exports.getAssignByType = async (req, res) => {
     try {
         const { type } = req.params;
         const assigns = await Assign.findAll({
@@ -68,7 +122,8 @@ const getAssignByType = async (req, res) => {
         Error.sendError(res, error);
     }
 };
-const createAssignByType = async (req, res) => {
+
+exports.createAssignByType = async (req, res) => {
     try {
         const { type } = req.params;
         const { groupLecturerId, listGroupStudentId } = req.body;
@@ -117,10 +172,11 @@ const createAssignByType = async (req, res) => {
         Error.sendError(res, error);
     }
 };
-const updateAssignByType = async () => {};
-const deleteAssign = async () => {};
 
-const getAssignByLecturerId = async (req, res) => {
+exports.updateAssignByType = async () => {};
+exports.deleteAssign = async () => {};
+
+exports.getAssignByLecturerId = async (req, res) => {
     try {
         const { lecturerId, type } = req.params;
         const { termId } = req.query;
@@ -144,6 +200,7 @@ const getAssignByLecturerId = async (req, res) => {
                 type: type.toUpperCase(),
             },
         });
+
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: `Lấy danh sách phân công ${checkTypeGroup(type.toUpperCase())} thành công`,
@@ -154,7 +211,7 @@ const getAssignByLecturerId = async (req, res) => {
     }
 };
 
-const getGroupStudentNoAssign = async (req, res) => {
+exports.getGroupStudentNoAssign = async (req, res) => {
     try {
         const { type } = req.params;
         const { termId } = req.query;
@@ -192,6 +249,7 @@ const getGroupStudentNoAssign = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
 const isExistLecturerSupportInGroupLecturer = async (groupLecturerId, listGroupStudentId) => {
     const query =
         'select t.lecturer_term_id as id from topics t inner join group_students gt on t.id = gt.topic_id where gt.id = :groupStudentId ';
@@ -218,6 +276,7 @@ const isExistLecturerSupportInGroupLecturer = async (groupLecturerId, listGroupS
     }
     return isExistLecturerSupportInGroup;
 };
+
 const isExitGroupLecturerAndGroupStudent = async (type, listGroupStudentId) => {
     let flag = false;
     for (let i = 0; i < listGroupStudentId.length; i++) {
@@ -231,13 +290,4 @@ const isExitGroupLecturerAndGroupStudent = async (type, listGroupStudentId) => {
         if (flag) break;
     }
     return flag === true;
-};
-
-module.exports = {
-    getAssigns,
-    getAssignByType,
-    getAssignById,
-    getAssignByLecturerId,
-    createAssignByType,
-    getGroupStudentNoAssign,
 };

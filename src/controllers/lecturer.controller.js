@@ -286,42 +286,6 @@ exports.getLecturersByMajorId = async (req, res) => {
     }
 };
 
-exports.getLecturerById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const lecturer = await Lecturer.findOne({
-            where: { id },
-            attributes: {
-                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
-                include: [
-                    ['major_id', 'majorId'],
-                    [sequelize.col('major.name'), 'majorName'],
-                ],
-            },
-            include: [
-                {
-                    model: Major,
-                    attributes: [],
-                    as: 'major',
-                },
-            ],
-        });
-
-        if (!lecturer) {
-            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
-        }
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Lấy thông tin giảng viên thành công!',
-            lecturer,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.createLecturer = async (req, res) => {
     try {
         let { username, fullName, gender, phone, email, degree, majorId } = req.body;
@@ -497,20 +461,18 @@ exports.exportLecturers = async (req, res) => {
     try {
         const { majorId } = req.body;
 
-        // check if majorId is provided
         if (!majorId) {
             return Error.sendWarning(res, 'Chuyên ngành không được để trống!');
         }
 
-        // check if majorId is valid
         const major = await Major.findByPk(majorId);
         if (!major) {
             return Error.sendNotFound(res, 'Chuyên ngành không tồn tại!');
         }
 
-        // STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email, Bằng cấp
-        const lecturers = await sequelize.query(
-            `SELECT l.username as 'Mã GV', l.full_name as 'Họ và tên', l.gender as 'Giới tính', l.phone as 'Số điện thoại', l.email as 'Email', l.degree as 'Bằng cấp'
+        // STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
+        let lecturers = await sequelize.query(
+            `SELECT l.username as 'Mã GV', l.full_name as 'Họ và tên', l.gender as 'Giới tính', l.phone as 'Số điện thoại', l.email as 'Email'
             FROM lecturers l
             WHERE l.major_id = :majorId`,
             {
@@ -524,15 +486,11 @@ exports.exportLecturers = async (req, res) => {
             lecturers[i]['Giới tính'] = lecturers[i]['Giới tính'] === 'MALE' ? 'Nam' : 'Nữ';
         }
 
-        const ws = xlsx.utils.json_to_sheet(lecturers);
-        const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, 'Danh sách giảng viên');
-
-        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-        res.setHeader('Content-Disposition', 'attachment; filename=danh-sach-giang-vien.xlsx');
-
-        res.status(HTTP_STATUS.OK).send(buffer);
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách giảng viên thành công!',
+            lecturers,
+        });
     } catch (error) {
         console.log(error);
         Error.sendError(res, error);
@@ -629,6 +587,42 @@ exports.countLecturersByMajorId = async (req, res) => {
             success: true,
             message: 'Lấy số lượng giảng viên của chuyên ngành thành công!',
             count,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getLecturerById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const lecturer = await Lecturer.findOne({
+            where: { id },
+            attributes: {
+                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
+                include: [
+                    ['major_id', 'majorId'],
+                    [sequelize.col('major.name'), 'majorName'],
+                ],
+            },
+            include: [
+                {
+                    model: Major,
+                    attributes: [],
+                    as: 'major',
+                },
+            ],
+        });
+
+        if (!lecturer) {
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại!');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy thông tin giảng viên thành công!',
+            lecturer,
         });
     } catch (error) {
         console.log(error);

@@ -2,6 +2,7 @@ const express = require('express');
 const { APP_ROUTER } = require('../constants/router');
 const {
     getAssigns,
+    exportAssigns,
     getAssignByType,
     createAssignByType,
     getAssignById,
@@ -24,6 +25,13 @@ router.post(
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     createAssignByType,
+);
+
+router.post(
+    APP_ROUTER.EXPORT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    exportAssigns,
 );
 
 router.get(APP_ROUTER.ID, getAssignById);

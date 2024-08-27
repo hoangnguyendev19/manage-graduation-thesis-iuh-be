@@ -4,7 +4,9 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     importLecturerTerms,
+    exportLecturerTerms,
     getLecturerTermsList,
+    getLecturerTermById,
     deleteLecturerTerm,
     getLecturerTermsToAdding,
     createLecturerTerm,
@@ -24,6 +26,13 @@ router.post(
     importLecturerTerms,
 );
 
+router.post(
+    APP_ROUTER.EXPORT,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    exportLecturerTerms,
+);
+
 router.get(APP_ROUTER.LIST, protectLecturer, getLecturerTermsList);
 
 router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturerTerms);
@@ -31,6 +40,8 @@ router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturerTerms);
 router.get(APP_ROUTER.LECTURER_TERM_TO_ADDING, protectLecturer, getLecturerTermsToAdding);
 
 router.get(APP_ROUTER.COUNT, countLecturerTermsByTermId);
+
+router.get(APP_ROUTER.ID, protectLecturer, getLecturerTermById);
 
 router.post(
     APP_ROUTER.INDEX,
@@ -41,7 +52,7 @@ router.post(
 );
 
 router.delete(
-    APP_ROUTER.INDEX,
+    APP_ROUTER.ID,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     deleteLecturerTerm,
