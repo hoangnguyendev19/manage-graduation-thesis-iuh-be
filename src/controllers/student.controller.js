@@ -605,12 +605,10 @@ exports.exportStudents = async (req, res) => {
     try {
         const { termId, majorId } = req.body;
 
-        // check if termId and majorId are provided
         if (!termId || !majorId) {
             return Error.sendWarning(res, 'Hãy chọn học kỳ và ngành học!');
         }
 
-        // check if termId and majorId are valid
         const term = await Term.findByPk(termId);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');

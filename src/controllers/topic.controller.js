@@ -328,6 +328,7 @@ exports.createTopic = async (req, res) => {
             standardOutput,
             requireInput,
         } = req.body;
+
         const { termId } = req.query;
 
         const errors = validationResult(req);
@@ -373,7 +374,7 @@ exports.createTopic = async (req, res) => {
         );
 
         const numberOfDigits = topics[0].total.toString().length;
-        const key = `#${(i + 1).toString().padStart(numberOfDigits, '0')}`;
+        const key = `#${(topics[0].total + 1).toString().padStart(numberOfDigits, '0')}`;
 
         const topic = await Topic.create({
             key,
