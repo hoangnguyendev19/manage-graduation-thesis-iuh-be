@@ -88,6 +88,7 @@ exports.createAllNotificationStudentTerms = async (req, res) => {
             title,
             content,
             created_by: req.user.id,
+            type: 'STUDENT',
         });
 
         const studentConvert = studentTerms.map((lt) => ({
