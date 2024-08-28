@@ -515,7 +515,7 @@ exports.createGroupStudent = async (req, res) => {
         });
 
         const numberOfDigits = groupStudentCount.toString().length;
-        const groupNumber = (i + 1).toString().padStart(numberOfDigits, '0');
+        const groupNumber = (groupStudentCount + 1).toString().padStart(numberOfDigits, '0');
 
         if (studentIds.length === 0) {
             group = await GroupStudent.create({

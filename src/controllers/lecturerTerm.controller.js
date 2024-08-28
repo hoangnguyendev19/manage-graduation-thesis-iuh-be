@@ -10,9 +10,11 @@ exports.importLecturerTerms = async (req, res) => {
     try {
         const { termId } = req.body;
         const term = await Term.findByPk(termId);
+
         if (!term) {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
+
         const lecturers = await Lecturer.findAll({ where: { major_id: term.major_id } });
 
         for (const lecturer of lecturers) {
@@ -102,6 +104,7 @@ exports.exportLecturerTerms = async (req, res) => {
 exports.getLecturerTermsList = async (req, res) => {
     try {
         const { termId } = req.query;
+
         const lecturerTerms = await LecturerTerm.findAll({
             where: {
                 term_id: termId,
@@ -115,7 +118,9 @@ exports.getLecturerTermsList = async (req, res) => {
                 as: 'lecturer',
             },
         });
+
         const count = lecturerTerms.length;
+
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách giảng viên trong học kì thành công',
@@ -149,7 +154,7 @@ exports.searchLecturerTerms = async (req, res) => {
         const orderBy = sort ? `ORDER BY l.${searchField} ${sort}` : 'ORDER BY l.created_at DESC';
 
         const lecturerTerms = await sequelize.query(
-            `SELECT l.id, l.username, l.full_name AS fullName,
+            `SELECT lt.id, l.username, l.full_name AS fullName,
                 (SELECT COUNT(t.id)
                 FROM topics t
                 INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
@@ -163,14 +168,11 @@ exports.searchLecturerTerms = async (req, res) => {
                 FROM group_lecturer_members glm
                 INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id
                 WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS totalGroupLecturers
-            FROM lecturers l
-            WHERE EXISTS (
-                SELECT 1
-                FROM lecturer_terms lt
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId
-            )
+            FROM lecturer_terms lt
+            INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId
             ${searchQuery}
-            GROUP BY l.id, l.username, l.full_name
+            GROUP BY lt.id, l.username, l.full_name, l.id
             ${orderBy}
             LIMIT :limit OFFSET :offset`,
             {
@@ -185,13 +187,10 @@ exports.searchLecturerTerms = async (req, res) => {
         );
 
         const countResult = await sequelize.query(
-            `SELECT COUNT(DISTINCT l.id) AS total
-            FROM lecturers l
-            WHERE EXISTS (
-                SELECT 1
-                FROM lecturer_terms lt
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId
-            )
+            `SELECT COUNT(DISTINCT lt.id) AS total
+            FROM lecturer_terms lt
+            INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId
             ${searchQuery}`,
             {
                 replacements: {
@@ -225,15 +224,14 @@ exports.getLecturerTermsToAdding = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
         const query = `SELECT l.id AS lecturerId, l.full_name AS fullName,l.username as username,
-                        l.email,l.degree, m.name AS majorName
-                        FROM lecturers l
-                        LEFT JOIN lecturer_terms lt ON lt.lecturer_id = l.id AND lt.term_id = :termId
-                        LEFT JOIN majors m ON m.id = l.major_id
-                        WHERE 
-                        lt.lecturer_id IS NULL
-                        OR
-                        ( l.major_id  != :majorId AND  lt.lecturer_id IS NULL )
-                        `;
+        l.email,l.degree, m.name AS majorName
+        FROM lecturers l
+        LEFT JOIN lecturer_terms lt ON lt.lecturer_id = l.id AND lt.term_id = :termId
+        LEFT JOIN majors m ON m.id = l.major_id
+        WHERE 
+        lt.lecturer_id IS NULL
+        OR
+        ( l.major_id  != :majorId AND  lt.lecturer_id IS NULL )`;
 
         const lecturerTerms = await sequelize.query(query, {
             type: QueryTypes.SELECT,
@@ -242,6 +240,7 @@ exports.getLecturerTermsToAdding = async (req, res) => {
                 termId: termId,
             },
         });
+
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách giảng viên để thêm vào học kì thành công',
@@ -262,7 +261,7 @@ exports.getLecturerTermById = async (req, res) => {
         const { id } = req.params;
 
         const lecturerTerm = await sequelize.query(
-            `SELECT l.id, l.full_name as fullName, l.username, l.email, l.phone, l.gender, l.degree, m.name AS majorName
+            `SELECT lt.id, l.full_name as fullName, l.username, l.email, l.phone, l.gender, l.degree, m.name AS majorName
             FROM lecturer_terms lt
             INNER JOIN lecturers l ON l.id = lt.lecturer_id
             INNER JOIN majors m ON m.id = l.major_id
