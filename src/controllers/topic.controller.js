@@ -571,9 +571,9 @@ exports.importTopics = async (req, res) => {
         );
 
         const numberOfDigits = topics[0].total.toString().length;
-        const key = `#${(i + 1).toString().padStart(numberOfDigits, '0')}`;
 
-        for (const topic of listTopic) {
+        for (let i = 0; i < listTopic.length; i++) {
+            const key = `#${(i + 2).toString().padStart(numberOfDigits, '0')}`;
             const {
                 name,
                 description,
@@ -582,7 +582,7 @@ exports.importTopics = async (req, res) => {
                 standardOutput,
                 requireInput,
                 lecturerTermId,
-            } = topic;
+            } = listTopic[i];
 
             await Topic.create({
                 key,
@@ -609,7 +609,7 @@ exports.importTopics = async (req, res) => {
 
 exports.exportTopics = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId } = req.query;
 
         if (!termId) {
             return Error.sendWarning(res, 'Hãy chọn học kì!');

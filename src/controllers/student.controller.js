@@ -603,7 +603,7 @@ exports.importStudents = async (req, res) => {
 
 exports.exportStudents = async (req, res) => {
     try {
-        const { termId, majorId } = req.body;
+        const { termId, majorId } = req.query;
 
         if (!termId || !majorId) {
             return Error.sendWarning(res, 'Hãy chọn học kỳ và ngành học!');

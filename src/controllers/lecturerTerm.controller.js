@@ -45,7 +45,7 @@ exports.importLecturerTerms = async (req, res) => {
 
 exports.exportLecturerTerms = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId } = req.query;
 
         if (!termId) {
             return Error.sendWarning(res, 'Hãy chọn học kì!');

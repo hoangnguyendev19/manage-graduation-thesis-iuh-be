@@ -68,7 +68,7 @@ router.post(
     importStudents,
 );
 
-router.post(
+router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
