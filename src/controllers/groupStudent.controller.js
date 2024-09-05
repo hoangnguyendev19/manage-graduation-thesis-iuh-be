@@ -412,7 +412,7 @@ exports.getMembersById = async (req, res) => {
         const membersWithTranscripts = await Promise.all(
             members.map(async (member) => {
                 const transcripts = await sequelize.query(
-                    `SELECT e.type, AVG(score) as avgScore FROM transcripts t
+                    `SELECT e.type, SUM(score) as sumScore FROM transcripts t
                     LEFT JOIN evaluations e ON t.evaluation_id = e.id
                     WHERE student_term_id = :studentTermId
                     GROUP BY e.type`,
@@ -633,9 +633,9 @@ exports.importGroupStudent = async (req, res) => {
     }
 };
 
-exports.exportGroupStudent = async (req, res) => {
+exports.getExportGroupStudent = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId } = req.query;
 
         if (!termId) {
             return Error.sendBadRequest(res, 'Thiếu thông tin học kỳ!');

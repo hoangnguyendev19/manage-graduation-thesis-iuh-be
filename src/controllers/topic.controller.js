@@ -359,12 +359,15 @@ exports.createTopic = async (req, res) => {
         if (existedTopic) {
             return Error.sendConflict(res, 'Tên đề tài đã tồn tại!');
         }
-
-        const topics = await sequelize.query(
-            `SELECT count(t.id) as total 
-            FROM topics t
-            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            WHERE lt.term_id = :termId`,
+        const oldTopic = await sequelize.query(
+            `
+            select * from topics t
+            left join
+            lecturer_terms lt on t.lecturer_term_id = lt.id
+            where lt.term_id = :termId
+            order by t.key desc
+            limit 1
+            `,
             {
                 replacements: {
                     termId,
@@ -372,10 +375,18 @@ exports.createTopic = async (req, res) => {
                 type: QueryTypes.SELECT,
             },
         );
-
-        const numberOfDigits = topics[0].total.toString().length;
-        const key = `#${(topics[0].total + 1).toString().padStart(numberOfDigits, '0')}`;
-
+        let key;
+        if (oldTopic.length === 0) {
+            key = '#001';
+        } else {
+            let code = ['0', '0', '0'];
+            const currentKey = _.toNumber(oldTopic[0].key.slice(1)) + 1;
+            let size = currentKey.toString().trim().length;
+            for (let i = 0; i < size; i++) {
+                code[code.length - i - 1] = currentKey.toString()[size - i - 1];
+            }
+            key = '#' + code.join('');
+        }
         const topic = await Topic.create({
             key,
             name,
@@ -557,11 +568,15 @@ exports.importTopics = async (req, res) => {
             listTopic.push(topicToSaved);
         }
 
-        const topics = await sequelize.query(
-            `SELECT count(t.id) as total 
-            FROM topics t
-            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            WHERE lt.term_id = :termId`,
+        const oldTopic = await sequelize.query(
+            `
+            select * from topics t
+            left join
+            lecturer_terms lt on t.lecturer_term_id = lt.id
+            where lt.term_id = :termId
+            order by t.key desc
+            limit 1
+            `,
             {
                 replacements: {
                     termId,
@@ -570,10 +585,19 @@ exports.importTopics = async (req, res) => {
             },
         );
 
-        const numberOfDigits = topics[0].total.toString().length;
-
         for (let i = 0; i < listTopic.length; i++) {
-            const key = `#${(i + 2).toString().padStart(numberOfDigits, '0')}`;
+            let key;
+            if (oldTopic.length === 0) {
+                key = '#001';
+            } else {
+                let code = ['0', '0', '0'];
+                const currentKey = _.toNumber(oldTopic[0].key.slice(1)) + i + 1;
+                let size = currentKey.toString().trim().length;
+                for (let i = 0; i < size; i++) {
+                    code[code.length - i - 1] = currentKey.toString()[size - i - 1];
+                }
+                key = '#' + code.join('');
+            }
             const {
                 name,
                 description,
