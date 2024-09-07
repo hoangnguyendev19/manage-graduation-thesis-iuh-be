@@ -571,7 +571,7 @@ exports.importTopics = async (req, res) => {
         );
 
         const numberOfDigits = topics[0].total.toString().length;
-        const key = `#${(i + 1).toString().padStart(numberOfDigits, '0')}`;
+        const key = `#${(topics[0].total + 1).toString().padStart(numberOfDigits, '0')}`;
 
         for (const topic of listTopic) {
             const {
