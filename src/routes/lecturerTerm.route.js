@@ -26,7 +26,7 @@ router.post(
     importLecturerTerms,
 );
 
-router.post(
+router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),

@@ -40,7 +40,7 @@ exports.getAssigns = async (req, res) => {
 
 exports.exportAssigns = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId } = req.query;
 
         if (!termId) {
             return Error.sendBadRequest(res, 'Thiếu thông tin học kỳ!');

@@ -309,14 +309,23 @@ exports.getGroupStudentOfSearch = async (req, res) => {
         }
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, count(st.student_id) as numOfMembers 
-            FROM group_students gs 
-            LEFT JOIN student_terms st ON gs.id = st.group_student_id
-            LEFT JOIN students s ON st.student_id = s.id
-            WHERE gs.term_id = :termId ${searchQuery}
-            GROUP BY gs.id, gs.name
-            ${orderBy}
-            LIMIT :limit OFFSET :offset`,
+            `SELECT 
+        gs.id, 
+        gs.name,
+        gs.topic_id as topicId, 
+        tc.name as topicName, 
+        l.full_name as lecturerName, 
+        JSON_ARRAYAGG(s.full_name) as studentNames
+        FROM group_students gs 
+        LEFT JOIN student_terms st ON gs.id = st.group_student_id
+        LEFT JOIN students s ON st.student_id = s.id
+        LEFT JOIN topics tc ON gs.topic_id = tc.id 
+        LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
+        LEFT JOIN lecturers l ON l.id = lt.lecturer_id
+        WHERE gs.term_id = :termId ${searchQuery}
+        GROUP BY gs.id, gs.name, tc.name, l.full_name  
+        ${orderBy}
+        LIMIT :limit OFFSET :offset`,
             {
                 type: QueryTypes.SELECT,
                 replacements: {
@@ -403,7 +412,7 @@ exports.getMembersById = async (req, res) => {
         const membersWithTranscripts = await Promise.all(
             members.map(async (member) => {
                 const transcripts = await sequelize.query(
-                    `SELECT e.type, AVG(score) as avgScore FROM transcripts t
+                    `SELECT e.type, SUM(score) as sumScore FROM transcripts t
                     LEFT JOIN evaluations e ON t.evaluation_id = e.id
                     WHERE student_term_id = :studentTermId
                     GROUP BY e.type`,
@@ -624,9 +633,9 @@ exports.importGroupStudent = async (req, res) => {
     }
 };
 
-exports.exportGroupStudent = async (req, res) => {
+exports.getExportGroupStudent = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId } = req.query;
 
         if (!termId) {
             return Error.sendBadRequest(res, 'Thiếu thông tin học kỳ!');

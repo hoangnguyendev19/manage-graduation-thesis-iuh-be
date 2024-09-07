@@ -46,7 +46,7 @@ router.put(
     APP_ROUTER.TERM_CHOOSE_GROUP,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTermDetail,
+    // validateTermDetail,
     updateChooseGroupTerm,
 );
 
@@ -54,7 +54,7 @@ router.put(
     APP_ROUTER.TERM_PUBLIC_TOPIC,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTermDetail,
+    // validateTermDetail,
     updatePublicTopicTerm,
 );
 
@@ -62,7 +62,7 @@ router.put(
     APP_ROUTER.TERM_CHOOSE_TOPIC,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTermDetail,
+    // validateTermDetail,
     updateChooseTopicTerm,
 );
 
@@ -70,7 +70,7 @@ router.put(
     APP_ROUTER.TERM_DISCUSSION,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTermDetail,
+    // validateTermDetail,
     updateDiscussionTerm,
 );
 
@@ -78,7 +78,7 @@ router.put(
     APP_ROUTER.TERM_REPORT,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTermDetail,
+    // validateTermDetail,
     updateReportTerm,
 );
 
@@ -86,7 +86,7 @@ router.put(
     APP_ROUTER.TERM_PUBLIC_RESULT,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTermDetail,
+    // validateTermDetail,
     updatePublicResultTerm,
 );
 
@@ -96,7 +96,7 @@ router.put(
     APP_ROUTER.ID,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTerm,
+    // validateTerm,
     updateTerm,
 );
 
@@ -106,7 +106,7 @@ router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateTerm,
+    // validateTerm,
     createTerm,
 );
 

@@ -227,11 +227,11 @@ exports.validateEvaluation = [
         .isIn(['ADVISOR', 'REVIEWER', 'REPORT'])
         .withMessage('Loại đánh giá không hợp lệ!'),
 
-    check('termId')
-        .notEmpty()
-        .withMessage('ID học kỳ không được để trống!')
-        .isUUID()
-        .withMessage('ID học kỳ không hợp lệ!'),
+    // check('termId')
+    //     .notEmpty()
+    //     .withMessage('ID học kỳ không được để trống!')
+    //     .isUUID()
+    //     .withMessage('ID học kỳ không hợp lệ!'),
 
     check('name')
         .notEmpty()

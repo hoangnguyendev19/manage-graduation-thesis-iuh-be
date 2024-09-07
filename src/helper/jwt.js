@@ -58,11 +58,9 @@ exports.removeRefreshToken = (id) => {
         if (error) {
             return Error.sendError(res, error);
         }
-
         if (reply !== 1) {
             return Error.sendError(res, 'Token not deleted');
         }
-
         return reply;
     });
 };

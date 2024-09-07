@@ -58,7 +58,7 @@ router.post(
     importLecturers,
 );
 
-router.post(
+router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER']),

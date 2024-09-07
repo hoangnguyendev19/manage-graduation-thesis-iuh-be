@@ -459,7 +459,7 @@ exports.importLecturers = async (req, res) => {
 
 exports.exportLecturers = async (req, res) => {
     try {
-        const { majorId } = req.body;
+        const { majorId } = req.query;
 
         if (!majorId) {
             return Error.sendWarning(res, 'Chuyên ngành không được để trống!');

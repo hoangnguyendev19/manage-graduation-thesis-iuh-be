@@ -45,7 +45,7 @@ exports.importLecturerTerms = async (req, res) => {
 
 exports.exportLecturerTerms = async (req, res) => {
     try {
-        const { termId } = req.body;
+        const { termId } = req.query;
 
         if (!termId) {
             return Error.sendWarning(res, 'Hãy chọn học kì!');
@@ -261,7 +261,7 @@ exports.getLecturerTermById = async (req, res) => {
         const { id } = req.params;
 
         const lecturerTerm = await sequelize.query(
-            `SELECT lt.id, l.full_name as fullName, l.username, l.email, l.phone, l.gender, l.degree, m.name AS majorName
+            `SELECT lt.id,l.id as lecturerId, l.full_name as fullName, l.username, l.email, l.phone, l.gender, l.degree, m.name AS majorName
             FROM lecturer_terms lt
             INNER JOIN lecturers l ON l.id = lt.lecturer_id
             INNER JOIN majors m ON m.id = l.major_id
