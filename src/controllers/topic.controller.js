@@ -598,6 +598,7 @@ exports.importTopics = async (req, res) => {
                 }
                 key = '#' + code.join('');
             }
+          
             const {
                 name,
                 description,

@@ -53,7 +53,7 @@ exports.exportAssigns = async (req, res) => {
 
         // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV1, HD TV2, Thư ký, Ghi chú
         let assigns = await sequelize.query(
-            `SELECT gs.name as 'STT Nhóm', s.id as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as fullName, a.type as 'Ghi chú'
+            `SELECT gs.name as 'STT Nhóm', s.id as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
             FROM assigns a
             INNER JOIN group_students gs ON a.group_student_id = gs.id
             INNER JOIN student_terms st ON st.group_student_id = gs.id
