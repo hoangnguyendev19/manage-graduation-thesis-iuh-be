@@ -72,6 +72,7 @@ const APP_ROUTER = {
     TOPIC_QUANTITY_GROUP_MAX: '/quantity-group-max',
     TOPIC_BY_GROUP_LECTURER: '/group-lecturer/:id',
     TOPIC_BY_LECTURER: '/lecturer/:lecturerId',
+    TOPIC_COUNT_BY_LECTURER: '/count-by-lecturer',
 
     //GROUP_LECTURERS
     GROUP_LECTURER: '/api/v1/group-lecturers',
@@ -116,9 +117,6 @@ const APP_ROUTER = {
     //EVALUATIONS
     EVALUATION: '/api/v1/evaluations',
     SCORES: '/scores',
-
-    // EVALUATION_EXPORT_PDF: '/pdf/assigns/:assign_id/download',
-    // GENERATE_EVALUATION: '/pdf/download',
 
     //ASSIGNS
     ASSIGN: '/api/v1/assigns',

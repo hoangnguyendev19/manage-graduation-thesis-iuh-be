@@ -484,6 +484,14 @@ exports.exportLecturers = async (req, res) => {
         for (let i = 0; i < lecturers.length; i++) {
             lecturers[i]['STT'] = i + 1;
             lecturers[i]['Giới tính'] = lecturers[i]['Giới tính'] === 'MALE' ? 'Nam' : 'Nữ';
+
+            if (!lecturers[i]['Email']) {
+                lecturers[i]['Email'] = '';
+            }
+
+            if (!lecturers[i]['Số điện thoại']) {
+                lecturers[i]['Số điện thoại'] = '';
+            }
         }
 
         res.status(HTTP_STATUS.OK).json({

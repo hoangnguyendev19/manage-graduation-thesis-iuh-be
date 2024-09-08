@@ -633,7 +633,7 @@ exports.importGroupStudent = async (req, res) => {
     }
 };
 
-exports.getExportGroupStudent = async (req, res) => {
+exports.exportGroupStudent = async (req, res) => {
     try {
         const { termId } = req.query;
 
