@@ -636,6 +636,24 @@ exports.exportStudents = async (req, res) => {
         for (let i = 0; i < students.length; i++) {
             students[i]['STT'] = i + 1;
             students[i]['Giới tính'] = students[i]['Giới tính'] === 'MALE' ? 'Nam' : 'Nữ';
+
+            if (!students[i]['Ngày sinh']) {
+                students[i]['Ngày sinh'] = '';
+            } else {
+                students[i]['Ngày sinh'] = moment(students[i]['Ngày sinh']).format('DD/MM/YYYY');
+            }
+
+            if (!students[i]['Email']) {
+                students[i]['Email'] = '';
+            }
+
+            if (!students[i]['Số điện thoại']) {
+                students[i]['Số điện thoại'] = '';
+            }
+
+            if (!students[i]['Lớp học']) {
+                students[i]['Lớp học'] = '';
+            }
         }
 
         res.status(HTTP_STATUS.OK).json({

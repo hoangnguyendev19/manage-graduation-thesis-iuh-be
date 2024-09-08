@@ -27,7 +27,7 @@ const {
     cancelTopic,
     countOfGroupStudent,
     searchGroupStudentByName,
-    getExportGroupStudent,
+    exportGroupStudent,
 } = require('../controllers/groupStudent.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -63,7 +63,7 @@ router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
-    getExportGroupStudent,
+    exportGroupStudent,
 );
 
 router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGroupStudent);

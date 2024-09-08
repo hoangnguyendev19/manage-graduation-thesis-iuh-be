@@ -206,6 +206,7 @@ exports.getTopicApprovedOfSearch = async (req, res) => {
 exports.getTopicsByGroupLecturerId = async (req, res) => {
     try {
         const { id } = req.params;
+
         const groupLecturer = await GroupLecturer.findByPk(id);
         if (!groupLecturer) {
             return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
@@ -225,10 +226,11 @@ exports.getTopicsByGroupLecturerId = async (req, res) => {
         );
 
         const newTopics = topics.reduce((acc, topic) => {
-            const { id, name } = topic;
+            const { id, key, name } = topic;
             if (!acc[id]) {
                 acc[id] = {
                     id,
+                    key,
                     name,
                 };
             }
@@ -282,6 +284,7 @@ exports.getTopicById = async (req, res) => {
         if (!topic) {
             return Error.sendNotFound(res, 'Topic not found');
         }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin đề tài thành công!',
@@ -296,6 +299,7 @@ exports.getTopicById = async (req, res) => {
 exports.countTopicsByTermId = async (req, res) => {
     try {
         const { termId } = req.query;
+
         const count = await Topic.count({
             include: {
                 model: LecturerTerm,
@@ -310,6 +314,47 @@ exports.countTopicsByTermId = async (req, res) => {
             success: true,
             message: 'Lấy số lượng đề tài trong học kỳ thành công!',
             count,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.countTopicsByLecturerId = async (req, res) => {
+    try {
+        const countRegisteredTopics = await sequelize.query(
+            `SELECT COUNT(t.id) as count
+            FROM topics t
+            INNER JOIN group_students gs ON t.id = gs.topic_id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.lecturer_id = :lecturerId`,
+            {
+                replacements: {
+                    lecturerId: req.user.id,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const countApprovedTopics = await sequelize.query(
+            `SELECT COUNT(t.id) as count
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.lecturer_id = :lecturerId AND t.status = 'APPROVED'`,
+            {
+                replacements: {
+                    lecturerId: req.user.id,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng đề tài của giảng viên thành công!',
+            countRegisteredTopics: countRegisteredTopics[0].count,
+            countApprovedTopics: countApprovedTopics[0].count,
         });
     } catch (error) {
         console.log(error);
@@ -598,7 +643,7 @@ exports.importTopics = async (req, res) => {
                 }
                 key = '#' + code.join('');
             }
-          
+
             const {
                 name,
                 description,

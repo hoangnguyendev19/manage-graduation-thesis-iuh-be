@@ -51,9 +51,9 @@ exports.exportAssigns = async (req, res) => {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV1, HD TV2, Thư ký, Ghi chú
+        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV, Ghi chú
         let assigns = await sequelize.query(
-            `SELECT gs.name as 'STT Nhóm', s.id as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
+            `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
             FROM assigns a
             INNER JOIN group_students gs ON a.group_student_id = gs.id
             INNER JOIN student_terms st ON st.group_student_id = gs.id
@@ -71,6 +71,14 @@ exports.exportAssigns = async (req, res) => {
 
         for (let i = 0; i < assigns.length; i++) {
             assigns[i]['STT'] = i + 1;
+
+            if (assigns[i]['Ghi chú'] === 'REVIEWER') {
+                assigns[i]['Ghi chú'] = 'Hội đồng phản biện';
+            } else if (assigns[i]['Ghi chú'] === 'REPORT_POSTER') {
+                assigns[i]['Ghi chú'] = 'Hội đồng poster';
+            } else if (assigns[i]['Ghi chú'] === 'REPORT_COUNCIL') {
+                assigns[i]['Ghi chú'] = 'Hội đồng báo cáo';
+            }
         }
 
         res.status(HTTP_STATUS.OK).json({
