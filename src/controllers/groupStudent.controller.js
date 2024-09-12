@@ -222,8 +222,9 @@ exports.getGroupStudentsByTermId = async (req, res) => {
 exports.getGroupStudentById = async (req, res) => {
     try {
         const { id } = req.params;
+
         const groupStudent = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.topic_id as topicId, gs.created_at as createdAt, tc.name as topicName, tc.description as topicDescription, tc.target as topicTarget, tc.standard_output as topicStandardOutput, tc.require_input as topicRequireInput, tc.expected_result as topicExpectedResult, l.full_name as lecturerName FROM group_students gs
+            `SELECT gs.id, gs.name, gs.created_at as createdAt, tc.name as topicName, tc.description as topicDescription, tc.target as topicTarget, tc.standard_output as topicStandardOutput, tc.require_input as topicRequireInput, tc.expected_result as topicExpectedResult, l.full_name as lecturerName FROM group_students gs
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
@@ -240,10 +241,82 @@ exports.getGroupStudentById = async (req, res) => {
             return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
+        let members = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+            attributes: ['id', 'status', 'isAdmin'],
+            include: {
+                model: Student,
+                attributes: ['id', 'username', 'fullName', 'clazzName'],
+                as: 'student',
+            },
+        });
+
+        const membersWithTranscripts = await Promise.all(
+            members.map(async (member) => {
+                const transcripts = await sequelize.query(
+                    `SELECT e.type, SUM(score) as sumScore FROM transcripts t
+                    LEFT JOIN evaluations e ON t.evaluation_id = e.id
+                    WHERE student_term_id = :studentTermId
+                    GROUP BY e.type`,
+                    {
+                        type: QueryTypes.SELECT,
+                        replacements: { studentTermId: member.id },
+                    },
+                );
+
+                return {
+                    ...member.toJSON(),
+                    transcripts,
+                };
+            }),
+        );
+
+        let groupLecturers = await sequelize.query(
+            `SELECT gl.id, gl.name, gl.type, l.username, l.full_name as fullName
+            FROM group_lecturers gl
+            INNER JOIN assigns a ON gl.id = a.group_lecturer_id
+            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE a.group_student_id = :id`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { id },
+            },
+        );
+
+        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
+            const group = acc.find((g) => g.id === groupLecturer.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupLecturer.id,
+                    name: groupLecturer.name,
+                    type: groupLecturer.type,
+                    members: [
+                        { username: groupLecturer.username, fullName: groupLecturer.fullName },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    username: groupLecturer.username,
+                    fullName: groupLecturer.fullName,
+                });
+            }
+
+            return acc;
+        }, []);
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin nhóm sinh viên thành công!',
-            groupStudent: groupStudent[0],
+            groupStudent: {
+                info: groupStudent[0],
+                members: membersWithTranscripts,
+                groupLecturers,
+            },
         });
     } catch (error) {
         console.log(error);
@@ -393,66 +466,46 @@ exports.searchGroupStudentByName = async (req, res) => {
     }
 };
 
-exports.getMembersById = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        let members = await StudentTerm.findAll({
-            where: {
-                group_student_id: id,
-            },
-            attributes: ['id', 'status', 'isAdmin'],
-            include: {
-                model: Student,
-                attributes: ['id', 'username', 'fullName', 'clazzName'],
-                as: 'student',
-            },
-        });
-
-        const membersWithTranscripts = await Promise.all(
-            members.map(async (member) => {
-                const transcripts = await sequelize.query(
-                    `SELECT e.type, SUM(score) as sumScore FROM transcripts t
-                    LEFT JOIN evaluations e ON t.evaluation_id = e.id
-                    WHERE student_term_id = :studentTermId
-                    GROUP BY e.type`,
-                    {
-                        type: QueryTypes.SELECT,
-                        replacements: { studentTermId: member.id },
-                    },
-                );
-
-                return {
-                    ...member.toJSON(),
-                    transcripts,
-                };
-            }),
-        );
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Lấy danh sách thành viên nhóm sinh viên thành công!',
-            members: membersWithTranscripts,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.countOfGroupStudent = async (req, res) => {
+exports.countGroupStudents = async (req, res) => {
     try {
         const { termId } = req.query;
         const count = (await GroupStudent.count({ where: { term_id: termId } })) + 1;
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Count success',
+            message: 'Lấy số lượng nhóm sinh viên thành công!',
             count: count - 1,
             nameCount: 'Nhóm số ' + count,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.countOfGroupStudent= ~ error:', error);
+        console.log('🚀 ~ exports.countGroupStudents= ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.countGroupStudentsByLecturerId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        const count = await sequelize.query(
+            `SELECT COUNT(gs.id) as total
+            FROM group_students gs
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE gs.term_id = :termId AND lt.lecturer_id = :lecturerId`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId, lecturerId: req.user.id },
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng nhóm sinh viên hướng dẫn thành công!',
+            count: count[0].total,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.countGroupStudentsByLecturerId= ~ error:', error);
         Error.sendError(res, error);
     }
 };
