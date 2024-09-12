@@ -47,70 +47,73 @@ exports.getLecturerNoGroupByType = async (req, res) => {
 
 exports.getGroupLecturers = async (req, res) => {
     try {
-        const { termId, type, limit = 10, page = 1 } = req.query;
-        const offset = (page - 1) * limit;
+        const { termId, type = 'reviewer' } = req.query;
 
-        let groupLecturers = await GroupLecturer.findAll({
-            where: {
-                term_id: termId,
-                ...(type && { type: type.toUpperCase() }), // If type is provided, add it to the where clause
-            },
-            limit: parseInt(limit),
-            offset,
-        });
-
-        if (!type) {
-            groupLecturers = await GroupLecturer.findAll({
-                where: {
-                    term_id: termId,
+        let groupLecturers = await sequelize.query(
+            `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+            FROM group_lecturers gl
+            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE gl.term_id = :termId AND gl.type = :type
+            ORDER BY gl.name ASC`,
+            {
+                replacements: {
+                    termId,
+                    type: type.toUpperCase(),
                 },
-            });
-        }
-
-        const lecturerQuery = `
-            SELECT l.id, l.username, l.full_name AS fullName, l.gender, m.name AS majorName
-            FROM lecturers l
-            JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-            JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id
-            JOIN group_lecturers gl ON glm.group_lecturer_id = gl.id
-            JOIN majors m ON l.major_id = m.id
-            WHERE gl.id = :id;
-        `;
-
-        const result = await Promise.all(
-            groupLecturers.map(async (groupLecturer) => {
-                const members = await sequelize.query(lecturerQuery, {
-                    type: QueryTypes.SELECT,
-                    replacements: { id: groupLecturer.id },
-                });
-
-                return {
-                    groupLecturerId: groupLecturer.id,
-                    name: groupLecturer.name,
-                    type: groupLecturer.type,
-                    members,
-                };
-            }),
+                type: QueryTypes.SELECT,
+            },
         );
 
-        const total = await GroupLecturer.count({
-            where: {
-                term_id: termId,
-                ...(type && { type: type.toUpperCase() }),
-            },
-        });
+        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
+            const group = acc.find((g) => g.id === groupLecturer.id);
+            if (!group) {
+                acc.push({
+                    id: groupLecturer.id,
+                    name: groupLecturer.name,
+                    members: [
+                        {
+                            username: groupLecturer.username,
+                            fullName: groupLecturer.fullName,
+                        },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    username: groupLecturer.username,
+                    fullName: groupLecturer.fullName,
+                });
+            }
+            return acc;
+        }, []);
 
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        const totalAssigns = await sequelize.query(
+            `SELECT gl.id, COUNT(a.group_student_id) as totalAssigns
+            FROM group_lecturers gl
+            INNER JOIN assigns a ON gl.id = a.group_lecturer_id
+            WHERE gl.term_id = :termId AND gl.type = :type`,
+            {
+                replacements: {
+                    termId,
+                    type: type.toUpperCase(),
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        groupLecturers = groupLecturers.map((groupLecturer) => {
+            const totalAssign = totalAssigns.find((assign) => assign.id === groupLecturer.id);
+            return {
+                ...groupLecturer,
+                totalAssigns: totalAssign ? totalAssign.totalAssigns : 0,
+            };
+        });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách nhóm giảng viên thành công!',
-            groupLecturers: result,
-            params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
-                totalPage,
-            },
+            groupLecturers,
         });
     } catch (error) {
         console.log('🚀 ~ getGroupLecturers ~ error:', error);
@@ -187,30 +190,69 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
 exports.getGroupLecturerById = async (req, res) => {
     try {
         const { id } = req.params;
-        const oldGr = await GroupLecturer.findByPk(id);
-        if (!oldGr) {
-            return Error.sendNotFound(res, 'Không có nhóm giảng viên này');
-        }
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.email, l.gender, l.degree, l.is_active as isActive, l.major_id as majoId, m.name as majorName
-        FROM lecturers l JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
-        ON glm.group_lecturer_id = gl.id JOIN majors m ON l.major_id = m.id
-        WHERE gl.id = :id;
-        `;
-        const groupLecturerMembers = await sequelize.query(query, {
-            type: QueryTypes.SELECT,
-            replacements: {
-                id,
+
+        const members = await sequelize.query(
+            `SELECT l.username, l.full_name as fullName, l.degree, m.name as majorName
+            FROM group_lecturers gl
+            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            INNER JOIN majors m ON l.major_id = m.id
+            WHERE gl.id = :id`,
+            {
+                replacements: {
+                    id,
+                },
+                type: QueryTypes.SELECT,
             },
-        });
+        );
+
+        let groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name, t.name as topicName, s.username, s.full_name as fullName
+            FROM group_students gs
+            INNER JOIN assigns a ON gs.id = a.group_student_id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN student_terms st ON gs.id = st.group_student_id
+            INNER JOIN students s ON st.student_id = s.id
+            WHERE a.group_lecturer_id = :id`,
+            {
+                replacements: {
+                    id,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        groupStudents = groupStudents.reduce((acc, groupStudent) => {
+            const group = acc.find((g) => g.id === groupStudent.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupStudent.id,
+                    name: groupStudent.name,
+                    topicName: groupStudent.topicName,
+                    members: [
+                        {
+                            username: groupStudent.username,
+                            fullName: groupStudent.fullName,
+                        },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    username: groupStudent.username,
+                    fullName: groupStudent.fullName,
+                });
+            }
+            return acc;
+        }, []);
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin nhóm giảng viên thành công!',
             groupLecturer: {
-                groupLecturerId: oldGr.id,
-                termId: oldGr.term_id,
-                name: oldGr.name,
-                typeGroup: oldGr.type,
-                members: groupLecturerMembers,
+                members,
+                groupStudents,
             },
         });
     } catch (error) {
@@ -261,6 +303,36 @@ exports.countGroupLecturersByTermId = async (req, res) => {
         });
     } catch (error) {
         console.log('🚀 ~ exports.countLecturerTermsByTermId= ~ error:', error);
+        return Error.sendError(res, error);
+    }
+};
+
+exports.countGroupLecturersByLecturerId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        const count = await sequelize.query(
+            `SELECT COUNT(gl.id) as total
+            FROM group_lecturers gl
+            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
+            {
+                replacements: {
+                    termId,
+                    lecturerId: req.user.id,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy số lượng nhóm giảng viên của giảng viên thành công!',
+            count: count[0].total,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.countGroupLecturersByLecturerId= ~ error:', error);
         return Error.sendError(res, error);
     }
 };

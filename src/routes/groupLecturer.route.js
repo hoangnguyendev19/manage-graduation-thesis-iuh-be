@@ -14,6 +14,7 @@ const {
     getMemberFromGroupLecturer,
     getGroupLecturersByLecturerId,
     countGroupLecturersByTermId,
+    countGroupLecturersByLecturerId,
     searchGroupLecturerByName,
 } = require('../controllers/groupLecturer.controller');
 
@@ -29,6 +30,8 @@ router.get(APP_ROUTER.GROUP_LECTURER_BY_LECTURER, protectLecturer, getGroupLectu
 router.get(APP_ROUTER.GROUP_LECTURER_MEMBER, getMemberFromGroupLecturer);
 
 router.get(APP_ROUTER.COUNT, countGroupLecturersByTermId);
+
+router.get(APP_ROUTER.COUNT_BY_LECTURER, protectLecturer, countGroupLecturersByLecturerId);
 
 router.get(APP_ROUTER.SEARCH, searchGroupLecturerByName);
 

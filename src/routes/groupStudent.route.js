@@ -9,7 +9,6 @@ const {
     getGroupStudentById,
     getGroupStudentMembers,
     getGroupStudentOfSearch,
-    getMembersById,
     getGroupStudentsByTermId,
     getMyGroupStudent,
     createGroupStudent,
@@ -25,7 +24,8 @@ const {
     deleteGroupStudent,
     chooseTopic,
     cancelTopic,
-    countOfGroupStudent,
+    countGroupStudents,
+    countGroupStudentsByLecturerId,
     searchGroupStudentByName,
     exportGroupStudent,
 } = require('../controllers/groupStudent.controller');
@@ -46,11 +46,11 @@ router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, getGroupStudentMembers);
 
 router.get(APP_ROUTER.QUERY, getGroupStudentOfSearch);
 
-router.get(APP_ROUTER.COUNT, countOfGroupStudent);
+router.get(APP_ROUTER.COUNT, countGroupStudents);
+
+router.get(APP_ROUTER.COUNT_BY_LECTURER, protectLecturer, countGroupStudentsByLecturerId);
 
 router.get(APP_ROUTER.SEARCH, searchGroupStudentByName);
-
-router.get(APP_ROUTER.MEMBER, getMembersById);
 
 router.post(
     APP_ROUTER.IMPORT,

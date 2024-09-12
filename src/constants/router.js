@@ -4,6 +4,7 @@ const APP_ROUTER = {
     QUERY: '/query',
     LIST: '/list',
     COUNT: '/count',
+    COUNT_BY_LECTURER: '/count-by-lecturer',
     ID: '/:id',
     LOGIN: '/login',
     REGISTER: '/register',
@@ -17,7 +18,6 @@ const APP_ROUTER = {
     FORGOT_PASSWORD: '/forgot-password',
     LOCK: '/lock',
     UNLOCK: '/unlock',
-    MEMBER: '/:id/member',
     SEARCH: '/search',
     EXPORT: '/export',
 
@@ -72,7 +72,6 @@ const APP_ROUTER = {
     TOPIC_QUANTITY_GROUP_MAX: '/quantity-group-max',
     TOPIC_BY_GROUP_LECTURER: '/group-lecturer/:id',
     TOPIC_BY_LECTURER: '/lecturer/:lecturerId',
-    TOPIC_COUNT_BY_LECTURER: '/count-by-lecturer',
 
     //GROUP_LECTURERS
     GROUP_LECTURER: '/api/v1/group-lecturers',

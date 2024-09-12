@@ -323,14 +323,17 @@ exports.countTopicsByTermId = async (req, res) => {
 
 exports.countTopicsByLecturerId = async (req, res) => {
     try {
+        const { termId } = req.query;
+
         const countRegisteredTopics = await sequelize.query(
             `SELECT COUNT(t.id) as count
             FROM topics t
             INNER JOIN group_students gs ON t.id = gs.topic_id
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            WHERE lt.lecturer_id = :lecturerId`,
+            WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
             {
                 replacements: {
+                    termId: termId,
                     lecturerId: req.user.id,
                 },
                 type: QueryTypes.SELECT,
@@ -341,9 +344,10 @@ exports.countTopicsByLecturerId = async (req, res) => {
             `SELECT COUNT(t.id) as count
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-            WHERE lt.lecturer_id = :lecturerId AND t.status = 'APPROVED'`,
+            WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND t.status = 'APPROVED'`,
             {
                 replacements: {
+                    termId: termId,
                     lecturerId: req.user.id,
                 },
                 type: QueryTypes.SELECT,
@@ -352,7 +356,7 @@ exports.countTopicsByLecturerId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lấy số lượng đề tài của giảng viên thành công!',
+            message: 'Lấy số lượng đề tài của giảng viên học kỳ thành công!',
             countRegisteredTopics: countRegisteredTopics[0].count,
             countApprovedTopics: countApprovedTopics[0].count,
         });
