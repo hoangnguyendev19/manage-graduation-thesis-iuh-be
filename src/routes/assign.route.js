@@ -4,7 +4,9 @@ const {
     getAssigns,
     exportAssigns,
     getAssignByType,
-    createAssignByType,
+    createAssign,
+    updateAssign,
+    deleteAssign,
     getAssignById,
     getAssignByLecturerId,
     getGroupStudentNoAssign,
@@ -21,10 +23,24 @@ router.get(APP_ROUTER.ASSIGN_BY_TYPE_AND_LECTURER_ID, getAssignByLecturerId);
 router.get(APP_ROUTER.GROUP_STUDENT_NO_ASSIGN_BY_TYPE, getGroupStudentNoAssign);
 
 router.post(
-    APP_ROUTER.ASSIGN_BY_TYPE,
+    APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
-    createAssignByType,
+    createAssign,
+);
+
+router.put(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    updateAssign,
+);
+
+router.delete(
+    APP_ROUTER.ID + APP_ROUTER.ASSIGN_BY_TYPE,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    deleteAssign,
 );
 
 router.get(
