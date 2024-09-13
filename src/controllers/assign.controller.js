@@ -4,6 +4,7 @@ const {
     LecturerTerm,
     GroupLecturerMember,
     Term,
+    GroupStudent,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
@@ -40,10 +41,10 @@ exports.getAssigns = async (req, res) => {
 
 exports.exportAssigns = async (req, res) => {
     try {
-        const { termId } = req.query;
+        const { termId, type } = req.query;
 
         if (!termId) {
-            return Error.sendBadRequest(res, 'Thiếu thông tin học kỳ!');
+            return Error.sendWarning(res, 'Thiếu thông tin học kỳ!');
         }
 
         const term = await Term.findByPk(termId);
@@ -51,23 +52,44 @@ exports.exportAssigns = async (req, res) => {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
+        let assigns = [];
+
         // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV, Ghi chú
-        let assigns = await sequelize.query(
-            `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
-            FROM assigns a
-            INNER JOIN group_students gs ON a.group_student_id = gs.id
-            INNER JOIN student_terms st ON st.group_student_id = gs.id
-            INNER JOIN students s ON st.student_id = s.id
-            INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
-            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
-            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
-            INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            WHERE lt.term_id = :termId`,
-            {
-                replacements: { termId },
-                type: QueryTypes.SELECT,
-            },
-        );
+        if (type === 'reviewer') {
+            assigns = await sequelize.query(
+                `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
+                FROM assigns a
+                INNER JOIN group_students gs ON a.group_student_id = gs.id
+                INNER JOIN student_terms st ON st.group_student_id = gs.id
+                INNER JOIN students s ON st.student_id = s.id
+                INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE lt.term_id = :termId AND a.type = 'REVIEWER'`,
+                {
+                    replacements: { termId },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        } else if (type === 'report') {
+            assigns = await sequelize.query(
+                `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
+                FROM assigns a
+                INNER JOIN group_students gs ON a.group_student_id = gs.id
+                INNER JOIN student_terms st ON st.group_student_id = gs.id
+                INNER JOIN students s ON st.student_id = s.id
+                INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE lt.term_id = :termId AND NOT a.type = 'REVIEWER'`,
+                {
+                    replacements: { termId },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        }
 
         for (let i = 0; i < assigns.length; i++) {
             assigns[i]['STT'] = i + 1;
@@ -131,58 +153,161 @@ exports.getAssignByType = async (req, res) => {
     }
 };
 
-exports.createAssignByType = async (req, res) => {
+exports.createAssign = async (req, res) => {
     try {
-        const { type } = req.params;
-        const { groupLecturerId, listGroupStudentId } = req.body;
+        const { groupLecturerId, listGroupStudentId, type } = req.body;
 
-        const isExistAssign = await isExitGroupLecturerAndGroupStudent(type, listGroupStudentId);
-
-        if (isExistAssign) {
-            return Error.sendConflict(res, 'Nhóm sinh viên đã được phân công chấm điểm');
-        }
-        if (type === 'reviewer' || type === 'report_poster' || type === 'report_council') {
-            const isExistLecturerSupport = await isExistLecturerSupportInGroupLecturer(
-                groupLecturerId,
-                listGroupStudentId,
-            );
-
-            if (isExistLecturerSupport) {
-                return Error.sendConflict(
-                    res,
-                    `Giảng viên hướng dẫn Đề tài không được phân ${checkTypeGroup(
-                        type.toUpperCase(),
-                    )}`,
-                );
-            }
-        }
-        const currentGroupLecturer = await GroupLecturer.findByPk(groupLecturerId, {
+        const groupLecturer = await GroupLecturer.findByPk(groupLecturerId, {
             attributes: ['id', 'name'],
         });
 
-        if (!currentGroupLecturer) {
+        if (!groupLecturer) {
             return Error.sendNotFound(res, 'Không tồn tại nhóm giảng viên này');
         }
 
-        listGroupStudentId.map(async (groupStudentId) => {
+        for (let i = 0; i < listGroupStudentId.length; i++) {
+            const isExistAssign = await Assign.findOne({
+                where: {
+                    type: type.toUpperCase(),
+                    group_student_id: listGroupStudentId[i],
+                },
+            });
+
+            const groupStudent = await GroupStudent.findByPk(listGroupStudentId[i], {
+                attributes: ['id', 'name'],
+            });
+
+            if (isExistAssign) {
+                return Error.sendConflict(
+                    res,
+                    `Nhóm sinh viên ${groupStudent.name} đã được phân công chấm điểm`,
+                );
+            }
+
+            const isExistLecturerSupportInGroupLecturer = await sequelize.query(
+                `SELECT l.full_name as fullName 
+                FROM group_lecturer_members glm
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN topics t ON lt.id = t.lecturer_term_id
+                INNER JOIN group_students gs ON t.id = gs.topic_id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE glm.group_lecturer_id = :groupLecturerId AND gs.id = :groupStudentId`,
+                {
+                    replacements: {
+                        groupLecturerId,
+                        groupStudentId: listGroupStudentId[i],
+                    },
+                    type: QueryTypes.SELECT,
+                },
+            );
+
+            if (isExistLecturerSupportInGroupLecturer.length > 0) {
+                return Error.sendConflict(
+                    res,
+                    `Giảng viên ${
+                        isExistLecturerSupportInGroupLecturer[0].fullName
+                    } là giảng viên hướng dẫn của Nhóm sinh viên ${
+                        groupStudent.name
+                    } nên không được phân ${checkTypeGroup(type.toUpperCase())}`,
+                );
+            }
+
             await Assign.create({
                 group_lecturer_id: groupLecturerId,
+                group_student_id: listGroupStudentId[i],
                 type: type.toUpperCase(),
-                group_student_id: groupStudentId,
             });
-        });
+        }
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: `Phân ${currentGroupLecturer.name} chấm điểm nhóm sinh viên thành công`,
+            message: `Phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công`,
         });
     } catch (error) {
         Error.sendError(res, error);
     }
 };
 
-exports.updateAssignByType = async () => {};
-exports.deleteAssign = async () => {};
+exports.updateAssign = async (req, res) => {
+    try {
+        const { groupLecturerId, listGroupStudentId, type } = req.body;
+
+        const groupLecturer = await GroupLecturer.findByPk(groupLecturerId, {
+            attributes: ['id', 'name'],
+        });
+
+        if (!groupLecturer) {
+            return Error.sendNotFound(res, 'Không tồn tại nhóm giảng viên này');
+        }
+
+        const assigns = await Assign.findAll({
+            where: {
+                group_lecturer_id: groupLecturerId,
+                type: type.toUpperCase(),
+            },
+        });
+
+        for (let i = 0; i < assigns.length; i++) {
+            if (!listGroupStudentId.includes(assigns[i].group_student_id)) {
+                await assigns[i].destroy();
+            } else {
+                listGroupStudentId.splice(
+                    listGroupStudentId.indexOf(assigns[i].group_student_id),
+                    1,
+                );
+            }
+        }
+
+        if (listGroupStudentId.length > 0) {
+            for (let i = 0; i < listGroupStudentId.length; i++) {
+                await Assign.create({
+                    group_lecturer_id: groupLecturerId,
+                    group_student_id: listGroupStudentId[i],
+                    type: type.toUpperCase(),
+                });
+            }
+        }
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: `Cập nhật phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công`,
+        });
+    } catch (error) {
+        Error.sendError(res, error);
+    }
+};
+
+exports.deleteAssign = async (req, res) => {
+    try {
+        const { id, type } = req.params;
+
+        const groupLecturer = await GroupLecturer.findByPk(id, {
+            attributes: ['id', 'name'],
+        });
+
+        if (!groupLecturer) {
+            return Error.sendNotFound(res, 'Không tồn tại nhóm giảng viên này');
+        }
+
+        const assigns = await Assign.findAll({
+            where: {
+                group_lecturer_id: id,
+                type: type.toUpperCase(),
+            },
+        });
+
+        for (let i = 0; i < assigns.length; i++) {
+            await assigns[i].destroy();
+        }
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: `Xóa phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công`,
+        });
+    } catch (error) {
+        Error.sendError(res, error);
+    }
+};
 
 exports.getAssignByLecturerId = async (req, res) => {
     try {
@@ -256,46 +381,4 @@ exports.getGroupStudentNoAssign = async (req, res) => {
     } catch (error) {
         Error.sendError(res, error);
     }
-};
-
-const isExistLecturerSupportInGroupLecturer = async (groupLecturerId, listGroupStudentId) => {
-    const query =
-        'select t.lecturer_term_id as id from topics t inner join group_students gt on t.id = gt.topic_id where gt.id = :groupStudentId ';
-
-    const membersOfGroup = await GroupLecturerMember.findAll({
-        where: { group_lecturer_id: groupLecturerId },
-    });
-
-    let isExistLecturerSupportInGroup;
-    for (i = 0; i < listGroupStudentId.length; i++) {
-        let lecturerSupport = await sequelize.query(query, {
-            replacements: {
-                groupStudentId: `${listGroupStudentId[i]}`,
-            },
-            type: QueryTypes.SELECT,
-        });
-
-        isExistLecturerSupportInGroup =
-            membersOfGroup
-                .map((x) => x.lecturer_term_id)
-                .filter((id) => id === lecturerSupport[0].id).length > 0;
-
-        if (isExistLecturerSupportInGroup) break;
-    }
-    return isExistLecturerSupportInGroup;
-};
-
-const isExitGroupLecturerAndGroupStudent = async (type, listGroupStudentId) => {
-    let flag = false;
-    for (let i = 0; i < listGroupStudentId.length; i++) {
-        const oldAssign = await Assign.findOne({
-            where: {
-                type: type.toUpperCase(),
-                group_student_id: listGroupStudentId[i],
-            },
-        });
-        flag = oldAssign ? true : false;
-        if (flag) break;
-    }
-    return flag === true;
 };
