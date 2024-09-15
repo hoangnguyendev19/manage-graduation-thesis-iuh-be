@@ -9,7 +9,6 @@ const {
     getGroupStudentById,
     getGroupStudentMembers,
     getGroupStudentOfSearch,
-    getMembersById,
     getGroupStudentsByTermId,
     getMyGroupStudent,
     createGroupStudent,
@@ -52,8 +51,6 @@ router.get(APP_ROUTER.COUNT, countGroupStudents);
 router.get(APP_ROUTER.COUNT_BY_LECTURER, protectLecturer, countGroupStudentsByLecturerId);
 
 router.get(APP_ROUTER.SEARCH, searchGroupStudentByName);
-
-router.get(APP_ROUTER.MEMBER, getMembersById);
 
 router.post(
     APP_ROUTER.IMPORT,
