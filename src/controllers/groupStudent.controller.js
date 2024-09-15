@@ -324,6 +324,52 @@ exports.getGroupStudentById = async (req, res) => {
     }
 };
 
+exports.getMembersById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        let members = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+            attributes: ['id', 'status', 'isAdmin'],
+            include: {
+                model: Student,
+                attributes: ['id', 'username', 'fullName', 'clazzName'],
+                as: 'student',
+            },
+        });
+
+        const membersWithTranscripts = await Promise.all(
+            members.map(async (member) => {
+                const transcripts = await sequelize.query(
+                    `SELECT e.type, SUM(score) as sumScore FROM transcripts t
+                    LEFT JOIN evaluations e ON t.evaluation_id = e.id
+                    WHERE student_term_id = :studentTermId
+                    GROUP BY e.type`,
+                    {
+                        type: QueryTypes.SELECT,
+                        replacements: { studentTermId: member.id },
+                    },
+                );
+
+                return {
+                    ...member.toJSON(),
+                    transcripts,
+                };
+            }),
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            message: 'Lấy danh sách thành viên nhóm sinh viên thành công!',
+            members: membersWithTranscripts,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getGroupStudentMembers = async (req, res) => {
     try {
         const { id } = req.params;
