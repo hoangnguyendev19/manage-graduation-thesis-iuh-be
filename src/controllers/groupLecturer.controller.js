@@ -217,10 +217,12 @@ exports.getGroupLecturerById = async (req, res) => {
         );
 
         let groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, t.name as topicName, s.username, s.full_name as fullName
+            `SELECT gs.id, gs.name, t.name as topicName, lt.id as lecturerTermId, l.full_name as lecturerName, s.username, s.full_name as fullName
             FROM group_students gs
             INNER JOIN assigns a ON gs.id = a.group_student_id
             INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
             INNER JOIN student_terms st ON gs.id = st.group_student_id
             INNER JOIN students s ON st.student_id = s.id
             WHERE a.group_lecturer_id = :id`,
@@ -240,6 +242,8 @@ exports.getGroupLecturerById = async (req, res) => {
                     id: groupStudent.id,
                     name: groupStudent.name,
                     topicName: groupStudent.topicName,
+                    lecturerTermId: groupStudent.lecturerTermId,
+                    lecturerName: groupStudent.lecturerName,
                     members: [
                         {
                             username: groupStudent.username,
