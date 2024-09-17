@@ -200,6 +200,10 @@ exports.getGroupLecturerById = async (req, res) => {
     try {
         const { id } = req.params;
 
+        const groupLecturerName = await GroupLecturer.findByPk(id, {
+            attributes: ['name'],
+        });
+
         const members = await sequelize.query(
             `SELECT l.id, l.username, l.full_name as fullName, l.degree, m.name as majorName
             FROM group_lecturers gl
@@ -264,6 +268,7 @@ exports.getGroupLecturerById = async (req, res) => {
             success: true,
             message: 'Lấy thông tin nhóm giảng viên thành công!',
             groupLecturer: {
+                name: groupLecturerName.name,
                 members,
                 groupStudents,
             },
@@ -476,7 +481,7 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
         const groupLecturer = await GroupLecturer.findByPk(id);
 
         if (!groupLecturer) {
-            return Error.sendNotFound(res, 'Nhóm giảng viên không hợp lệ');
+            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
         }
 
         const lecturerTerm = await LecturerTerm.findOne({
@@ -485,9 +490,11 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
                 term_id: groupLecturer.term_id,
             },
         });
+
         if (!lecturerTerm) {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kì này');
         }
+
         const member = await GroupLecturerMember.findOne({
             where: {
                 group_lecturer_id: id,
@@ -496,6 +503,16 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
         });
 
         await member.destroy();
+
+        const groupLecturerMembers = await GroupLecturerMember.findAll({
+            where: {
+                group_lecturer_id: id,
+            },
+        });
+
+        if (groupLecturerMembers.length === 0) {
+            await groupLecturer.destroy();
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
