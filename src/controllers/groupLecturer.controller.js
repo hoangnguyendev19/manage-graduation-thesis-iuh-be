@@ -1,4 +1,4 @@
-const { GroupLecturer, LecturerTerm, GroupLecturerMember } = require('../models/index');
+const { GroupLecturer, LecturerTerm, GroupLecturerMember, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
@@ -365,8 +365,38 @@ exports.createGroupLecturerByType = async (req, res) => {
             return Error.sendWarning(res, errors.array()[0].msg);
         }
 
-        const countGr = (await GroupLecturer.count()) + 1;
-        const name = checkTypeGroup(type.toUpperCase()) + ' ' + countGr;
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        const lecIds = await sequelize.query(
+            `SELECT lt.lecturer_id as id FROM group_lecturers gl
+             INNER JOIN group_lecturer_members glm ON glm.group_lecturer_id = gl.id
+             INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id 
+             WHERE lt.term_id = :termId AND type = :type`,
+            {
+                replacements: {
+                    termId,
+                    type: type.toUpperCase(),
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const isExist = lecIds.reduce((acc, lecId) => {
+            if (lecturers.includes(lecId.id)) {
+                acc.push(lecId.id);
+            }
+            return acc;
+        }, []);
+
+        if (isExist.length === lecturers.length) {
+            return Error.sendConflict(res, 'Nhóm giảng viên này đã được tạo với loại nhóm này');
+        }
+
+        const countGr = await GroupLecturer.count();
+        const name = `${checkTypeGroup(type.toUpperCase())} ${countGr + 1}`;
 
         const groupLecturer = await GroupLecturer.create({
             name: name,
@@ -374,7 +404,7 @@ exports.createGroupLecturerByType = async (req, res) => {
             type: type.toUpperCase(),
         });
 
-        lecturers.forEach(async (lecId) => {
+        const lecturerPromises = lecturers.map(async (lecId) => {
             const lecturerTerm = await LecturerTerm.findOne({
                 where: {
                     lecturer_id: lecId,
@@ -382,11 +412,15 @@ exports.createGroupLecturerByType = async (req, res) => {
                 },
             });
 
-            GroupLecturerMember.create({
-                group_lecturer_id: groupLecturer.id,
-                lecturer_term_id: lecturerTerm.id,
-            });
+            if (lecturerTerm) {
+                await GroupLecturerMember.create({
+                    group_lecturer_id: groupLecturer.id,
+                    lecturer_term_id: lecturerTerm.id,
+                });
+            }
         });
+
+        await Promise.all(lecturerPromises);
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
@@ -394,19 +428,22 @@ exports.createGroupLecturerByType = async (req, res) => {
             groupLecturer,
         });
     } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
+        console.error(error);
+        return Error.sendError(res, error);
     }
 };
 
 exports.updateGroupLecturer = async (req, res) => {
     try {
         const { id } = req.params;
+
         const groupLecturer = await GroupLecturer.findByPk(id);
         if (!groupLecturer) {
             return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
         }
+
         await groupLecturer.update(req.body);
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Cập nhật nhóm giảng viên thành công',
@@ -421,11 +458,14 @@ exports.updateGroupLecturer = async (req, res) => {
 exports.deleteGroupLecturer = async (req, res) => {
     try {
         const { id } = req.params;
+
         const groupLecturer = await GroupLecturer.findByPk(id);
         if (!groupLecturer) {
             return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
         }
+
         await groupLecturer.destroy();
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Xoá nhóm giảng viên thành công!',
