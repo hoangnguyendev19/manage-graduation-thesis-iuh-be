@@ -54,10 +54,10 @@ exports.exportAssigns = async (req, res) => {
 
         let assigns = [];
 
-        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV, Ghi chú
+        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV1, HD TV2, Thư ký, Ghi chú
         if (type === 'reviewer') {
             assigns = await sequelize.query(
-                `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
+                `SELECT gs.id, gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
                 FROM assigns a
                 INNER JOIN group_students gs ON a.group_student_id = gs.id
                 INNER JOIN student_terms st ON st.group_student_id = gs.id
@@ -66,7 +66,8 @@ exports.exportAssigns = async (req, res) => {
                 INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE lt.term_id = :termId AND a.type = 'REVIEWER'`,
+                WHERE lt.term_id = :termId AND a.type = 'REVIEWER'
+                GROUP BY gs.name, s.username, s.full_name, gl.name, a.type`,
                 {
                     replacements: { termId },
                     type: QueryTypes.SELECT,
@@ -74,7 +75,7 @@ exports.exportAssigns = async (req, res) => {
             );
         } else if (type === 'report') {
             assigns = await sequelize.query(
-                `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', gl.name as '#HĐPB', l.full_name as 'HD TV', a.type as 'Ghi chú'
+                `SELECT gs.id, gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
                 FROM assigns a
                 INNER JOIN group_students gs ON a.group_student_id = gs.id
                 INNER JOIN student_terms st ON st.group_student_id = gs.id
@@ -83,7 +84,8 @@ exports.exportAssigns = async (req, res) => {
                 INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE lt.term_id = :termId AND NOT a.type = 'REVIEWER'`,
+                WHERE lt.term_id = :termId AND NOT a.type = 'REVIEWER'
+                GROUP BY gs.name, s.username, s.full_name, gl.name, a.type`,
                 {
                     replacements: { termId },
                     type: QueryTypes.SELECT,
@@ -101,6 +103,25 @@ exports.exportAssigns = async (req, res) => {
             } else if (assigns[i]['Ghi chú'] === 'REPORT_COUNCIL') {
                 assigns[i]['Ghi chú'] = 'Hội đồng báo cáo';
             }
+
+            const lecturerSupport = await sequelize.query(
+                `SELECT l.full_name as fullName 
+                FROM group_students gs
+                INNER JOIN topics t ON gs.topic_id = t.id
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gs.id = :groupStudentId`,
+                {
+                    replacements: { groupStudentId: assigns[i].id },
+                    type: QueryTypes.SELECT,
+                },
+            );
+
+            assigns[i]['GVHD'] = lecturerSupport[0].fullName;
+
+            delete assigns[i].id;
+
+            assigns[i]['HD TV'] = assigns[i]['HD TV'].split(', ');
         }
 
         res.status(HTTP_STATUS.OK).json({
@@ -158,11 +179,20 @@ exports.createAssign = async (req, res) => {
         const { groupLecturerId, listGroupStudentId, type } = req.body;
 
         const groupLecturer = await GroupLecturer.findByPk(groupLecturerId, {
-            attributes: ['id', 'name'],
+            attributes: ['id', 'name', 'type'],
         });
 
         if (!groupLecturer) {
             return Error.sendNotFound(res, 'Không tồn tại nhóm giảng viên này');
+        }
+
+        if (groupLecturer.type !== type.toUpperCase()) {
+            return Error.sendConflict(
+                res,
+                `Nhóm giảng viên ${groupLecturer.name} không phải là ${checkTypeGroup(
+                    type.toUpperCase(),
+                )}`,
+            );
         }
 
         for (let i = 0; i < listGroupStudentId.length; i++) {
