@@ -27,6 +27,7 @@ router.get(
     protectLecturer,
     getTranscriptGroupStudentByLecturerSupport,
 );
+
 router.get(
     APP_ROUTER.TRANSCRIPT_GROUP_STUDENT_TO_SCORING,
     protectLecturer,
