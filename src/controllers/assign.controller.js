@@ -67,7 +67,7 @@ exports.exportAssigns = async (req, res) => {
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
                 WHERE lt.term_id = :termId AND a.type = 'REVIEWER'
-                GROUP BY gs.name, s.username, s.full_name, gl.name, a.type`,
+                GROUP BY gs.id, gs.name, s.username, s.full_name, gl.name, a.type`,
                 {
                     replacements: { termId },
                     type: QueryTypes.SELECT,
@@ -85,7 +85,7 @@ exports.exportAssigns = async (req, res) => {
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
                 WHERE lt.term_id = :termId AND NOT a.type = 'REVIEWER'
-                GROUP BY gs.name, s.username, s.full_name, gl.name, a.type`,
+                GROUP BY gs.id, gs.name, s.username, s.full_name, gl.name, a.type`,
                 {
                     replacements: { termId },
                     type: QueryTypes.SELECT,
