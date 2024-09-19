@@ -42,7 +42,6 @@ const APP_ROUTER = {
     //STUDENTS
     STUDENT: '/api/v1/students',
     STUDENT_STATUS: '/:id/status',
-    // STUDENT_EXPORT: '/export-transcript',
     STUDENTS_NO_HAVE_GROUP: '/no-have-group',
 
     //TERMS

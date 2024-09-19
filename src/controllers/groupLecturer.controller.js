@@ -371,11 +371,12 @@ exports.createGroupLecturerByType = async (req, res) => {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
+        // Get existing lecturer IDs for this term and group type
         const lecIds = await sequelize.query(
             `SELECT lt.lecturer_id as id FROM group_lecturers gl
              INNER JOIN group_lecturer_members glm ON glm.group_lecturer_id = gl.id
              INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id 
-             WHERE lt.term_id = :termId AND type = :type`,
+             WHERE lt.term_id = :termId AND gl.type = :type`,
             {
                 replacements: {
                     termId,
@@ -385,22 +386,19 @@ exports.createGroupLecturerByType = async (req, res) => {
             },
         );
 
-        const isExist = lecIds.reduce((acc, lecId) => {
-            if (lecturers.includes(lecId.id)) {
-                acc.push(lecId.id);
-            }
-            return acc;
-        }, []);
+        // Check if any lecturers already exist in the group
+        const existingLecturers = lecIds.map((lecId) => lecId.id);
+        const isExist = lecturers.filter((lecId) => existingLecturers.includes(lecId));
 
         if (isExist.length === lecturers.length) {
             return Error.sendConflict(res, 'Nhóm giảng viên này đã được tạo với loại nhóm này');
         }
 
         const countGr = await GroupLecturer.count();
-        const name = `${checkTypeGroup(type.toUpperCase())} ${countGr + 1}`;
+        const groupName = `${checkTypeGroup(type.toUpperCase())} ${countGr + 1}`;
 
         const groupLecturer = await GroupLecturer.create({
-            name: name,
+            name: groupName,
             term_id: termId,
             type: type.toUpperCase(),
         });
@@ -423,14 +421,14 @@ exports.createGroupLecturerByType = async (req, res) => {
 
         await Promise.all(lecturerPromises);
 
-        res.status(HTTP_STATUS.CREATED).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Tạo nhóm giảng viên mới thành công',
             groupLecturer,
         });
     } catch (error) {
-        console.error(error);
-        return Error.sendError(res, error);
+        console.error('Error:', error);
+        return Error.sendError(res, 'Lỗi khi tạo nhóm giảng viên');
     }
 };
 

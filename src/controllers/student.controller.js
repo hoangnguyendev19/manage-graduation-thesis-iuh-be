@@ -830,10 +830,24 @@ exports.getStudentsNoHaveGroup = async (req, res) => {
 
 exports.countStudentsByTermId = async (req, res) => {
     try {
-        const { termId } = req.query;
-        const count = await StudentTerm.count({
-            where: { term_id: termId },
-        });
+        const { termId, status = '' } = req.query;
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        let count = 0;
+
+        if (!status) {
+            count = await StudentTerm.count({
+                where: { term_id: termId },
+            });
+        } else {
+            count = await StudentTerm.count({
+                where: { term_id: termId, status: status.toUpperCase() },
+            });
+        }
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
