@@ -138,7 +138,7 @@ exports.getGroupLecturers = async (req, res) => {
 
 exports.getGroupLecturerByTypeEvaluation = async (req, res) => {
     try {
-        const { termId, type = 'reviewer' } = req.query;
+        const { termId, type = 'REVIEWER' } = req.query;
 
         // check if term exists
         const term = await Term.findByPk(termId);
@@ -148,7 +148,7 @@ exports.getGroupLecturerByTypeEvaluation = async (req, res) => {
 
         let groupLecturers = [];
 
-        if (type === 'reviewer') {
+        if (type === 'REVIEWER') {
             groupLecturers = await sequelize.query(
                 `SELECT gl.id, gl.name, l.username, l.full_name as fullName
                 FROM group_lecturers gl
@@ -164,7 +164,7 @@ exports.getGroupLecturerByTypeEvaluation = async (req, res) => {
                     type: QueryTypes.SELECT,
                 },
             );
-        } else if (type === 'report') {
+        } else if (type === 'REPORT') {
             groupLecturers = await sequelize.query(
                 `SELECT gl.id, gl.name, l.username, l.full_name as fullName
                 FROM group_lecturers gl
