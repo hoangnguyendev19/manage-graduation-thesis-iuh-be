@@ -4,6 +4,7 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     getGroupLecturers,
+    getGroupLecturerByTypeEvaluation,
     getGroupLecturerById,
     updateGroupLecturer,
     deleteGroupLecturer,
@@ -26,6 +27,8 @@ const router = express.Router();
 router.get(APP_ROUTER.GROUP_LECTURER_NO_GROUP, getLecturerNoGroupByType);
 
 router.get(APP_ROUTER.GROUP_LECTURER_BY_LECTURER, protectLecturer, getGroupLecturersByLecturerId);
+
+router.get(APP_ROUTER.GROUP_LECTURER_EVALUATION, getGroupLecturerByTypeEvaluation);
 
 router.get(APP_ROUTER.GROUP_LECTURER_MEMBER, getMemberFromGroupLecturer);
 
