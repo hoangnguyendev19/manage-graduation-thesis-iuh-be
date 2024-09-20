@@ -1,4 +1,11 @@
-const { Transcript, StudentTerm, LecturerTerm, Evaluation, Term } = require('../models/index');
+const {
+    Transcript,
+    StudentTerm,
+    LecturerTerm,
+    Evaluation,
+    Term,
+    GroupLecturerMember,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
@@ -483,6 +490,85 @@ exports.getTranscriptGroupStudentByLecturerSupport = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
+        return Error.sendError(res, error);
+    }
+};
+
+exports.unTranscriptStudentsByType = async (req, res) => {
+    try {
+        const { type = 'ADVISOR' } = req.params;
+        const { termId } = req.query;
+
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: req.user.id,
+                term_id: termId,
+            },
+            attributes: ['id'],
+        });
+
+        let query = '';
+        let groupStudents;
+
+        if (type === 'ADVISOR') {
+            query = `
+                select gr.id as id,
+                gr.name as name,
+                gr.topic_id as topicId,
+                t.name as topicName
+                from group_students gr 
+                join topics t on gr.topic_id = t.id 
+                where t.lecturer_term_id = :lecturerTermId`;
+            groupStudents = await sequelize.query(query, {
+                replacements: {
+                    lecturerTermId: lecturerTerm.id,
+                },
+                type: sequelize.QueryTypes.SELECT,
+            });
+        } else {
+            const groupLecturers = await GroupLecturerMember.findAll({
+                where: {
+                    lecturer_term_id: lecturerTerm.id,
+                },
+                attributes: ['group_lecturer_id'],
+            });
+
+            const myIn = groupLecturers.map((mem) => `'${mem.group_lecturer_id}'`);
+            if (myIn.length < 1) {
+                return res.status(HTTP_STATUS.OK).json({
+                    success: true,
+                    message: 'Lấy danh sách sinh viên thành công',
+                    groupStudents: [],
+                    totalRows: 0,
+                });
+            }
+
+            const inGroupLecturerQuery = `where ass.group_lecturer_id in (${myIn.join(',')})`;
+            query = `select gr.topic_id as topicId, gr.name as name, gr.id as id, t.name as topicName 
+                        from group_students gr
+                        join topics t
+                        on gr.topic_id  = t.id
+                        join assigns ass
+                        on gr.id  = ass.group_student_id
+                        ${inGroupLecturerQuery}
+                        and ass.type = :type
+                        `;
+            groupStudents = await sequelize.query(query, {
+                replacements: {
+                    type: type,
+                },
+                type: sequelize.QueryTypes.SELECT,
+            });
+        }
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách nhóm sinh viên thành công',
+            groupStudents,
+            totalRows: groupStudents.length,
+        });
+    } catch (error) {
+        Error.sendError(res, error);
         return Error.sendError(res, error);
     }
 };

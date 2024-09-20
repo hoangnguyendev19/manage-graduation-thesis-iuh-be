@@ -62,6 +62,7 @@ const APP_ROUTER = {
     TRANSCRIPT_GROUP_STUDENT_TO_SCORING: '/lecturer-supports/group-student-to-scoring',
     TRANSCRIPT_BY_STUDENT: '/student',
     TRANSCRIPT_BY_GROUP_STUDENT: '/group-student',
+    LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER: '/scoring/:type/listStudentsNoTranscript',
 
     //TOPICS
     TOPIC: '/api/v1/topics',
