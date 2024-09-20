@@ -49,6 +49,12 @@ exports.getGroupLecturers = async (req, res) => {
     try {
         const { termId, type = 'reviewer' } = req.query;
 
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
         let groupLecturers = await sequelize.query(
             `SELECT gl.id, gl.name, l.username, l.full_name as fullName
             FROM group_lecturers gl
@@ -126,6 +132,87 @@ exports.getGroupLecturers = async (req, res) => {
         });
     } catch (error) {
         console.log('🚀 ~ getGroupLecturers ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getGroupLecturerByTypeEvaluation = async (req, res) => {
+    try {
+        const { termId, type = 'reviewer' } = req.query;
+
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        let groupLecturers = [];
+
+        if (type === 'reviewer') {
+            groupLecturers = await sequelize.query(
+                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+                FROM group_lecturers gl
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gl.term_id = :termId AND gl.type = 'REVIEWER'
+                ORDER BY gl.name ASC`,
+                {
+                    replacements: {
+                        termId,
+                    },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        } else if (type === 'report') {
+            groupLecturers = await sequelize.query(
+                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+                FROM group_lecturers gl
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gl.term_id = :termId AND NOT gl.type = 'REVIEWER'
+                ORDER BY gl.name ASC`,
+                {
+                    replacements: {
+                        termId,
+                    },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        }
+
+        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
+            const group = acc.find((g) => g.id === groupLecturer.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupLecturer.id,
+                    name: groupLecturer.name,
+                    members: [
+                        {
+                            username: groupLecturer.username,
+                            fullName: groupLecturer.fullName,
+                        },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    username: groupLecturer.username,
+                    fullName: groupLecturer.fullName,
+                });
+            }
+
+            return acc;
+        }, []);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách nhóm giảng viên thành công!',
+            groupLecturers,
+        });
+    } catch (error) {
+        console.log(error);
         Error.sendError(res, error);
     }
 };
