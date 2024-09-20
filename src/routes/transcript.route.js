@@ -9,6 +9,7 @@ const {
     getTranscriptByStudent,
     createTranscriptList,
     updateTranscriptList,
+    unTranscriptStudentsByType,
     getTranscriptGroupStudentByLecturerSupport,
     getGroupStudentMemberToScoring,
 } = require('../controllers/transcript.controller');
@@ -38,6 +39,12 @@ router.get(APP_ROUTER.TRANSCRIPT_BY_STUDENT, protectStudent, getTranscriptByStud
 router.post(APP_ROUTER.LIST, protectLecturer, createTranscriptList);
 
 router.put(APP_ROUTER.LIST, protectLecturer, updateTranscriptList);
+
+router.get(
+    APP_ROUTER.LIST_STUDENT_NO_TRANSCRIPT_BY_LECTURER,
+    protectLecturer,
+    unTranscriptStudentsByType,
+);
 
 router.get(APP_ROUTER.INDEX, protectLecturer, getTranscriptByType);
 
