@@ -20,6 +20,7 @@ const APP_ROUTER = {
     UNLOCK: '/unlock',
     SEARCH: '/search',
     EXPORT: '/export',
+    EXPORT_ME: '/export-me',
 
     // UPLOAD
     UPLOAD: '/api/v1/uploads',
@@ -54,6 +55,7 @@ const APP_ROUTER = {
     TERM_DISCUSSION: '/:id/discussion',
     TERM_REPORT: '/:id/report',
     TERM_PUBLIC_RESULT: '/:id/public-result',
+    TERM_BY_LECTURER: '/lecturer',
 
     //TRANSCRIPTS
     TRANSCRIPT: '/api/v1/transcripts',
@@ -75,7 +77,6 @@ const APP_ROUTER = {
     //GROUP_LECTURERS
     GROUP_LECTURER: '/api/v1/group-lecturers',
     GROUP_LECTURER_MEMBER: '/:id/members',
-    GROUP_LECTURER_BY_TYPE: '/:type',
     GROUP_LECTURER_NO_GROUP: '/:type/no-group',
     GROUP_LECTURER_BY_LECTURER: '/lecturer',
     GROUP_LECTURER_EVALUATION: '/evaluation',
@@ -119,9 +120,7 @@ const APP_ROUTER = {
 
     //ASSIGNS
     ASSIGN: '/api/v1/assigns',
-    ASSIGN_BY_TYPE: '/type-evaluation/:type',
     GROUP_STUDENT_NO_ASSIGN_BY_TYPE: '/type-evaluation/:type/group-student/no-assign',
-    ASSIGN_BY_TYPE_AND_LECTURER_ID: '/type-evaluation/:type/lecturers/:lecturerId',
 
     //ACHIEVEMENT
     ACHIEVEMENT: '/api/v1/achievements',

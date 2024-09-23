@@ -6,33 +6,30 @@ const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
 const { validationResult } = require('express-validator');
 
-const checkTypeGroup = (value) => {
-    switch (value) {
-        case 'REVIEWER':
-            return 'Nhóm chấm phản biện';
-        case 'REPORT_POSTER':
-            return 'Nhóm chấm poster ';
-        case 'REPORT_COUNCIL':
-            return 'Nhóm chấm hội đồng';
-    }
-};
-
 exports.getLecturerNoGroupByType = async (req, res) => {
     try {
         const { termId } = req.query;
         const { type } = req.params;
-        const subQuery = `SELECT lt.id FROM lecturer_terms lt INNER JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id LEFT JOIN  group_lecturers gl ON gl.id  = glm.group_lecturer_id WHERE gl.type = '${type.toUpperCase()}' `;
 
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.is_active as isActive, l.major_id as majorId    
-             FROM lecturers l LEFT JOIN majors m ON l.major_id = m.id LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-            WHERE lt.term_id = :termId AND lt.id NOT IN (${subQuery})`;
-
-        const lecturerTerm = await sequelize.query(query, {
-            replacements: {
-                termId,
+        const lecturerTerm = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name AS fullName, l.is_active AS isActive, l.major_id AS majorId
+            FROM lecturers l
+            LEFT JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId AND lt.id NOT IN 
+            (SELECT lt.id 
+            FROM lecturer_terms lt
+            INNER JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id
+            INNER JOIN group_lecturers gl ON gl.id = glm.group_lecturer_id
+            WHERE gl.type = :groupType)`,
+            {
+                replacements: {
+                    termId,
+                    groupType: type.toUpperCase(),
+                },
+                type: QueryTypes.SELECT,
             },
-            type: QueryTypes.SELECT,
-        });
+        );
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách giảng viên chưa tham gia nhóm thành công',
@@ -219,7 +216,13 @@ exports.getGroupLecturerByTypeEvaluation = async (req, res) => {
 
 exports.getGroupLecturersByLecturerId = async (req, res) => {
     try {
-        const { termId, lecturerId } = req.query;
+        const { termId, lecturerId, type } = req.query;
+
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
 
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
@@ -230,52 +233,65 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
         });
 
         if (!lecturerTerm) {
-            return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kì này');
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ này');
         }
 
-        const groupLecturers = await sequelize.query(
-            `SELECT gr.id as groupLecturerId, gr.name, gr.type 
+        let groupLecturers = await sequelize.query(
+            `SELECT gr.id AS groupLecturerId, gr.name, gr.type, l.id AS lecturerId, l.username, l.full_name AS fullName, l.gender, m.name AS majorName
             FROM group_lecturers gr
-            LEFT JOIN group_lecturer_members grm ON gr.id = grm.group_lecturer_id
-            WHERE grm.lecturer_term_id = :lecturerTermId`,
+            INNER JOIN group_lecturer_members grm ON gr.id = grm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON grm.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            INNER JOIN majors m ON l.major_id = m.id
+            WHERE gr.term_id = :termId AND gr.type = :type`,
             {
                 replacements: {
-                    lecturerTermId: lecturerTerm.id,
+                    termId,
+                    type: type.toUpperCase(),
                 },
                 type: QueryTypes.SELECT,
             },
         );
 
-        const result = await Promise.all(
-            groupLecturers.map(async (groupLecturer) => {
-                const members = await sequelize.query(
-                    `SELECT l.id, l.username, l.full_name as fullName, l.gender, m.name as majorName
-                    FROM lecturers l
-                    JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-                    JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id
-                    JOIN majors m ON l.major_id = m.id
-                    WHERE glm.group_lecturer_id = :groupLecturerId`,
-                    {
-                        type: QueryTypes.SELECT,
-                        replacements: {
-                            groupLecturerId: groupLecturer.groupLecturerId,
-                        },
-                    },
-                );
+        groupLecturers = groupLecturers.reduce((acc, curr) => {
+            const group = acc.find((g) => g.groupLecturerId === curr.groupLecturerId);
 
-                return {
-                    groupLecturerId: groupLecturer.groupLecturerId,
-                    name: groupLecturer.name,
-                    type: groupLecturer.type,
-                    members,
-                };
-            }),
+            if (!group) {
+                acc.push({
+                    groupLecturerId: curr.groupLecturerId,
+                    name: curr.name,
+                    type: curr.type,
+                    members: [
+                        {
+                            id: curr.lecturerId,
+                            username: curr.username,
+                            fullName: curr.fullName,
+                            gender: curr.gender,
+                            majorName: curr.majorName,
+                        },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    id: curr.lecturerId,
+                    username: curr.username,
+                    fullName: curr.fullName,
+                    gender: curr.gender,
+                    majorName: curr.majorName,
+                });
+            }
+
+            return acc;
+        }, []);
+
+        groupLecturers = groupLecturers.filter((groupLecturer) =>
+            groupLecturer.members.some((member) => member.id === lecturerId),
         );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách nhóm giảng viên thành công!',
-            groupLecturers: result,
+            groupLecturers,
         });
     } catch (error) {
         console.error('🚀 ~ getGroupLecturersByLecturerId ~ error:', error);
@@ -442,10 +458,9 @@ exports.countGroupLecturersByLecturerId = async (req, res) => {
     }
 };
 
-exports.createGroupLecturerByType = async (req, res) => {
+exports.createGroupLecturer = async (req, res) => {
     try {
-        const { type } = req.params;
-        const { termId, lecturers } = req.body;
+        const { termId, lecturers, type } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -457,9 +472,10 @@ exports.createGroupLecturerByType = async (req, res) => {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
-        // Get existing lecturer IDs for this term and group type
-        const lecIds = await sequelize.query(
-            `SELECT lt.lecturer_id as id FROM group_lecturers gl
+        // Fetch existing lecturer IDs for this term and group type
+        const existingLecturerIds = await sequelize.query(
+            `SELECT lt.lecturer_id as id 
+             FROM group_lecturers gl
              INNER JOIN group_lecturer_members glm ON glm.group_lecturer_id = gl.id
              INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id 
              WHERE lt.term_id = :termId AND gl.type = :type`,
@@ -472,40 +488,46 @@ exports.createGroupLecturerByType = async (req, res) => {
             },
         );
 
-        // Check if any lecturers already exist in the group
-        const existingLecturers = lecIds.map((lecId) => lecId.id);
-        const isExist = lecturers.filter((lecId) => existingLecturers.includes(lecId));
+        const existingLecturerSet = new Set(existingLecturerIds.map((lec) => lec.id));
 
-        if (isExist.length === lecturers.length) {
+        // Check for lecturers that already exist in the group
+        const duplicateLecturers = lecturers.filter((lecId) => existingLecturerSet.has(lecId));
+        if (duplicateLecturers.length === lecturers.length) {
             return Error.sendConflict(res, 'Nhóm giảng viên này đã được tạo với loại nhóm này');
         }
 
-        const countGr = await GroupLecturer.count();
-        const groupName = `${checkTypeGroup(type.toUpperCase())} ${countGr + 1}`;
+        // Generate group name
+        const countGr = await GroupLecturer.count({
+            where: { term_id: termId, type: type.toUpperCase() },
+        });
+        const groupName = `${(countGr + 1).toString().padStart(2, '0')}`;
 
+        // Create the new group
         const groupLecturer = await GroupLecturer.create({
             name: groupName,
             term_id: termId,
             type: type.toUpperCase(),
         });
 
-        const lecturerPromises = lecturers.map(async (lecId) => {
-            const lecturerTerm = await LecturerTerm.findOne({
-                where: {
-                    lecturer_id: lecId,
-                    term_id: groupLecturer.term_id,
-                },
-            });
-
-            if (lecturerTerm) {
-                await GroupLecturerMember.create({
-                    group_lecturer_id: groupLecturer.id,
-                    lecturer_term_id: lecturerTerm.id,
-                });
-            }
+        // Fetch lecturer terms for all provided lecturers in one query
+        const lecturerTerms = await LecturerTerm.findAll({
+            where: {
+                lecturer_id: lecturers,
+                term_id: termId,
+            },
         });
 
-        await Promise.all(lecturerPromises);
+        if (lecturerTerms.length === 0) {
+            return Error.sendNotFound(res, 'Không tìm thấy giảng viên hợp lệ trong học kỳ này.');
+        }
+
+        // Create group members
+        const groupLecturerMembers = lecturerTerms.map((lecturerTerm) => ({
+            group_lecturer_id: groupLecturer.id,
+            lecturer_term_id: lecturerTerm.id,
+        }));
+
+        await GroupLecturerMember.bulkCreate(groupLecturerMembers);
 
         return res.status(HTTP_STATUS.CREATED).json({
             success: true,
@@ -514,7 +536,7 @@ exports.createGroupLecturerByType = async (req, res) => {
         });
     } catch (error) {
         console.error('Error:', error);
-        return Error.sendError(res, 'Lỗi khi tạo nhóm giảng viên');
+        return Error.sendError(res, error);
     }
 };
 
@@ -651,72 +673,63 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
 
 exports.addMemberToGroupLecturer = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { lecturerId } = req.body;
+        const { id } = req.params; // GroupLecturer ID
+        const { lecturerId } = req.body; // Lecturer ID to add
+
+        // Check if the group exists
         const oldGr = await GroupLecturer.findByPk(id);
-        const isExist = await isExistLecturerInGroup(lecturerId, id);
-        if (isExist) {
-            return Error.sendConflict(res, 'Giảng viên đã tham gia nhóm này');
-        }
-        const isFull = await isFullquantityOfGroup(id);
-
-        if (isFull) {
-            return Error.sendNotFound(res, 'Nhóm đã đủ số lượng thành viên tối đa');
-        }
-
         if (!oldGr) {
             return Error.sendNotFound(res, 'Không có nhóm giảng viên này');
         }
 
+        // Check if the lecturer already exists in the group
+        const existingMembers = await sequelize.query(
+            `SELECT l.id 
+            FROM lecturers l 
+            JOIN lecturer_terms lt ON lt.lecturer_id = l.id 
+            RIGHT JOIN group_lecturer_members glm ON glm.lecturer_term_id = lt.id 
+            WHERE glm.group_lecturer_id = :id AND l.id = :lecturerId`,
+            {
+                replacements: { id, lecturerId },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        if (existingMembers.length > 0) {
+            return Error.sendConflict(res, 'Giảng viên đã tham gia nhóm này');
+        }
+
+        // Check if the group is full (assuming max group size is 2)
+        const currentMembers = await GroupLecturerMember.count({
+            where: { group_lecturer_id: id },
+        });
+        if (currentMembers >= 2) {
+            return Error.sendNotFound(res, 'Nhóm đã đủ số lượng thành viên tối đa');
+        }
+
+        // Check if the lecturer exists for the same term
         const oldLecturer = await LecturerTerm.findOne({
             where: { term_id: oldGr.term_id, lecturer_id: lecturerId },
         });
-
         if (!oldLecturer) {
             return Error.sendForbidden(res, 'Không tồn tại giảng viên trong học kì này');
         }
 
-        const newMem = await GroupLecturerMember.create({
+        // Add the lecturer to the group
+        const newMember = await GroupLecturerMember.create({
             group_lecturer_id: id,
             lecturer_term_id: oldLecturer.id,
         });
 
-        const groupLecturerMember = await GroupLecturerMember.findByPk(newMem.id);
+        const groupLecturerMember = await GroupLecturerMember.findByPk(newMember.id);
 
-        res.status(HTTP_STATUS.CREATED).json({
+        return res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Thêm giảng viên thành công',
             groupLecturerMember,
         });
     } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
+        console.error(error);
+        return Error.sendError(res, error);
     }
-};
-
-const isExistLecturerInGroup = async (lecturerId, id) => {
-    const query =
-        'select l.id from lecturers l join lecturer_terms lt on lt.lecturer_id = l.id right join group_lecturer_members glm on glm.lecturer_term_id = lt.id where glm.group_lecturer_id = :id and l.id = :lecturerId';
-    const member = await sequelize.query(query, {
-        replacements: {
-            id,
-            lecturerId,
-        },
-        type: QueryTypes.SELECT,
-    });
-
-    if (member.length > 0) {
-        return true;
-    } else return false;
-};
-
-const isFullquantityOfGroup = async (id) => {
-    const members = await GroupLecturerMember.findAll({
-        where: {
-            group_lecturer_id: id,
-        },
-    });
-    if (members.length === 2) {
-        return true;
-    } else return false;
 };

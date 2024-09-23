@@ -1,14 +1,7 @@
-const {
-    Assign,
-    GroupLecturer,
-    LecturerTerm,
-    GroupLecturerMember,
-    Term,
-    GroupStudent,
-} = require('../models/index');
+const { Assign, GroupLecturer, Term, GroupStudent } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { Sequelize, QueryTypes } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 
 const checkTypeGroup = (value) => {
@@ -22,29 +15,12 @@ const checkTypeGroup = (value) => {
     }
 };
 
-exports.getAssigns = async (req, res) => {
-    try {
-        const assigns = await Assign.findAll({
-            attributes: {
-                exclude: ['updated_at', 'created_at'],
-            },
-        });
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Lấy danh sách phân công thành công!',
-            assigns,
-        });
-    } catch (error) {
-        Error.sendError(res, error);
-    }
-};
-
 exports.exportAssigns = async (req, res) => {
     try {
         const { termId, type } = req.query;
 
         if (!termId) {
-            return Error.sendWarning(res, 'Thiếu thông tin học kỳ!');
+            return Error.sendWarning(res, 'Hãy chọn học kỳ!');
         }
 
         const term = await Term.findByPk(termId);
@@ -54,7 +30,7 @@ exports.exportAssigns = async (req, res) => {
 
         let assigns = [];
 
-        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV1, HD TV2, Thư ký, Ghi chú
+        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV, Thư ký, Ghi chú
         if (type === 'reviewer') {
             assigns = await sequelize.query(
                 `SELECT gs.id, gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
@@ -134,39 +110,96 @@ exports.exportAssigns = async (req, res) => {
     }
 };
 
-exports.getAssignById = async (req, res) => {
+exports.exportAssignsByLecturerId = async (req, res) => {
     try {
-        const { id } = req.params;
-        const assigns = await Assign.findByPk(id, {
-            attributes: {
-                exclude: ['updated_at', 'created_at'],
-            },
-        });
+        const { termId, type } = req.query;
+
+        if (!termId) {
+            return Error.sendWarning(res, 'Hãy chọn học kỳ!');
+        }
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        let assigns = [];
+
+        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, #HĐPB, HD TV, Thư ký, Ghi chú
+        if (type === 'reviewer') {
+            assigns = await sequelize.query(
+                `SELECT gs.id, gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
+                FROM assigns a
+                INNER JOIN group_students gs ON a.group_student_id = gs.id
+                INNER JOIN student_terms st ON st.group_student_id = gs.id
+                INNER JOIN students s ON st.student_id = s.id
+                INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE lt.term_id = :termId AND a.type = 'REVIEWER'
+                GROUP BY gs.id, gs.name, s.username, s.full_name, gl.name, a.type`,
+                {
+                    replacements: { termId },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        } else if (type === 'report') {
+            assigns = await sequelize.query(
+                `SELECT gs.id, gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
+                FROM assigns a
+                INNER JOIN group_students gs ON a.group_student_id = gs.id
+                INNER JOIN student_terms st ON st.group_student_id = gs.id
+                INNER JOIN students s ON st.student_id = s.id
+                INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE lt.term_id = :termId AND NOT a.type = 'REVIEWER'
+                GROUP BY gs.id, gs.name, s.username, s.full_name, gl.name, a.type`,
+                {
+                    replacements: { termId },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        }
+
+        assigns = assigns.filter((assign) => assign['HD TV'].includes(req.user.fullName));
+
+        for (let i = 0; i < assigns.length; i++) {
+            assigns[i]['STT'] = i + 1;
+
+            if (assigns[i]['Ghi chú'] === 'REVIEWER') {
+                assigns[i]['Ghi chú'] = 'Hội đồng phản biện';
+            } else if (assigns[i]['Ghi chú'] === 'REPORT_POSTER') {
+                assigns[i]['Ghi chú'] = 'Hội đồng poster';
+            } else if (assigns[i]['Ghi chú'] === 'REPORT_COUNCIL') {
+                assigns[i]['Ghi chú'] = 'Hội đồng báo cáo';
+            }
+
+            const lecturerSupport = await sequelize.query(
+                `SELECT l.full_name as fullName 
+                FROM group_students gs
+                INNER JOIN topics t ON gs.topic_id = t.id
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gs.id = :groupStudentId`,
+                {
+                    replacements: { groupStudentId: assigns[i].id },
+                    type: QueryTypes.SELECT,
+                },
+            );
+
+            assigns[i]['GVHD'] = lecturerSupport[0].fullName;
+
+            delete assigns[i].id;
+
+            assigns[i]['HD TV'] = assigns[i]['HD TV'].split(', ');
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lấy thông tin phân công thành công!',
-            assigns,
-        });
-    } catch (error) {
-        Error.sendError(res, error);
-    }
-};
-
-exports.getAssignByType = async (req, res) => {
-    try {
-        const { type } = req.params;
-        const assigns = await Assign.findAll({
-            where: {
-                type: type.toUpperCase(),
-            },
-            attributes: {
-                exclude: ['updated_at', 'created_at'],
-            },
-        });
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: `Lấy danh sách phân công ${checkTypeGroup(type.toUpperCase())} thành công!`,
+            message: 'Xuất danh sách phân công thành công!',
             assigns,
         });
     } catch (error) {
@@ -251,7 +284,7 @@ exports.createAssign = async (req, res) => {
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: `Phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công`,
+            message: `Phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công!`,
         });
     } catch (error) {
         Error.sendError(res, error);
@@ -339,76 +372,42 @@ exports.deleteAssign = async (req, res) => {
     }
 };
 
-exports.getAssignByLecturerId = async (req, res) => {
-    try {
-        const { lecturerId, type } = req.params;
-        const { termId } = req.query;
-
-        const lecturerTerm = await LecturerTerm.findOne({
-            where: {
-                term_id: termId,
-                lecturer_id: lecturerId,
-            },
-        });
-
-        const lecturerOfMemberGroup = await GroupLecturerMember.findAll({
-            where: { lecturer_term_id: lecturerTerm.id },
-        });
-
-        const assignsByGroupLecturer = await Assign.findAll({
-            where: {
-                group_lecturer_id: {
-                    [Sequelize.Op.in]: lecturerOfMemberGroup.map((mem) => mem.group_lecturer_id),
-                },
-                type: type.toUpperCase(),
-            },
-        });
-
-        return res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: `Lấy danh sách phân công ${checkTypeGroup(type.toUpperCase())} thành công`,
-            assigns: assignsByGroupLecturer,
-        });
-    } catch (error) {
-        Error.sendError(res, error);
-    }
-};
-
 exports.getGroupStudentNoAssign = async (req, res) => {
     try {
         const { type } = req.params;
         const { termId } = req.query;
+
         const assigns = await Assign.findAll({
             attributes: ['group_student_id'],
             where: {
                 type: type.toUpperCase(),
             },
         });
+
         const myNotIn = assigns.map((ass) => `'${ass.group_student_id}'`);
+
         const notInCondition = myNotIn.length > 0 ? `AND gs.id NOT IN (${myNotIn.join(',')})` : '';
 
-        const groupStudentsQuery = `
-        SELECT gs.id, gs.name,
-                t.name AS topicName, 
-                l.full_name AS fullName,
-                lt.lecturer_id AS lecturerId,
-                lt.id AS lecturerTermId
-                FROM group_students gs
-                RIGHT JOIN topics t ON gs.topic_id = t.id
-                RIGHT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                RIGHT JOIN lecturers l ON lt.lecturer_id = l.id
-        WHERE gs.term_id = :termId ${notInCondition}`;
+        const resultGroupStudent = await sequelize.query(
+            `SELECT gs.id, gs.name, t.name AS topicName, l.full_name AS lecturerName, lt.lecturer_id AS lecturerId, lt.id AS lecturerTermId
+            FROM group_students gs
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE gs.term_id = :termId ${notInCondition}`,
+            {
+                replacements: { termId },
+                type: QueryTypes.SELECT,
+            },
+        );
 
-        const resultGroupStudent = await sequelize.query(groupStudentsQuery, {
-            replacements: { termId },
-            type: sequelize.QueryTypes.SELECT,
-        });
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách sinh viên chưa chấm thành công',
             groupStudent: resultGroupStudent,
         });
     } catch (error) {
-        Error.sendError(res, error);
+        console.error(error);
+        return Error.sendError(res, error);
     }
 };

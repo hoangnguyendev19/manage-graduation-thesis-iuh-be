@@ -380,6 +380,7 @@ exports.createTopic = async (req, res) => {
 
         const { termId } = req.query;
 
+        // Validate inputs
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return Error.sendWarning(res, errors.array()[0].msg);
@@ -387,6 +388,7 @@ exports.createTopic = async (req, res) => {
 
         const lecturer_id = req.user.id;
 
+        // Check if lecturer is valid for this term
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 lecturer_id: lecturer_id,
@@ -398,6 +400,7 @@ exports.createTopic = async (req, res) => {
             return Error.sendNotFound(res, 'Giảng viên không hợp lệ trong học kì này');
         }
 
+        // Check if the topic already exists
         const existedTopic = await Topic.findOne({
             where: {
                 name,
@@ -406,36 +409,31 @@ exports.createTopic = async (req, res) => {
         });
 
         if (existedTopic) {
-            return Error.sendConflict(res, 'Tên đề tài đã tồn tại!');
+            return Error.sendConflict(res, 'Đề tài đã tồn tại trong học kỳ này!');
         }
+
+        // Fetch the last topic key in the term
         const oldTopic = await sequelize.query(
-            `
-            select * from topics t
-            left join
-            lecturer_terms lt on t.lecturer_term_id = lt.id
-            where lt.term_id = :termId
-            order by t.key desc
-            limit 1
-            `,
+            `SELECT t.key FROM topics t
+            LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId
+            ORDER BY t.key DESC
+            LIMIT 1`,
             {
-                replacements: {
-                    termId,
-                },
+                replacements: { termId },
                 type: QueryTypes.SELECT,
             },
         );
-        let key;
+
+        let key = '';
         if (oldTopic.length === 0) {
-            key = '#001';
+            key = '001';
         } else {
-            let code = ['0', '0', '0'];
-            const currentKey = _.toNumber(oldTopic[0].key.slice(1)) + 1;
-            let size = currentKey.toString().trim().length;
-            for (let i = 0; i < size; i++) {
-                code[code.length - i - 1] = currentKey.toString()[size - i - 1];
-            }
-            key = '#' + code.join('');
+            const currentKey = parseInt(oldTopic[0].key, 10) + 1;
+            key = currentKey.toString().padStart(3, '0');
         }
+        console.log(key);
+
         const topic = await Topic.create({
             key,
             name,
@@ -454,7 +452,7 @@ exports.createTopic = async (req, res) => {
             topic,
         });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         Error.sendError(res, error);
     }
 };
@@ -533,18 +531,22 @@ exports.updateQuantityGroupMax = async (req, res) => {
 exports.importTopics = async (req, res) => {
     try {
         const { termId } = req.body;
+
         if (!req.file) {
             return Error.sendWarning(res, 'Vui lòng chọn file tải lên');
         }
+
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
 
         let listTopic = [];
+
         for (const topic of jsonData) {
             if (
-                !topic['Mã giảng viên'] ||
+                !topic['Mã GV'] ||
+                !topic['Tên GV'] ||
                 !topic['Tên đề tài'] ||
                 !topic['Mục tiêu đề tài'] ||
                 !topic['Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng'] ||
@@ -558,7 +560,8 @@ exports.importTopics = async (req, res) => {
                 );
             }
 
-            const username = topic['Mã giảng viên'].trim();
+            const username = topic['Mã GV'].trim();
+            const fullName = topic['Tên GV'].trim();
             const name = topic['Tên đề tài'].trim();
             const target = topic['Mục tiêu đề tài'].trim();
             const expectedResult =
@@ -567,24 +570,18 @@ exports.importTopics = async (req, res) => {
             const requireInput = topic['Yêu cầu đầu vào'].trim();
             const standardOutput = topic['Yêu cầu đầu ra'].trim();
 
-            let topicToSaved = {
-                username: username,
-                name: name,
-                target: target,
-                expectedResult: expectedResult,
-                description: description,
-                requireInput: requireInput,
-                standardOutput: standardOutput,
-            };
             const lecturer = await Lecturer.findOne({
                 where: {
-                    username: username,
+                    username,
                 },
                 attributes: ['id'],
             });
 
             if (!lecturer) {
-                return Error.sendNotFound(res, `Giảng viên có mã ${username} không tồn tại.`);
+                return Error.sendNotFound(
+                    res,
+                    `Giảng viên ${fullName} có mã ${username} không tồn tại.`,
+                );
             }
 
             const isExistLecturer = await LecturerTerm.findOne({
@@ -598,13 +595,13 @@ exports.importTopics = async (req, res) => {
             if (!isExistLecturer) {
                 return Error.sendNotFound(
                     res,
-                    `Mã giảng viên ${username} không tồn tại trong kỳ này.`,
+                    `Giảng viên ${fullName} có mã ${username} không tồn tại trong kỳ này.`,
                 );
             }
 
             const existedTopic = await Topic.findOne({
                 where: {
-                    name: name,
+                    name,
                     lecturer_term_id: isExistLecturer.id,
                 },
             });
@@ -613,41 +610,33 @@ exports.importTopics = async (req, res) => {
                 return Error.sendConflict(res, `Tên đề tài ${name} đã tồn tại.`);
             }
 
-            topicToSaved.lecturerTermId = isExistLecturer.id;
-            listTopic.push(topicToSaved);
+            listTopic.push({
+                username,
+                name,
+                target,
+                expectedResult,
+                description,
+                requireInput,
+                standardOutput,
+                lecturerTermId: isExistLecturer.id,
+            });
         }
 
+        // Get the last topic key for the term
         const oldTopic = await sequelize.query(
-            `
-            select * from topics t
-            left join
-            lecturer_terms lt on t.lecturer_term_id = lt.id
-            where lt.term_id = :termId
-            order by t.key desc
-            limit 1
-            `,
-            {
-                replacements: {
-                    termId,
-                },
-                type: QueryTypes.SELECT,
-            },
+            `SELECT * FROM topics t
+            LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId
+            ORDER BY t.key DESC
+            LIMIT 1`,
+            { replacements: { termId }, type: QueryTypes.SELECT },
         );
 
-        for (let i = 0; i < listTopic.length; i++) {
-            let key;
-            if (oldTopic.length === 0) {
-                key = '#001';
-            } else {
-                let code = ['0', '0', '0'];
-                const currentKey = _.toNumber(oldTopic[0].key.slice(1)) + i + 1;
-                let size = currentKey.toString().trim().length;
-                for (let i = 0; i < size; i++) {
-                    code[code.length - i - 1] = currentKey.toString()[size - i - 1];
-                }
-                key = '#' + code.join('');
-            }
+        // Determine the next topic key
+        let lastKey = oldTopic.length === 0 ? 0 : parseInt(oldTopic[0].key, 10);
 
+        for (const [i, topic] of listTopic.entries()) {
+            const newKey = (lastKey + i + 1).toString().padStart(3, '0');
             const {
                 name,
                 description,
@@ -656,10 +645,11 @@ exports.importTopics = async (req, res) => {
                 standardOutput,
                 requireInput,
                 lecturerTermId,
-            } = listTopic[i];
+            } = topic;
 
+            // Create new topics
             await Topic.create({
-                key,
+                key: newKey,
                 name,
                 description,
                 quantityGroupMax: 2,
@@ -696,7 +686,7 @@ exports.exportTopics = async (req, res) => {
 
         // collumns: Mã GV, Tên GV, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra
         let topics = await sequelize.query(
-            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'MỤC TIÊU ĐỀ TÀI', t.expected_result as 'DỰ KIẾN SẢN PHẨM NGHIÊN CỨU CỦA ĐỀ TÀI VÀ KHẢ NĂNG ỨNG DỤNG', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra'
+            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'Mục tiêu đề tài', t.expected_result as 'Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra'
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -716,6 +706,50 @@ exports.exportTopics = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Xuất danh sách đề tài thành công!',
+            topics,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.exportTopicsByLecturerId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        if (!termId) {
+            return Error.sendWarning(res, 'Hãy chọn học kì!');
+        }
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        // collumns: Mã GV, Tên GV, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra
+        let topics = await sequelize.query(
+            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'Mục tiêu đề tài', t.expected_result as 'Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra'
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
+            {
+                replacements: {
+                    termId,
+                    lecturerId: req.user.id,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        for (let i = 0; i < topics.length; i++) {
+            topics[i]['STT'] = i + 1;
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách đề tài của giảng viên thành công!',
             topics,
         });
     } catch (error) {
@@ -802,10 +836,12 @@ exports.updateStatusTopic = async (req, res) => {
     try {
         const { id } = req.params;
         const { status, note } = req.body;
+
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
+
         topic.status = status;
         topic.note = note;
         await topic.save();
@@ -823,11 +859,14 @@ exports.updateStatusTopic = async (req, res) => {
 exports.deleteTopic = async (req, res) => {
     try {
         const { id } = req.params;
+
         const topic = await Topic.findByPk(id);
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
+
         await topic.destroy();
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Xoá thành công!',

@@ -17,6 +17,7 @@ const {
     deleteTopic,
     importTopics,
     exportTopics,
+    exportTopicsByLecturerId,
     importTopicsFromTermIdToSelectedTermId,
 } = require('../controllers/topic.controller');
 
@@ -49,6 +50,8 @@ router.get(
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     exportTopics,
 );
+
+router.get(APP_ROUTER.EXPORT_ME, protectLecturer, exportTopicsByLecturerId);
 
 router.post(
     APP_ROUTER.IMPORT_FROM_SELECT,
