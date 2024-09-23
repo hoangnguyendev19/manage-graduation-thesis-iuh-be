@@ -103,48 +103,6 @@ exports.validateMajor = [
         .withMessage('Tên ngành phải có ít nhất 5 ký tự!'),
 ];
 
-exports.validateTerm = [
-    check('name')
-        .notEmpty()
-        .withMessage('Tên học kỳ không được để trống!')
-        .isLength({ min: 5 })
-        .withMessage('Tên học kỳ phải có ít nhất 5 ký tự!'),
-
-    check('startDate')
-        .notEmpty()
-        .withMessage('Ngày bắt đầu không được để trống!')
-        .isDate({
-            format: 'YYYY-MM-DD HH:mm:ss',
-        })
-        .withMessage('Ngày bắt đầu không hợp lệ!'),
-
-    check('endDate')
-        .notEmpty()
-        .withMessage('Ngày kết thúc không được để trống!')
-        .isDate({
-            format: 'YYYY-MM-DD HH:mm:ss',
-        })
-        .withMessage('Ngày kết thúc không hợp lệ!'),
-];
-
-exports.validateTermDetail = [
-    check('startDate')
-        .notEmpty()
-        .withMessage('Ngày bắt đầu không được để trống!')
-        .isDate({
-            format: 'YYYY-MM-DD HH:mm:ss',
-        })
-        .withMessage('Ngày bắt đầu không hợp lệ!'),
-
-    check('endDate')
-        .notEmpty()
-        .withMessage('Ngày kết thúc không được để trống!')
-        .isDate({
-            format: 'YYYY-MM-DD HH:mm:ss',
-        })
-        .withMessage('Ngày kết thúc không hợp lệ!'),
-];
-
 exports.validateTopic = [
     check('name')
         .notEmpty()
@@ -218,6 +176,19 @@ exports.validateGroupLecturer = [
             max: 3,
         })
         .withMessage('Danh sách ID giảng viên phải là mảng!'),
+
+    check('type')
+        .notEmpty()
+        .withMessage('Loại nhóm giảng viên không được để trống!')
+        .isIn([
+            'REVIEWER',
+            'REPORT_POSTER',
+            'REPORT_COUNCIL',
+            'reviewer',
+            'report_poster',
+            'report_council',
+        ])
+        .withMessage('Loại nhóm giảng viên không hợp lệ!'),
 ];
 
 exports.validateEvaluation = [

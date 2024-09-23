@@ -8,108 +8,60 @@ const { validationResult } = require('express-validator');
 
 exports.getGroupStudents = async (req, res) => {
     try {
-        const { termId, topicId, majorId, page, limit } = req.query;
-        let offset = (page - 1) * limit;
+        const { termId } = req.query;
 
-        let groupStudents = [];
-        let total = 0;
-
-        if (majorId && !topicId) {
-            groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                LEFT JOIN topics tc ON gs.topic_id = tc.id 
-                WHERE gs.term_id = :termId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
-                GROUP BY gs.id
-                ORDER BY gs.name ASC
-                LIMIT :limit OFFSET :offset`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, majorId, limit: parseInt(limit), offset },
-                },
-            );
-
-            total = await sequelize.query(
-                `SELECT COUNT(DISTINCT gs.id) as total FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                WHERE gs.term_id = :termId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, majorId },
-                },
-            );
-
-            total = total[0].total;
-        } else if (majorId && topicId) {
-            groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                LEFT JOIN topics tc ON gs.topic_id = tc.id 
-                WHERE gs.term_id = :termId and gs.topic_id = :topicId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)
-                GROUP BY gs.id
-                ORDER BY gs.name ASC
-                LIMIT :limit OFFSET :offset`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, topicId, majorId, limit: parseInt(limit), offset },
-                },
-            );
-
-            total = await sequelize.query(
-                `SELECT COUNT(DISTINCT gs.id) as total FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                WHERE gs.term_id = :termId and gs.topic_id = :topicId and st.student_id IN (SELECT id FROM students WHERE major_id = :majorId)`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, topicId, majorId },
-                },
-            );
-
-            total = total[0].total;
-        } else if (!majorId && !topicId) {
-            groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName,l.full_name as lecturerName, COUNT(st.student_id) as numOfMembers FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                LEFT JOIN topics tc ON gs.topic_id = tc.id 
-                LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
-                LEFT JOIN lecturers l ON l.id = lt.lecturer_id
-                WHERE gs.term_id = :termId
-                GROUP BY gs.id
-                ORDER BY gs.name ASC
-                LIMIT :limit OFFSET :offset`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId, limit: parseInt(limit), offset },
-                },
-            );
-
-            total = await sequelize.query(
-                `SELECT COUNT(DISTINCT gs.id) as total FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                WHERE gs.term_id = :termId`,
-                {
-                    type: QueryTypes.SELECT,
-                    replacements: { termId },
-                },
-            );
-
-            total = total[0].total;
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        const totalPage = _.ceil(total / _.toInteger(limit));
+        let groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, s.username, s.full_name as fullName
+            FROM group_students gs 
+            INNER JOIN student_terms st ON gs.id = st.group_student_id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN topics tc ON gs.topic_id = tc.id 
+            INNER JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            WHERE gs.term_id = :termId`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: {
+                    termId,
+                },
+            },
+        );
+
+        groupStudents = groupStudents.reduce((acc, groupStudent) => {
+            const group = acc.find((g) => g.id === groupStudent.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupStudent.id,
+                    name: groupStudent.name,
+                    topicId: groupStudent.topicId,
+                    topicName: groupStudent.topicName,
+                    lecturerName: groupStudent.lecturerName,
+                    members: [{ username: groupStudent.username, fullName: groupStudent.fullName }],
+                });
+            } else {
+                group.members.push({
+                    username: groupStudent.username,
+                    fullName: groupStudent.fullName,
+                });
+            }
+
+            return acc;
+        }, []);
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách nhóm sinh viên thành công!',
             groupStudents,
-            params: {
-                page: _.toInteger(page),
-                limit: _.toInteger(limit),
-                totalPage,
-            },
         });
     } catch (error) {
-        console.log(error);
+        console.log('🚀 ~ getGroupStudents ~ error:', error);
         Error.sendError(res, error);
     }
 };
@@ -351,96 +303,6 @@ exports.getGroupStudentMembers = async (req, res) => {
     }
 };
 
-exports.getGroupStudentOfSearch = async (req, res) => {
-    try {
-        const {
-            termId,
-            page = 1,
-            limit = 10,
-            keywords = '',
-            searchField = '',
-            sort = 'ASC',
-        } = req.query;
-
-        const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
-        const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
-        const offset = (validPage - 1) * validLimit;
-
-        const allowedSorts = ['ASC', 'DESC'];
-        if (!allowedSorts.includes(sort.toUpperCase())) {
-            return Error.sendNotFound(res, `Sort order "${sort}" không hợp lệ!!`);
-        }
-
-        let searchQuery = '';
-        let orderBy = '';
-        if (searchField === 'name') {
-            searchQuery = `AND gs.name LIKE :keywords`;
-            orderBy = `ORDER BY gs.name ${sort.toUpperCase()}`;
-        } else if (searchField === 'fullName') {
-            searchQuery = `AND s.full_name LIKE :keywords`;
-            orderBy = `ORDER BY s.full_name ${sort.toUpperCase()}`;
-        }
-
-        const groupStudents = await sequelize.query(
-            `SELECT 
-        gs.id, 
-        gs.name,
-        gs.topic_id as topicId, 
-        tc.name as topicName, 
-        l.full_name as lecturerName, 
-        JSON_ARRAYAGG(s.full_name) as studentNames
-        FROM group_students gs 
-        LEFT JOIN student_terms st ON gs.id = st.group_student_id
-        LEFT JOIN students s ON st.student_id = s.id
-        LEFT JOIN topics tc ON gs.topic_id = tc.id 
-        LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
-        LEFT JOIN lecturers l ON l.id = lt.lecturer_id
-        WHERE gs.term_id = :termId ${searchQuery}
-        GROUP BY gs.id, gs.name, tc.name, l.full_name  
-        ${orderBy}
-        LIMIT :limit OFFSET :offset`,
-            {
-                type: QueryTypes.SELECT,
-                replacements: {
-                    termId,
-                    keywords: `%${keywords}`,
-                    limit: validLimit,
-                    offset,
-                },
-            },
-        );
-
-        const countResult = await sequelize.query(
-            `SELECT COUNT(DISTINCT gs.id) AS total 
-            FROM group_students gs 
-            LEFT JOIN student_terms st ON gs.id = st.group_student_id
-            LEFT JOIN students s ON st.student_id = s.id
-            WHERE gs.term_id = :termId ${searchQuery}`,
-            {
-                type: QueryTypes.SELECT,
-                replacements: { termId, keywords: `%${keywords}` },
-            },
-        );
-
-        const total = countResult[0].total;
-        const totalPage = _.ceil(total / validLimit);
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Lấy danh sách nhóm sinh viên thành công!',
-            groupStudents,
-            params: {
-                page: validPage,
-                limit: validLimit,
-                totalPage,
-            },
-        });
-    } catch (error) {
-        console.log('🚀 ~ getGroupStudentOfSearch ~ error:', error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.searchGroupStudentByName = async (req, res) => {
     try {
         const { termId, name } = req.query;
@@ -581,13 +443,13 @@ exports.createGroupStudent = async (req, res) => {
 
         if (studentIds.length === 0) {
             group = await GroupStudent.create({
-                name: `Nhóm số ${groupNumber}`,
+                name: `${groupNumber}`,
                 term_id: termId,
             });
 
             return res.status(HTTP_STATUS.CREATED).json({
                 success: true,
-                message: 'Create success!',
+                message: 'Tạo nhóm sinh viên thành công!',
                 groupStudent: group,
             });
         }
@@ -610,7 +472,7 @@ exports.createGroupStudent = async (req, res) => {
         }
 
         group = await GroupStudent.create({
-            name: `Nhóm số ${groupNumber}`,
+            name: `${groupNumber}`,
             term_id: termId,
         });
 
@@ -671,7 +533,7 @@ exports.importGroupStudent = async (req, res) => {
         for (let i = 0; i < numberOfGroups; i++) {
             const groupNumber = (i + 1).toString().padStart(numberOfDigits, '0');
             await GroupStudent.create({
-                name: `Nhóm số ${groupNumber}`,
+                name: `${groupNumber}`,
                 term_id: termId,
             });
         }
@@ -686,12 +548,12 @@ exports.importGroupStudent = async (req, res) => {
     }
 };
 
-exports.exportGroupStudent = async (req, res) => {
+exports.exportGroupStudents = async (req, res) => {
     try {
         const { termId } = req.query;
 
         if (!termId) {
-            return Error.sendBadRequest(res, 'Thiếu thông tin học kỳ!');
+            return Error.sendWarning(res, 'Hãy chọn học kỳ!');
         }
 
         const term = await Term.findByPk(termId);
@@ -699,9 +561,9 @@ exports.exportGroupStudent = async (req, res) => {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        // column: STT Nhóm, Mã SV, Họ tên SV, GVHD, Mã đề tài, Tên đề tài
+        // column: Mã nhóm, Mã SV, Họ tên SV, GVHD, Mã đề tài, Tên đề tài
         let groupStudents = await sequelize.query(
-            `SELECT gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', t.key as 'Mã đề tài', t.name as 'Tên đề tài'
+            `SELECT gs.name as 'Mã nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', t.key as 'Mã đề tài', t.name as 'Tên đề tài'
             FROM group_students gs
             INNER JOIN student_terms st ON gs.id = st.group_student_id
             INNER JOIN students s ON st.student_id = s.id
@@ -723,6 +585,54 @@ exports.exportGroupStudent = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Xuất danh sách nhóm sinh viên thành công!',
+            groupStudents,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.exportGroupStudentsByLecturerId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        if (!termId) {
+            return Error.sendWarning(res, 'Hãy chọn học kỳ!');
+        }
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // column: Mã nhóm, Mã SV, Họ tên SV, GVHD, Mã đề tài, Tên đề tài
+        let groupStudents = await sequelize.query(
+            `SELECT gs.name as 'Mã nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', t.key as 'Mã đề tài', t.name as 'Tên đề tài'
+            FROM group_students gs
+            INNER JOIN student_terms st ON gs.id = st.group_student_id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE gs.term_id = :termId AND lt.lecturer_id = :lecturerId
+            ORDER BY gs.name ASC`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: {
+                    termId,
+                    lecturerId: req.user.id,
+                },
+            },
+        );
+
+        for (let i = 0; i < groupStudents.length; i++) {
+            groupStudents[i]['STT'] = i + 1;
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách nhóm sinh viên hướng dẫn của giảng viên thành công!',
             groupStudents,
         });
     } catch (error) {
