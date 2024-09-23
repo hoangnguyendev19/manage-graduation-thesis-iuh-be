@@ -10,7 +10,7 @@ const {
     deleteGroupLecturer,
     removeLecturerFromGroupLecturer,
     getLecturerNoGroupByType,
-    createGroupLecturerByType,
+    createGroupLecturer,
     addMemberToGroupLecturer,
     getMemberFromGroupLecturer,
     getGroupLecturersByLecturerId,
@@ -37,14 +37,6 @@ router.get(APP_ROUTER.COUNT, countGroupLecturersByTermId);
 router.get(APP_ROUTER.COUNT_BY_LECTURER, protectLecturer, countGroupLecturersByLecturerId);
 
 router.get(APP_ROUTER.SEARCH, searchGroupLecturerByName);
-
-router.post(
-    APP_ROUTER.GROUP_LECTURER_BY_TYPE,
-    protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
-    validateGroupLecturer,
-    createGroupLecturerByType,
-);
 
 router.post(
     APP_ROUTER.GROUP_LECTURER_MEMBER,
@@ -74,6 +66,14 @@ router.delete(
     protectLecturer,
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     deleteGroupLecturer,
+);
+
+router.post(
+    APP_ROUTER.INDEX,
+    protectLecturer,
+    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    validateGroupLecturer,
+    createGroupLecturer,
 );
 
 router.get(APP_ROUTER.INDEX, getGroupLecturers);

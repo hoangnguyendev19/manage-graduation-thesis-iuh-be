@@ -1,24 +1,17 @@
 const express = require('express');
 const { APP_ROUTER } = require('../constants/router');
 const {
-    getAssigns,
     exportAssigns,
-    getAssignByType,
+    exportAssignsByLecturerId,
     createAssign,
     updateAssign,
     deleteAssign,
-    getAssignById,
-    getAssignByLecturerId,
     getGroupStudentNoAssign,
 } = require('../controllers/assign.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 
 const router = express.Router();
-
-router.get(APP_ROUTER.ASSIGN_BY_TYPE, getAssignByType);
-
-router.get(APP_ROUTER.ASSIGN_BY_TYPE_AND_LECTURER_ID, getAssignByLecturerId);
 
 router.get(APP_ROUTER.GROUP_STUDENT_NO_ASSIGN_BY_TYPE, getGroupStudentNoAssign);
 
@@ -50,8 +43,6 @@ router.get(
     exportAssigns,
 );
 
-router.get(APP_ROUTER.ID, getAssignById);
-
-router.get(APP_ROUTER.INDEX, getAssigns);
+router.get(APP_ROUTER.EXPORT_ME, protectLecturer, exportAssignsByLecturerId);
 
 module.exports = router;
