@@ -133,87 +133,6 @@ exports.getGroupLecturers = async (req, res) => {
     }
 };
 
-exports.getGroupLecturerByTypeEvaluation = async (req, res) => {
-    try {
-        const { termId, type = 'REVIEWER' } = req.query;
-
-        // check if term exists
-        const term = await Term.findByPk(termId);
-        if (!term) {
-            return Error.sendNotFound(res, 'Học kì không tồn tại!');
-        }
-
-        let groupLecturers = [];
-
-        if (type === 'REVIEWER') {
-            groupLecturers = await sequelize.query(
-                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
-                FROM group_lecturers gl
-                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
-                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE gl.term_id = :termId AND gl.type = 'REVIEWER'
-                ORDER BY gl.name ASC`,
-                {
-                    replacements: {
-                        termId,
-                    },
-                    type: QueryTypes.SELECT,
-                },
-            );
-        } else if (type === 'REPORT') {
-            groupLecturers = await sequelize.query(
-                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
-                FROM group_lecturers gl
-                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
-                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE gl.term_id = :termId AND NOT gl.type = 'REVIEWER'
-                ORDER BY gl.name ASC`,
-                {
-                    replacements: {
-                        termId,
-                    },
-                    type: QueryTypes.SELECT,
-                },
-            );
-        }
-
-        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
-            const group = acc.find((g) => g.id === groupLecturer.id);
-
-            if (!group) {
-                acc.push({
-                    id: groupLecturer.id,
-                    name: groupLecturer.name,
-                    members: [
-                        {
-                            username: groupLecturer.username,
-                            fullName: groupLecturer.fullName,
-                        },
-                    ],
-                });
-            } else {
-                group.members.push({
-                    username: groupLecturer.username,
-                    fullName: groupLecturer.fullName,
-                });
-            }
-
-            return acc;
-        }, []);
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Lấy danh sách nhóm giảng viên thành công!',
-            groupLecturers,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.getGroupLecturersByLecturerId = async (req, res) => {
     try {
         const { termId, lecturerId, type } = req.query;
@@ -237,7 +156,7 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
         }
 
         let groupLecturers = await sequelize.query(
-            `SELECT gr.id AS groupLecturerId, gr.name, gr.type, l.id AS lecturerId, l.username, l.full_name AS fullName, l.gender, m.name AS majorName
+            `SELECT gr.id AS groupLecturerId, gr.name, gr.type, l.id AS lecturerId, l.username, l.full_name AS fullName
             FROM group_lecturers gr
             INNER JOIN group_lecturer_members grm ON gr.id = grm.group_lecturer_id
             INNER JOIN lecturer_terms lt ON grm.lecturer_term_id = lt.id
@@ -266,8 +185,6 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
                             id: curr.lecturerId,
                             username: curr.username,
                             fullName: curr.fullName,
-                            gender: curr.gender,
-                            majorName: curr.majorName,
                         },
                     ],
                 });
@@ -276,8 +193,6 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
                     id: curr.lecturerId,
                     username: curr.username,
                     fullName: curr.fullName,
-                    gender: curr.gender,
-                    majorName: curr.majorName,
                 });
             }
 
@@ -299,13 +214,187 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
     }
 };
 
+exports.getGroupLecturersByTypeEvaluation = async (req, res) => {
+    try {
+        const { termId, type = 'reviewer' } = req.query;
+
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        let groupLecturers = [];
+
+        if (type === 'reviewer') {
+            groupLecturers = await sequelize.query(
+                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+                FROM group_lecturers gl
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gl.term_id = :termId AND gl.type = 'REVIEWER'
+                ORDER BY gl.name ASC`,
+                {
+                    replacements: {
+                        termId,
+                    },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        } else if (type === 'report') {
+            groupLecturers = await sequelize.query(
+                `SELECT gl.id, gl.name, l.id as lecturerId, l.username, l.full_name as fullName
+                FROM group_lecturers gl
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gl.term_id = :termId AND NOT gl.type = 'REVIEWER'
+                ORDER BY gl.name ASC`,
+                {
+                    replacements: {
+                        termId,
+                    },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        }
+
+        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
+            const group = acc.find((g) => g.id === groupLecturer.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupLecturer.id,
+                    name: groupLecturer.name,
+                    members: [
+                        {
+                            id: groupLecturer.lecturerId,
+                            username: groupLecturer.username,
+                            fullName: groupLecturer.fullName,
+                        },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    id: groupLecturer.lecturerId,
+                    username: groupLecturer.username,
+                    fullName: groupLecturer.fullName,
+                });
+            }
+
+            return acc;
+        }, []);
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách nhóm giảng viên theo loại đánh giá thành công!',
+            groupLecturers,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getGroupLecturersByTypeEvaluationAndLecturerId = async (req, res) => {
+    try {
+        const { termId, type = 'reviewer', lecturerId } = req.query;
+
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        let groupLecturers = [];
+
+        if (type === 'reviewer') {
+            groupLecturers = await sequelize.query(
+                `SELECT gl.id, gl.name, l.id as lecturerId, l.username, l.full_name as fullName
+                FROM group_lecturers gl
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gl.term_id = :termId AND gl.type = 'REVIEWER'
+                ORDER BY gl.name ASC`,
+                {
+                    replacements: {
+                        termId,
+                    },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        } else if (type === 'report') {
+            groupLecturers = await sequelize.query(
+                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+                FROM group_lecturers gl
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gl.term_id = :termId AND NOT gl.type = 'REVIEWER'
+                ORDER BY gl.name ASC`,
+                {
+                    replacements: {
+                        termId,
+                    },
+                    type: QueryTypes.SELECT,
+                },
+            );
+        }
+
+        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
+            const group = acc.find((g) => g.id === groupLecturer.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupLecturer.id,
+                    name: groupLecturer.name,
+                    members: [
+                        {
+                            id: groupLecturer.lecturerId,
+                            username: groupLecturer.username,
+                            fullName: groupLecturer.fullName,
+                        },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    id: groupLecturer.lecturerId,
+                    username: groupLecturer.username,
+                    fullName: groupLecturer.fullName,
+                });
+            }
+
+            return acc;
+        }, []);
+
+        groupLecturers = groupLecturers.filter((groupLecturer) =>
+            groupLecturer.members.some((member) => member.id === lecturerId),
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách nhóm giảng viên theo loại đánh giá thành công!',
+            groupLecturers,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getGroupLecturerById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const groupLecturerName = await GroupLecturer.findByPk(id, {
-            attributes: ['name'],
+        const groupLecturer = await GroupLecturer.findByPk(id, {
+            attributes: ['name', 'type'],
         });
+
+        if (!groupLecturer) {
+            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
+        }
 
         const members = await sequelize.query(
             `SELECT l.id, l.username, l.full_name as fullName, l.degree, m.name as majorName
@@ -371,7 +460,8 @@ exports.getGroupLecturerById = async (req, res) => {
             success: true,
             message: 'Lấy thông tin nhóm giảng viên thành công!',
             groupLecturer: {
-                name: groupLecturerName.name,
+                name: groupLecturer.name,
+                type: groupLecturer.type,
                 members,
                 groupStudents,
             },

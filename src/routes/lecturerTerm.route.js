@@ -5,7 +5,7 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     importLecturerTerms,
     exportLecturerTerms,
-    getLecturerTermsList,
+    getLecturerTerms,
     getLecturerTermById,
     deleteLecturerTerm,
     getLecturerTermsToAdding,
@@ -33,8 +33,6 @@ router.get(
     exportLecturerTerms,
 );
 
-router.get(APP_ROUTER.LIST, protectLecturer, getLecturerTermsList);
-
 router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturerTerms);
 
 router.get(APP_ROUTER.LECTURER_TERM_TO_ADDING, protectLecturer, getLecturerTermsToAdding);
@@ -57,5 +55,7 @@ router.delete(
     checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
     deleteLecturerTerm,
 );
+
+router.get(APP_ROUTER.INDEX, protectLecturer, getLecturerTerms);
 
 module.exports = router;
