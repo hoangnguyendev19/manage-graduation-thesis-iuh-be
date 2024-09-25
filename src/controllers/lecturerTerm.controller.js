@@ -1,4 +1,4 @@
-const { LecturerTerm, Lecturer, Term } = require('../models/index');
+const { LecturerTerm, Lecturer, Term, Major } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const _ = require('lodash');
@@ -101,34 +101,37 @@ exports.exportLecturerTerms = async (req, res) => {
     }
 };
 
-exports.getLecturerTermsList = async (req, res) => {
+exports.getLecturerTerms = async (req, res) => {
     try {
         const { termId } = req.query;
 
-        const lecturerTerms = await LecturerTerm.findAll({
-            where: {
-                term_id: termId,
-            },
-            attributes: {
-                exclude: ['updated_at', 'created_at', 'lecturer_id', 'term_id'],
-            },
-            include: {
-                attributes: ['username', 'fullName', 'degree', 'id'],
-                model: Lecturer,
-                as: 'lecturer',
-            },
-        });
+        // check if termId exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
 
-        const count = lecturerTerms.length;
+        const lecturerTerms = await sequelize.query(
+            `SELECT lt.id, l.id as lecturerId, l.username, l.full_name AS fullName, m.name AS majorName
+            FROM lecturer_terms lt
+            INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            INNER JOIN majors m ON m.id = l.major_id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: {
+                    termId: termId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách giảng viên trong học kì thành công',
             lecturerTerms,
-            totalRows: count,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getLecturersList= ~ error:', error);
+        console.log('🚀 ~ exports.getLecturerTerms= ~ error:', error);
         return Error.sendError(res, error);
     }
 };
@@ -136,6 +139,12 @@ exports.getLecturerTermsList = async (req, res) => {
 exports.searchLecturerTerms = async (req, res) => {
     try {
         const { termId, limit = 10, page = 1, searchField, keywords, sort = 'ASC' } = req.query;
+
+        // check if termId exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
 
         const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
         const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
@@ -154,7 +163,7 @@ exports.searchLecturerTerms = async (req, res) => {
         const orderBy = sort ? `ORDER BY l.${searchField} ${sort}` : 'ORDER BY l.created_at DESC';
 
         const lecturerTerms = await sequelize.query(
-            `SELECT lt.id, l.username, l.full_name AS fullName,
+            `SELECT lt.id, l.username, l.full_name AS fullName, m.name AS majorName,
                 (SELECT COUNT(t.id)
                 FROM topics t
                 INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
@@ -170,6 +179,7 @@ exports.searchLecturerTerms = async (req, res) => {
                 WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS totalGroupLecturers
             FROM lecturer_terms lt
             INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            INNER JOIN majors m ON m.id = l.major_id
             WHERE lt.term_id = :termId
             ${searchQuery}
             GROUP BY lt.id, l.username, l.full_name, l.id

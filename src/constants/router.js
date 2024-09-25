@@ -80,6 +80,7 @@ const APP_ROUTER = {
     GROUP_LECTURER_NO_GROUP: '/:type/no-group',
     GROUP_LECTURER_BY_LECTURER: '/lecturer',
     GROUP_LECTURER_EVALUATION: '/evaluation',
+    GROUP_LECTURER_EVALUATION_LECTURER: '/evaluation-lecturer',
 
     //GROUP_STUDENTS
     GROUP_STUDENT: '/api/v1/group-students',
