@@ -631,28 +631,6 @@ exports.createGroupLecturer = async (req, res) => {
     }
 };
 
-exports.updateGroupLecturer = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const groupLecturer = await GroupLecturer.findByPk(id);
-        if (!groupLecturer) {
-            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
-        }
-
-        await groupLecturer.update(req.body);
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Cập nhật nhóm giảng viên thành công',
-            groupLecturer,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.deleteGroupLecturer = async (req, res) => {
     try {
         const { id } = req.params;
@@ -794,7 +772,7 @@ exports.addMemberToGroupLecturer = async (req, res) => {
         const currentMembers = await GroupLecturerMember.count({
             where: { group_lecturer_id: id },
         });
-        if (currentMembers >= 2) {
+        if (currentMembers >= 3) {
             return Error.sendNotFound(res, 'Nhóm đã đủ số lượng thành viên tối đa');
         }
 
