@@ -544,6 +544,7 @@ exports.importTopics = async (req, res) => {
         let listTopic = [];
 
         for (const topic of jsonData) {
+            console.log('🚀 ~ exports.importTopics= ~ topic:', topic);
             if (
                 !topic['Mã GV'] ||
                 !topic['Tên GV'] ||
@@ -560,7 +561,7 @@ exports.importTopics = async (req, res) => {
                 );
             }
 
-            const username = topic['Mã GV'].trim();
+            const username = topic['Mã GV'];
             const fullName = topic['Tên GV'].trim();
             const name = topic['Tên đề tài'].trim();
             const target = topic['Mục tiêu đề tài'].trim();
