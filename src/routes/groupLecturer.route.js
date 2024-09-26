@@ -60,13 +60,6 @@ router.put(
 
 router.get(APP_ROUTER.ID, getGroupLecturerById);
 
-router.put(
-    APP_ROUTER.ID,
-    protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
-    updateGroupLecturer,
-);
-
 router.delete(
     APP_ROUTER.ID,
     protectLecturer,
