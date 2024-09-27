@@ -215,61 +215,58 @@ exports.getTranscriptByStudent = async (req, res) => {
 exports.createTranscriptList = async (req, res) => {
     try {
         const { transcripts } = req.body;
-        //TODO: Check if term exist
+
+        // Check if term exist
         const term = await Term.findByPk(transcripts[0].termId);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
-        //TODO: Check if lecturer exist in term
+
+        // Check if lecturer exist in term
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 term_id: term.id,
                 lecturer_id: req.user.id,
             },
         });
+
         if (!lecturerTerm) {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
         }
-        //TODO: multi promise transcript
-        const transcriptPromises = transcripts.map(async (transcript) => {
-            const { evaluationId, score } = transcript;
 
-            //TODO: check is exist student
+        for (const transcript of transcripts) {
+            const { evaluationId, score, studentId } = transcript;
+
+            // Check if student exist in term
             const studentTerm = await StudentTerm.findOne({
                 where: {
                     term_id: term.id,
-                    student_id: transcript.studentId,
+                    student_id: studentId,
                 },
             });
+
             if (!studentTerm) {
-                throw new Error('Sinh viên không tồn tại trong học kỳ!');
+                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
             }
 
-            //TODO: check is exist evaluation
+            // Check if evaluation exist
             const evaluation = await Evaluation.findByPk(evaluationId);
             if (!evaluation) {
-                throw new Error('Đánh giá không tồn tại!');
+                return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
             }
 
             if (score > evaluation.scoreMax) {
-                throw new Error('Điểm không được lớn hơn điểm tối đa của đánh giá!');
+                return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
             }
+
             await Transcript.create({
                 lecturer_term_id: lecturerTerm.id,
                 student_term_id: studentTerm.id,
                 evaluation_id: evaluation.id,
                 score,
             });
-            return studentTerm;
-        });
 
-        //TODO: success multi create
-        const studentTerms = await Promise.all(transcriptPromises);
-
-        const evaluation = await Evaluation.findByPk(transcripts[0].evaluationId);
-
-        //TODO: Update actions of students
-        for (const studentTerm of studentTerms) {
+            // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
             const transcriptsOfStudent = await sequelize.query(
                 `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
             FROM student_terms st
@@ -320,6 +317,7 @@ exports.createTranscriptList = async (req, res) => {
                         break;
                 }
             }
+
             await studentTerm.save();
         }
 
@@ -337,11 +335,13 @@ exports.updateTranscriptList = async (req, res) => {
     try {
         const { transcripts } = req.body;
 
+        // Check if term exist
         const term = await Term.findByPk(transcripts[0].termId);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
+        // Check if lecturer exist in term
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
                 term_id: term.id,
@@ -353,8 +353,10 @@ exports.updateTranscriptList = async (req, res) => {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
         }
 
-        const updatePromises = transcripts.map(async (transcript) => {
-            const { evaluationId, score, studentId } = transcript;
+        for (const trans of transcripts) {
+            const { evaluationId, score, studentId } = trans;
+
+            // Check if student exist in term
             const studentTerm = await StudentTerm.findOne({
                 where: {
                     term_id: term.id,
@@ -363,16 +365,16 @@ exports.updateTranscriptList = async (req, res) => {
             });
 
             if (!studentTerm) {
-                throw new Error(`Sinh viên ${studentId} không tồn tại trong học kỳ!`);
+                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
             }
+
+            // Check if evaluation exist
             const evaluation = await Evaluation.findByPk(evaluationId);
             if (!evaluation) {
-                throw new Error(`Đánh giá ${evaluationId} không tồn tại!`);
+                return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
             }
-            if (score > evaluation.scoreMax) {
-                throw new Error('Điểm không được lớn hơn điểm tối đa của đánh giá!');
-            }
-            const existingTranscript = await Transcript.findOne({
+
+            const transcript = await Transcript.findOne({
                 where: {
                     student_term_id: studentTerm.id,
                     evaluation_id: evaluation.id,
@@ -380,30 +382,30 @@ exports.updateTranscriptList = async (req, res) => {
                 },
             });
 
-            if (!existingTranscript) {
-                throw new Error('Bảng điểm không tồn tại!');
+            if (!transcript) {
+                return Error.sendNotFound(res, 'Bảng điểm không tồn tại!');
             }
-            existingTranscript.score = score;
-            await existingTranscript.save();
 
-            return studentTerm;
-        });
-        const studentTerms = await Promise.all(updatePromises);
+            if (score > evaluation.scoreMax) {
+                return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
+            }
 
-        const evaluationType = transcripts[0]?.evaluationType || '';
+            transcript.score = score;
 
-        for (const studentTerm of studentTerms) {
+            await transcript.save();
+
+            // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
             const transcriptsOfStudent = await sequelize.query(
                 `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
-                FROM student_terms st
-                INNER JOIN transcripts t ON st.id = t.student_term_id
-                INNER JOIN evaluations e ON t.evaluation_id = e.id
-                WHERE st.id = :studentTermId AND e.type = :type
-                GROUP BY st.id, e.type`,
+            FROM student_terms st
+            INNER JOIN transcripts t ON st.id = t.student_term_id
+            INNER JOIN evaluations e ON t.evaluation_id = e.id
+            WHERE st.id = :studentTermId AND e.type = :type
+            GROUP BY st.id, e.type`,
                 {
                     replacements: {
                         studentTermId: studentTerm.id,
-                        type: evaluationType,
+                        type: evaluation.type,
                     },
                     type: sequelize.QueryTypes.SELECT,
                 },
@@ -415,7 +417,7 @@ exports.updateTranscriptList = async (req, res) => {
             );
 
             if (totalScore >= 4) {
-                switch (evaluationType) {
+                switch (evaluation.type) {
                     case 'ADVISOR':
                         studentTerm.status = 'PASS_ADVISOR';
                         break;
@@ -429,7 +431,7 @@ exports.updateTranscriptList = async (req, res) => {
                         break;
                 }
             } else {
-                switch (evaluationType) {
+                switch (evaluation.type) {
                     case 'ADVISOR':
                         studentTerm.status = 'FAIL_ADVISOR';
                         break;
@@ -452,11 +454,10 @@ exports.updateTranscriptList = async (req, res) => {
             message: 'Cập nhật bảng điểm thành công!',
         });
     } catch (error) {
-        console.error(error);
+        console.log(error);
         Error.sendError(res, error);
     }
 };
-
 
 exports.getTranscriptGroupStudentByLecturerSupport = async (req, res) => {
     try {
