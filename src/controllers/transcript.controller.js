@@ -234,20 +234,20 @@ exports.createTranscriptList = async (req, res) => {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
         }
 
-        // Check if student exist in term
-        const studentTerm = await StudentTerm.findOne({
-            where: {
-                term_id: term.id,
-                student_id: transcripts[0].studentId,
-            },
-        });
-
-        if (!studentTerm) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
-        }
-
         for (const transcript of transcripts) {
-            const { evaluationId, score } = transcript;
+            const { evaluationId, score, studentId } = transcript;
+
+            // Check if student exist in term
+            const studentTerm = await StudentTerm.findOne({
+                where: {
+                    term_id: term.id,
+                    student_id: studentId,
+                },
+            });
+
+            if (!studentTerm) {
+                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+            }
 
             // Check if evaluation exist
             const evaluation = await Evaluation.findByPk(evaluationId);
@@ -265,63 +265,61 @@ exports.createTranscriptList = async (req, res) => {
                 evaluation_id: evaluation.id,
                 score,
             });
-        }
 
-        const evaluation = await Evaluation.findByPk(transcripts[0].evaluationId);
-
-        // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
-        const transcriptsOfStudent = await sequelize.query(
-            `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
+            // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
+            const transcriptsOfStudent = await sequelize.query(
+                `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
             FROM student_terms st
             INNER JOIN transcripts t ON st.id = t.student_term_id
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             WHERE st.id = :studentTermId AND e.type = :type
             GROUP BY st.id, e.type`,
-            {
-                replacements: {
-                    studentTermId: studentTerm.id,
-                    type: evaluation.type,
+                {
+                    replacements: {
+                        studentTermId: studentTerm.id,
+                        type: evaluation.type,
+                    },
+                    type: sequelize.QueryTypes.SELECT,
                 },
-                type: sequelize.QueryTypes.SELECT,
-            },
-        );
+            );
 
-        const totalScore = transcriptsOfStudent.reduce(
-            (total, transcript) => total + transcript.avgScore,
-            0,
-        );
+            const totalScore = transcriptsOfStudent.reduce(
+                (total, transcript) => total + transcript.avgScore,
+                0,
+            );
 
-        if (totalScore >= 4) {
-            switch (evaluation.type) {
-                case 'ADVISOR':
-                    studentTerm.status = 'PASS_ADVISOR';
-                    break;
-                case 'REVIEWER':
-                    studentTerm.status = 'PASS_REVIEWER';
-                    break;
-                case 'REPORT':
-                    studentTerm.status = 'PASS_REPORT';
-                    break;
-                default:
-                    break;
+            if (totalScore >= 4) {
+                switch (evaluation.type) {
+                    case 'ADVISOR':
+                        studentTerm.status = 'PASS_ADVISOR';
+                        break;
+                    case 'REVIEWER':
+                        studentTerm.status = 'PASS_REVIEWER';
+                        break;
+                    case 'REPORT':
+                        studentTerm.status = 'PASS_REPORT';
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                switch (evaluation.type) {
+                    case 'ADVISOR':
+                        studentTerm.status = 'FAIL_ADVISOR';
+                        break;
+                    case 'REVIEWER':
+                        studentTerm.status = 'FAIL_REVIEWER';
+                        break;
+                    case 'REPORT':
+                        studentTerm.status = 'FAIL_REPORT';
+                        break;
+                    default:
+                        break;
+                }
             }
-        } else {
-            switch (evaluation.type) {
-                case 'ADVISOR':
-                    studentTerm.status = 'FAIL_ADVISOR';
-                    break;
-                case 'REVIEWER':
-                    studentTerm.status = 'FAIL_REVIEWER';
-                    break;
-                case 'REPORT':
-                    studentTerm.status = 'FAIL_REPORT';
-                    break;
-                default:
-                    break;
-            }
+
+            await studentTerm.save();
         }
-
-        await studentTerm.save();
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
@@ -355,20 +353,20 @@ exports.updateTranscriptList = async (req, res) => {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
         }
 
-        // Check if student exist in term
-        const studentTerm = await StudentTerm.findOne({
-            where: {
-                term_id: term.id,
-                student_id: transcripts[0].studentId,
-            },
-        });
-
-        if (!studentTerm) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
-        }
-
         for (const trans of transcripts) {
-            const { evaluationId, score } = trans;
+            const { evaluationId, score, studentId } = trans;
+
+            // Check if student exist in term
+            const studentTerm = await StudentTerm.findOne({
+                where: {
+                    term_id: term.id,
+                    student_id: studentId,
+                },
+            });
+
+            if (!studentTerm) {
+                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+            }
 
             // Check if evaluation exist
             const evaluation = await Evaluation.findByPk(evaluationId);
@@ -395,63 +393,61 @@ exports.updateTranscriptList = async (req, res) => {
             transcript.score = score;
 
             await transcript.save();
-        }
 
-        const evaluation = await Evaluation.findByPk(transcripts[0].evaluationId);
-
-        // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
-        const transcriptsOfStudent = await sequelize.query(
-            `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
+            // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
+            const transcriptsOfStudent = await sequelize.query(
+                `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
             FROM student_terms st
             INNER JOIN transcripts t ON st.id = t.student_term_id
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             WHERE st.id = :studentTermId AND e.type = :type
             GROUP BY st.id, e.type`,
-            {
-                replacements: {
-                    studentTermId: studentTerm.id,
-                    type: evaluation.type,
+                {
+                    replacements: {
+                        studentTermId: studentTerm.id,
+                        type: evaluation.type,
+                    },
+                    type: sequelize.QueryTypes.SELECT,
                 },
-                type: sequelize.QueryTypes.SELECT,
-            },
-        );
+            );
 
-        const totalScore = transcriptsOfStudent.reduce(
-            (total, transcript) => total + transcript.avgScore,
-            0,
-        );
+            const totalScore = transcriptsOfStudent.reduce(
+                (total, transcript) => total + transcript.avgScore,
+                0,
+            );
 
-        if (totalScore >= 4) {
-            switch (evaluation.type) {
-                case 'ADVISOR':
-                    studentTerm.status = 'PASS_ADVISOR';
-                    break;
-                case 'REVIEWER':
-                    studentTerm.status = 'PASS_REVIEWER';
-                    break;
-                case 'REPORT':
-                    studentTerm.status = 'PASS_REPORT';
-                    break;
-                default:
-                    break;
+            if (totalScore >= 4) {
+                switch (evaluation.type) {
+                    case 'ADVISOR':
+                        studentTerm.status = 'PASS_ADVISOR';
+                        break;
+                    case 'REVIEWER':
+                        studentTerm.status = 'PASS_REVIEWER';
+                        break;
+                    case 'REPORT':
+                        studentTerm.status = 'PASS_REPORT';
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                switch (evaluation.type) {
+                    case 'ADVISOR':
+                        studentTerm.status = 'FAIL_ADVISOR';
+                        break;
+                    case 'REVIEWER':
+                        studentTerm.status = 'FAIL_REVIEWER';
+                        break;
+                    case 'REPORT':
+                        studentTerm.status = 'FAIL_REPORT';
+                        break;
+                    default:
+                        break;
+                }
             }
-        } else {
-            switch (evaluation.type) {
-                case 'ADVISOR':
-                    studentTerm.status = 'FAIL_ADVISOR';
-                    break;
-                case 'REVIEWER':
-                    studentTerm.status = 'FAIL_REVIEWER';
-                    break;
-                case 'REPORT':
-                    studentTerm.status = 'FAIL_REPORT';
-                    break;
-                default:
-                    break;
-            }
+
+            await studentTerm.save();
         }
-
-        await studentTerm.save();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
