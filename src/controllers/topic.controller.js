@@ -7,7 +7,7 @@ const _ = require('lodash');
 const { sequelize } = require('../configs/connectDB');
 const { validationResult } = require('express-validator');
 
-exports.getTopicOfSearch = async (req, res) => {
+exports.getTopicsOfSearch = async (req, res) => {
     try {
         const { termId, keywords = '', searchField, page = 1, limit = 10, sort } = req.query;
 
@@ -114,7 +114,7 @@ exports.getTopicByLecturer = async (req, res) => {
     }
 };
 
-exports.getTopicApprovedOfSearch = async (req, res) => {
+exports.getTopicsApprovedOfSearch = async (req, res) => {
     try {
         const { termId, keywords, searchField, page, limit, sort } = req.query;
         const offset = (page - 1) * limit;
@@ -203,6 +203,39 @@ exports.getTopicApprovedOfSearch = async (req, res) => {
     }
 };
 
+exports.getTopicsApproved = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        const topics = await sequelize.query(
+            `SELECT t.id, t.key, t.name, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            LEFT JOIN group_students gs ON t.id = gs.topic_id
+            WHERE lt.term_id = :termId AND t.status = :status 
+            GROUP BY t.id, t.key, t.name, t.quantity_group_max, l.full_name
+            ORDER BY t.name`,
+            {
+                replacements: {
+                    termId,
+                    status: 'APPROVED',
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách đề tài thành công!',
+            topics,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getTopicsByGroupLecturerId = async (req, res) => {
     try {
         const { id } = req.params;
@@ -282,7 +315,7 @@ exports.getTopicById = async (req, res) => {
         });
 
         if (!topic) {
-            return Error.sendNotFound(res, 'Topic not found');
+            return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
