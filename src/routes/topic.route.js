@@ -3,8 +3,9 @@ const express = require('express');
 const { APP_ROUTER } = require('../constants/router');
 
 const {
-    getTopicOfSearch,
-    getTopicApprovedOfSearch,
+    getTopicsOfSearch,
+    getTopicsApprovedOfSearch,
+    getTopicsApproved,
     getTopicsByGroupLecturerId,
     getTopicByLecturer,
     getTopicById,
@@ -30,7 +31,7 @@ router.get(APP_ROUTER.TOPIC_BY_LECTURER, protectLecturer, getTopicByLecturer);
 
 router.get(APP_ROUTER.TOPIC_BY_GROUP_LECTURER, getTopicsByGroupLecturerId);
 
-router.get(APP_ROUTER.QUERY, getTopicOfSearch);
+router.get(APP_ROUTER.QUERY, getTopicsOfSearch);
 
 router.get(APP_ROUTER.COUNT, countTopicsByTermId);
 
@@ -74,13 +75,15 @@ router.put(
     updateStatusTopic,
 );
 
+router.get(APP_ROUTER.TOPIC_APPROVED, getTopicsApproved);
+
 router.get(APP_ROUTER.ID, getTopicById);
 
 router.put(APP_ROUTER.ID, protectLecturer, validateTopic, updateTopic);
 
 router.delete(APP_ROUTER.ID, protectLecturer, deleteTopic);
 
-router.get(APP_ROUTER.INDEX, getTopicApprovedOfSearch);
+router.get(APP_ROUTER.INDEX, getTopicsApprovedOfSearch);
 
 router.post(APP_ROUTER.INDEX, protectLecturer, validateTopic, createTopic);
 
