@@ -66,6 +66,51 @@ exports.getGroupStudents = async (req, res) => {
     }
 };
 
+exports.getGroupStudentsByTypeAssign = async (req, res) => {
+    try {
+        const { termId, type = 'ADVISOR' } = req.query;
+
+        let groupStudents = [];
+
+        if (type === 'ADVISOR') {
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName
+                FROM group_students gs
+                INNER JOIN topics tc ON gs.topic_id = tc.id
+                INNER JOIN lecturer_terms lt ON lt.id = tc.lecturer_term_id
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, lecturerId: req.user.id },
+                },
+            );
+        } else {
+            groupStudents = await sequelize.query(
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName
+                FROM group_students gs
+                INNER JOIN topics tc ON gs.topic_id = tc.id
+                INNER JOIN assigns a ON gs.id = a.group_student_id
+                INNER JOIN group_lecturer_members glm ON a.group_lecturer_id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND a.type = :type`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { termId, lecturerId: req.user.id, type },
+                },
+            );
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách nhóm sinh viên thành công!',
+            groupStudents,
+        });
+    } catch (error) {
+        console.log('🚀 ~ getGroupStudentsByTypeAssign ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getGroupStudentsByLecturerId = async (req, res) => {
     try {
         const { termId, lecturerId } = req.query;
