@@ -151,22 +151,33 @@ exports.getTranscriptSummary = async (req, res) => {
             },
         );
 
-        let totalAvgScore = 0;
+        const advisor = transcripts.find((transcript) => transcript.type === 'ADVISOR');
 
-        // I want to fix the avgScore to 2 decimal places
-        transcripts.forEach((transcript) => {
-            transcript.avgScore = Number(transcript.avgScore.toFixed(2));
-            totalAvgScore += transcript.avgScore;
-        });
+        const reviewer = transcripts.find((transcript) => transcript.type === 'REVIEWER');
 
-        totalAvgScore = Number((totalAvgScore / transcripts.length).toFixed(2));
+        const report = transcripts.find((transcript) => transcript.type === 'REPORT');
+
+        const advisorScore = advisor ? Number(advisor.avgScore).toFixed(2) : 0;
+        const reviewerScore = reviewer ? Number(reviewer.avgScore).toFixed(2) : 0;
+        const reportScore = report ? Number(report.avgScore).toFixed(2) : 0;
+
+        let totalAverageScore = 0;
+        if (transcripts.length !== 0) {
+            totalAverageScore = transcripts.reduce(
+                (total, transcript) => total + transcript.avgScore,
+                0,
+            );
+            totalAverageScore = Number(totalAverageScore / transcripts.length).toFixed(2);
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy bảng điểm tổng kết thành công!',
             transcript: {
-                transcripts,
-                totalAvgScore,
+                advisorScore,
+                reviewerScore,
+                reportScore,
+                totalAverageScore,
             },
         });
     } catch (error) {
@@ -511,6 +522,7 @@ exports.getTranscriptGroupStudentByLecturerSupport = async (req, res) => {
     }
 };
 
+// Instead of getGroupStudentsByTypeAssign
 exports.unTranscriptStudentsByType = async (req, res) => {
     try {
         const { type = 'ADVISOR' } = req.params;
