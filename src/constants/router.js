@@ -73,6 +73,7 @@ const APP_ROUTER = {
     TOPIC_QUANTITY_GROUP_MAX: '/quantity-group-max',
     TOPIC_BY_GROUP_LECTURER: '/group-lecturer/:id',
     TOPIC_BY_LECTURER: '/lecturer/:lecturerId',
+    TOPIC_APPROVED: '/approved',
 
     //GROUP_LECTURERS
     GROUP_LECTURER: '/api/v1/group-lecturers',
@@ -87,6 +88,7 @@ const APP_ROUTER = {
     GROUP_STUDENT_BY_LECTURER: '/lecturer',
     GROUP_STUDENT_BY_TOPIC: '/topic',
     GROUP_STUDENT_BY_TERM: '/term',
+    GROUP_STUDENT_BY_ASSIGN: '/assign',
     GROUP_STUDENT_ASSIGN_ADMIN: '/:id/assign-admin',
     GROUP_STUDENT_ASSIGN_TOPIC: '/:id/assign-topic',
     GROUP_STUDENT_REMOVE_TOPIC: '/:id/remove-topic',

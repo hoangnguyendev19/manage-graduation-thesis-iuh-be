@@ -129,14 +129,19 @@ exports.getTranscriptSummary = async (req, res) => {
     try {
         const { termId } = req.query;
 
+        // check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const transcripts = await sequelize.query(
-            `SELECT s.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
+            `SELECT st.student_id as id, e.type, sum(t.score) / sum(e.score_max) * 10 as avgScore
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             INNER JOIN student_terms st ON t.student_term_id = st.id
-            INNER JOIN students s ON st.student_id = s.id
-            WHERE st.term_id = :termId AND s.id = :studentId
-            GROUP BY s.id, e.type`,
+            WHERE st.term_id = :termId AND st.student_id = :studentId
+            GROUP BY st.student_id, e.type`,
             {
                 replacements: {
                     termId,
@@ -146,15 +151,34 @@ exports.getTranscriptSummary = async (req, res) => {
             },
         );
 
-        // I want to fix the avgScore to 2 decimal places
-        transcripts.forEach((transcript) => {
-            transcript.avgScore = Number(transcript.avgScore.toFixed(2));
-        });
+        const advisor = transcripts.find((transcript) => transcript.type === 'ADVISOR');
+
+        const reviewer = transcripts.find((transcript) => transcript.type === 'REVIEWER');
+
+        const report = transcripts.find((transcript) => transcript.type === 'REPORT');
+
+        const advisorScore = advisor ? Number(advisor.avgScore).toFixed(2) : 0;
+        const reviewerScore = reviewer ? Number(reviewer.avgScore).toFixed(2) : 0;
+        const reportScore = report ? Number(report.avgScore).toFixed(2) : 0;
+
+        let totalAverageScore = 0;
+        if (transcripts.length !== 0) {
+            totalAverageScore = transcripts.reduce(
+                (total, transcript) => total + transcript.avgScore,
+                0,
+            );
+            totalAverageScore = Number(totalAverageScore / transcripts.length).toFixed(2);
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy bảng điểm tổng kết thành công!',
-            transcripts,
+            transcript: {
+                advisorScore,
+                reviewerScore,
+                reportScore,
+                totalAverageScore,
+            },
         });
     } catch (error) {
         console.log(error);
@@ -162,25 +186,31 @@ exports.getTranscriptSummary = async (req, res) => {
     }
 };
 
-exports.getTranscriptByStudent = async (req, res) => {
+exports.getTranscriptByStudentId = async (req, res) => {
     try {
         const { termId, type } = req.query;
 
+        // Check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const studentTerm = await StudentTerm.findOne({
             where: {
-                term_id: termId,
+                term_id: term.id,
                 student_id: req.user.id,
             },
         });
 
-        const transcripts = await sequelize.query(
-            `SELECT t.id, t.score, l.full_name as lecturerName
+        let transcripts = await sequelize.query(
+            `SELECT l.id, l.full_name as lecturerName, sum(t.score) / sum(e.score_max) * 10 as avgScore
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
             WHERE t.student_term_id = :studentTermId AND e.type = :type
-            GROUP BY t.id, l.full_name`,
+            GROUP BY l.id, l.full_name`,
             {
                 replacements: {
                     studentTermId: studentTerm.id,
@@ -190,12 +220,14 @@ exports.getTranscriptByStudent = async (req, res) => {
             },
         );
 
-        let avgScore = 0;
+        let totalAvgScore = 0;
 
         if (transcripts.length !== 0) {
-            // I want to calculate average score throught transcripts
-            const total = transcripts.reduce((total, transcript) => total + transcript.score, 0);
-            avgScore = Number((total / transcripts.length).toFixed(2));
+            totalAvgScore = transcripts.reduce(
+                (total, transcript) => total + transcript.avgScore,
+                0,
+            );
+            totalAvgScore = Number(totalAvgScore.toFixed(2) / transcripts.length);
         }
 
         res.status(HTTP_STATUS.OK).json({
@@ -203,7 +235,7 @@ exports.getTranscriptByStudent = async (req, res) => {
             message: 'Lấy bảng điểm thành công!',
             transcript: {
                 transcripts,
-                avgScore,
+                totalAvgScore,
             },
         });
     } catch (error) {
@@ -490,6 +522,7 @@ exports.getTranscriptGroupStudentByLecturerSupport = async (req, res) => {
     }
 };
 
+// Instead of getGroupStudentsByTypeAssign
 exports.unTranscriptStudentsByType = async (req, res) => {
     try {
         const { type = 'ADVISOR' } = req.params;
