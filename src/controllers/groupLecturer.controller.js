@@ -1,4 +1,10 @@
-const { GroupLecturer, LecturerTerm, GroupLecturerMember, Term } = require('../models/index');
+const {
+    GroupLecturer,
+    LecturerTerm,
+    GroupLecturerMember,
+    Term,
+    Assign,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
@@ -228,7 +234,7 @@ exports.getGroupLecturersByTypeEvaluation = async (req, res) => {
 
         if (type === 'reviewer') {
             groupLecturers = await sequelize.query(
-                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+                `SELECT gl.id, gl.name, gl.type, l.id as lecturerId, l.username, l.full_name as fullName
                 FROM group_lecturers gl
                 INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
@@ -244,7 +250,7 @@ exports.getGroupLecturersByTypeEvaluation = async (req, res) => {
             );
         } else if (type === 'report') {
             groupLecturers = await sequelize.query(
-                `SELECT gl.id, gl.name, l.id as lecturerId, l.username, l.full_name as fullName
+                `SELECT gl.id, gl.name, gl.type, l.id as lecturerId, l.username, l.full_name as fullName
                 FROM group_lecturers gl
                 INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
@@ -267,6 +273,7 @@ exports.getGroupLecturersByTypeEvaluation = async (req, res) => {
                 acc.push({
                     id: groupLecturer.id,
                     name: groupLecturer.name,
+                    type: groupLecturer.type,
                     members: [
                         {
                             id: groupLecturer.lecturerId,
@@ -311,7 +318,7 @@ exports.getGroupLecturersByTypeEvaluationAndLecturerId = async (req, res) => {
 
         if (type === 'reviewer') {
             groupLecturers = await sequelize.query(
-                `SELECT gl.id, gl.name, l.id as lecturerId, l.username, l.full_name as fullName
+                `SELECT gl.id, gl.name, gl.type, l.id as lecturerId, l.username, l.full_name as fullName
                 FROM group_lecturers gl
                 INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
@@ -327,7 +334,7 @@ exports.getGroupLecturersByTypeEvaluationAndLecturerId = async (req, res) => {
             );
         } else if (type === 'report') {
             groupLecturers = await sequelize.query(
-                `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+                `SELECT gl.id, gl.name, gl.type, l.id as lecturerId, l.username, l.full_name as fullName
                 FROM group_lecturers gl
                 INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
@@ -350,6 +357,7 @@ exports.getGroupLecturersByTypeEvaluationAndLecturerId = async (req, res) => {
                 acc.push({
                     id: groupLecturer.id,
                     name: groupLecturer.name,
+                    type: groupLecturer.type,
                     members: [
                         {
                             id: groupLecturer.lecturerId,
@@ -640,6 +648,18 @@ exports.deleteGroupLecturer = async (req, res) => {
             return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
         }
 
+        await GroupLecturerMember.destroy({
+            where: {
+                group_lecturer_id: id,
+            },
+        });
+
+        await Assign.destroy({
+            where: {
+                group_lecturer_id: id,
+            },
+        });
+
         await groupLecturer.destroy();
 
         res.status(HTTP_STATUS.OK).json({
@@ -727,6 +747,12 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
         });
 
         if (groupLecturerMembers.length === 0) {
+            await Assign.destroy({
+                where: {
+                    group_lecturer_id: id,
+                },
+            });
+
             await groupLecturer.destroy();
         }
 
