@@ -8,7 +8,6 @@ const {
     getGroupLecturersByTypeEvaluation,
     getGroupLecturersByTypeEvaluationAndLecturerId,
     getGroupLecturerById,
-    updateGroupLecturer,
     deleteGroupLecturer,
     removeLecturerFromGroupLecturer,
     getLecturerNoGroupByType,
