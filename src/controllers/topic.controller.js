@@ -577,7 +577,6 @@ exports.importTopics = async (req, res) => {
         let listTopic = [];
 
         for (const topic of jsonData) {
-            console.log('🚀 ~ exports.importTopics= ~ topic:', topic);
             if (
                 !topic['Mã GV'] ||
                 !topic['Tên GV'] ||
