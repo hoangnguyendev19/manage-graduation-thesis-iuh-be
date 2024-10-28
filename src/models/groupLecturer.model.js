@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
                 defaultValue: 'REVIEWER',
             },
+            keywords: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
         },
         {
             tableName: 'group_lecturers',

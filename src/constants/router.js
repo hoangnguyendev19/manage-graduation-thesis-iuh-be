@@ -21,6 +21,7 @@ const APP_ROUTER = {
     SEARCH: '/search',
     EXPORT: '/export',
     EXPORT_ME: '/export-me',
+    KEYWORD: '/keyword',
 
     // UPLOAD
     UPLOAD: '/api/v1/uploads',
