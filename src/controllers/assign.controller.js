@@ -403,7 +403,7 @@ exports.getGroupStudentNoAssign = async (req, res) => {
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lấy danh sách sinh viên chưa chấm thành công',
+            message: 'Lấy danh sách sinh viên chưa được phân công!',
             groupStudent: resultGroupStudent,
         });
     } catch (error) {

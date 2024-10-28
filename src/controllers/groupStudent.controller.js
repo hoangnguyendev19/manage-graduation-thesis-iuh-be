@@ -19,11 +19,11 @@ exports.getGroupStudents = async (req, res) => {
         let groupStudents = await sequelize.query(
             `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, s.username, s.full_name as fullName
             FROM group_students gs 
-            INNER JOIN student_terms st ON gs.id = st.group_student_id
-            INNER JOIN students s ON st.student_id = s.id
-            INNER JOIN topics tc ON gs.topic_id = tc.id 
-            INNER JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
-            INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN students s ON st.student_id = s.id
+            LEFT JOIN topics tc ON gs.topic_id = tc.id 
+            LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
+            LEFT JOIN lecturers l ON l.id = lt.lecturer_id
             WHERE gs.term_id = :termId`,
             {
                 type: QueryTypes.SELECT,

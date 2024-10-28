@@ -397,7 +397,7 @@ exports.getGroupLecturerById = async (req, res) => {
         const { id } = req.params;
 
         const groupLecturer = await GroupLecturer.findByPk(id, {
-            attributes: ['name', 'type'],
+            attributes: ['name', 'type', 'keywords'],
         });
 
         if (!groupLecturer) {
@@ -471,6 +471,7 @@ exports.getGroupLecturerById = async (req, res) => {
             groupLecturer: {
                 name: groupLecturer.name,
                 type: groupLecturer.type,
+                keywords: groupLecturer.keywords,
                 members,
                 groupStudents,
             },
@@ -559,7 +560,7 @@ exports.countGroupLecturersByLecturerId = async (req, res) => {
 
 exports.createGroupLecturer = async (req, res) => {
     try {
-        const { termId, lecturers, type } = req.body;
+        const { termId, lecturers, type, keywords } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -606,6 +607,7 @@ exports.createGroupLecturer = async (req, res) => {
             name: groupName,
             term_id: termId,
             type: type.toUpperCase(),
+            keywords,
         });
 
         // Fetch lecturer terms for all provided lecturers in one query
