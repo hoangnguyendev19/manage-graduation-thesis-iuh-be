@@ -15,7 +15,6 @@ const achievement = require('./achievement.route');
 const notificationStudent = require('./notificationStudent.route');
 const notificationLecturer = require('./notificationLecturer.route');
 const notification = require('./notification.route');
-const upload = require('./upload.route');
 const assign = require('./assign.route');
 
 function router(app) {
@@ -34,7 +33,6 @@ function router(app) {
     app.use(APP_ROUTER.NOTIFICATION_STUDENT, notificationStudent);
     app.use(APP_ROUTER.NOTIFICATION_LECTURER, notificationLecturer);
     app.use(APP_ROUTER.NOTIFICATION, notification);
-    app.use(APP_ROUTER.UPLOAD, upload);
     app.use(APP_ROUTER.ASSIGN, assign);
 }
 
