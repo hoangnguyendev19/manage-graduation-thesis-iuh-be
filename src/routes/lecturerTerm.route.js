@@ -6,7 +6,6 @@ const {
     importLecturerTerms,
     exportLecturerTerms,
     getLecturerTerms,
-    getLecturerTermsByKeyword,
     getLecturerTermById,
     deleteLecturerTerm,
     getLecturerTermsToAdding,
@@ -39,8 +38,6 @@ router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturerTerms);
 router.get(APP_ROUTER.LECTURER_TERM_TO_ADDING, protectLecturer, getLecturerTermsToAdding);
 
 router.get(APP_ROUTER.COUNT, countLecturerTermsByTermId);
-
-router.get(APP_ROUTER.KEYWORD, protectLecturer, getLecturerTermsByKeyword);
 
 router.get(APP_ROUTER.ID, protectLecturer, getLecturerTermById);
 

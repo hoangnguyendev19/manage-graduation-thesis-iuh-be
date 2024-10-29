@@ -105,68 +105,51 @@ exports.exportLecturerTerms = async (req, res) => {
 
 exports.getLecturerTerms = async (req, res) => {
     try {
-        const { termId } = req.query;
+        const { termId, searchField } = req.query;
 
-        // check if termId exists
+        // Check if termId exists
         const term = await Term.findByPk(termId);
         if (!term) {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
-        const lecturerTerms = await sequelize.query(
-            `SELECT lt.id, l.id as lecturerId, l.username, l.full_name AS fullName, m.name AS majorName
-            FROM lecturer_terms lt
-            INNER JOIN lecturers l ON l.id = lt.lecturer_id
-            INNER JOIN majors m ON m.id = l.major_id
-            WHERE lt.term_id = :termId`,
-            {
-                replacements: {
-                    termId: termId,
+        let lecturerTerms = [];
+        if (searchField === 'default') {
+            lecturerTerms = await sequelize.query(
+                `SELECT lt.id, l.id as lecturerId, l.username, l.full_name AS fullName, m.name AS majorName
+                FROM lecturer_terms lt
+                INNER JOIN lecturers l ON l.id = lt.lecturer_id
+                INNER JOIN majors m ON m.id = l.major_id
+                WHERE lt.term_id = :termId`,
+                {
+                    replacements: { termId },
+                    type: QueryTypes.SELECT,
                 },
-                type: QueryTypes.SELECT,
-            },
-        );
+            );
 
-        return res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Lấy danh sách giảng viên trong học kì thành công',
-            lecturerTerms,
-        });
-    } catch (error) {
-        console.log('🚀 ~ exports.getLecturerTerms= ~ error:', error);
-        return Error.sendError(res, error);
-    }
-};
+            lecturerTerms = lecturerTerms.map((lec) => ({
+                ...lec,
+                total: 0,
+                keyword: null,
+            }));
+        } else {
+            const filePath = path.join('src', 'vectorDB', 'lecturers.json');
 
-exports.getLecturerTermsByKeyword = async (req, res) => {
-    const { keyword } = req.query;
-    const filePath = path.join('src', 'vectorDB', 'lecturers.json');
+            // Read the JSON file asynchronously with a promise
+            const data = await fs.promises.readFile(filePath, 'utf8');
 
-    // Read the JSON file
-    fs.readFile(filePath, 'utf8', async (err, data) => {
-        if (err) {
-            return Error.sendError(res, err);
-        }
-
-        try {
             const jsonData = JSON.parse(data);
+            const newJsonData = jsonData.flatMap((item) =>
+                item.categories.map((category) => ({
+                    lecturerTermId: item.lecturerTermId,
+                    total: category.total,
+                    keyword: category.category_name,
+                })),
+            );
 
-            const newJsonData = jsonData
-                .map((item) => {
-                    const category = item.categories.find(
-                        (category) =>
-                            category.category_name.toLowerCase() === keyword.toLowerCase(),
-                    );
-                    return category
-                        ? { lecturerTermId: item.lecturerTermId, total: category.total }
-                        : null;
-                })
-                .filter((item) => item !== null)
-                .sort((a, b) => b.total - a.total);
-
-            let lecturerTerms = await Promise.all(
+            const result = await Promise.all(
                 newJsonData.map(async (jData) => {
-                    const { lecturerTermId, total } = jData;
+                    const { lecturerTermId, total, keyword } = jData;
 
                     const lecturerTerm = await sequelize.query(
                         `SELECT lt.id, l.id as lecturerId, l.username, l.full_name as fullName, m.name as majorName
@@ -180,29 +163,28 @@ exports.getLecturerTermsByKeyword = async (req, res) => {
                         },
                     );
 
-                    // If no lecturer found, skip the result
                     if (!lecturerTerm || lecturerTerm.length === 0) return null;
 
                     return {
                         ...lecturerTerm[0],
                         total,
+                        keyword,
                     };
                 }),
             );
 
-            // Filter out any null results
-            lecturerTerms = lecturerTerms.filter((lec) => lec !== null);
-
-            res.status(HTTP_STATUS.OK).json({
-                success: true,
-                message: 'Tìm kiếm giảng viên theo từ khoá thành công!',
-                lecturerTerms,
-            });
-        } catch (error) {
-            console.log(error);
-            Error.sendError(res, error);
+            lecturerTerms.push(...result.filter((item) => item !== null));
         }
-    });
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách giảng viên trong học kì thành công',
+            lecturerTerms,
+        });
+    } catch (error) {
+        console.log('🚀 ~ exports.getLecturerTerms= ~ error:', error);
+        return Error.sendError(res, error);
+    }
 };
 
 exports.searchLecturerTerms = async (req, res) => {
