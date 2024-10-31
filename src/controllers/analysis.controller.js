@@ -5,6 +5,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
 const fs = require('fs');
+const path = require('path');
 
 //[AI libs]
 const { genAIModel, genChat } = require('../configs/connectGemini');
@@ -49,6 +50,7 @@ const getGrStudentsToAssign = async (type, termId) => {
         return Error.sendError(res, error);
     }
 };
+
 const getTopics = async (termId) => {
     try {
         const sql = `SELECT t.id, t.name, lecturer_term_id as lecturerTermId
@@ -79,7 +81,7 @@ const mergedArray = (arr1, arr2) =>
 //! ---------------------------[CLASSIFY TOPICS]--------------------------------
 
 // TODO [PROCESSING DATA]
-const classify_topics_result = async (termId) => {
+const classify_topics_result = async (termId, category) => {
     const topics = await getTopics(termId);
     const jsons_file = JSON.stringify(topics);
     const textSplitter = new RecursiveCharacterTextSplitter({
@@ -91,7 +93,7 @@ const classify_topics_result = async (termId) => {
     const vectorStoreRetriever = vectorStore.asRetriever();
 
     const prompt = ChatPromptTemplate.fromMessages([
-        ['system', CLASSIFICATION_TOPICS_TEMPLATE],
+        ['system', CLASSIFICATION_TOPICS_TEMPLATE(category)],
         ['human', '{question}'],
     ]);
     const chain = RunnableSequence.from([
@@ -122,19 +124,16 @@ const saveDataTopics = async (payload) => {
 };
 
 //TODO [ASSIGN]
-const analysisOfTopics = async (type, termId) => {
-    const classify = await classify_topics_result(termId);
+const analysisOfTopics = async (type, termId, category) => {
+    const classify = await classify_topics_result(termId, category);
     const data = await getGrStudentsToAssign(type, termId);
     const maping = await mergedArray(data, classify);
     saveDataTopics(maping);
-    console.log('🚀 ~ saveData ~ success!!!!!!!!!!!!!!!!!!!!!!!!');
 };
-analysisOfTopics('advisor', '8fb8fbda-37ed-4861-a3a2-236500e62ee6');
-
 //! ---------------------------[CLASSIFY LECTURER]--------------------------------
 
 //TODO [PROCESSING DATA]
-const classify_lecturer_result = async (termId) => {
+const classify_lecturer_result = async (termId, category) => {
     const topics = await getTopics(termId);
     const jsons_file = JSON.stringify(topics);
     const textSplitter = new RecursiveCharacterTextSplitter({
@@ -146,7 +145,7 @@ const classify_lecturer_result = async (termId) => {
     const vectorStoreRetriever = vectorStore.asRetriever();
 
     const prompt = ChatPromptTemplate.fromMessages([
-        ['system', CLASSIFICATION_LECTURERS_TEMPLATE],
+        ['system', CLASSIFICATION_LECTURERS_TEMPLATE(category)],
         ['human', '{question}'],
     ]);
     const chain = RunnableSequence.from([
@@ -175,9 +174,52 @@ const saveDataLecturers = async (payload) => {
     }
 };
 //TODO [ASSIGN]
-const analysisOfLecturers = async (termId) => {
-    const classify = await classify_lecturer_result(termId);
+const analysisOfLecturers = async (termId, category) => {
+    const classify = await classify_lecturer_result(termId, category);
     saveDataLecturers(classify);
-    console.log('🚀 ~ saveData ~ success!!!!!!!!!!!!!!!!!!!!!!!!');
 };
-// analysisOfLecturers('8fb8fbda-37ed-4861-a3a2-236500e62ee6');
+
+exports.analysisOfTopics = async (req, res) => {
+    const { termId, category } = req.body;
+    try {
+        await analysisOfTopics('advisor', termId, category);
+        return res
+            .status(HTTP_STATUS.OK)
+            .json({ success: true, message: 'Analysis topics success' });
+    } catch (error) {
+        return Error.sendError(res, error);
+    }
+};
+
+exports.analysisOfLecturers = async (req, res) => {
+    const { termId, category } = req.body;
+    try {
+        await analysisOfLecturers(termId, category);
+        return res
+            .status(HTTP_STATUS.OK)
+            .json({ success: true, message: 'Analysis lecturers success' });
+    } catch (error) {
+        return Error.sendError(res, error);
+    }
+};
+
+exports.getKeywords = async (req, res) => {
+    try {
+        const filePath = path.join('src', 'vectorDB', 'topics.json');
+
+        // Read and parse the JSON file asynchronously with a promise
+        const data = await fs.promises.readFile(filePath, 'utf8');
+        const parsedData = JSON.parse(data); // Parse JSON data
+
+        // Extract unique keywords from category_name
+        const keywords = [...new Set(parsedData.map((item) => item.category_name))];
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Get keywords success',
+            keywords,
+        });
+    } catch (error) {
+        Error.sendError(res, error);
+    }
+};
