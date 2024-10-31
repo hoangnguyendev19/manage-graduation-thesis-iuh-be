@@ -22,6 +22,11 @@ const APP_ROUTER = {
     EXPORT: '/export',
     EXPORT_ME: '/export-me',
 
+    // ANALYSIS
+    ANALYSIS: '/api/v1/analysis',
+    ANALYSIS_TOPICS: '/topics',
+    ANALYSIS_LECTURERS: '/lecturers',
+
     // UPLOAD
     UPLOAD: '/api/v1/uploads',
 
