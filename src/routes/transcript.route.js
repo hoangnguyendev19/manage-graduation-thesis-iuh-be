@@ -11,6 +11,7 @@ const {
     updateTranscriptList,
     getTranscriptGroupStudentByLecturerSupport,
     getGroupStudentMemberToScoring,
+    getStatisticTranscript,
 } = require('../controllers/transcript.controller');
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -32,6 +33,8 @@ router.get(
     protectLecturer,
     getGroupStudentMemberToScoring,
 );
+
+router.get(APP_ROUTER.TRANSCRIPT_STATISTIC, protectLecturer, getStatisticTranscript);
 
 router.get(APP_ROUTER.TRANSCRIPT_BY_STUDENT, protectStudent, getTranscriptByStudentId);
 
