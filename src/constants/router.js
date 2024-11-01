@@ -22,6 +22,9 @@ const APP_ROUTER = {
     EXPORT: '/export',
     EXPORT_ME: '/export-me',
 
+    // SUGGEST
+    SUGGEST: '/api/v1/suggest',
+
     // ANALYSIS
     ANALYSIS: '/api/v1/analysis',
     ANALYSIS_TOPICS: '/topics',
@@ -69,6 +72,7 @@ const APP_ROUTER = {
     TRANSCRIPT_GROUP_STUDENT_TO_SCORING: '/lecturer-supports/group-student-to-scoring',
     TRANSCRIPT_BY_STUDENT: '/student',
     TRANSCRIPT_BY_GROUP_STUDENT: '/group-student',
+    TRANSCRIPT_STATISTIC: '/statistic',
 
     //TOPICS
     TOPIC: '/api/v1/topics',

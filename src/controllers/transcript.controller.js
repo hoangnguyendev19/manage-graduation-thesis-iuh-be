@@ -577,3 +577,49 @@ exports.getGroupStudentMemberToScoring = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
+exports.getStatisticTranscript = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // I want to statistic the number of students have the average score in the term. Calculate: (totalScore / totalScoreMax) * 10 and divide follow (0.0-5.0, 5.0-5.4, 5.5-5.9, 6.0-6.9, 7.0-7.9, 8.0-8.4, 8.5-8.9, 9.0-10) points and I want return the number of students in each range of points
+        const statisticTranscripts = await sequelize.query(
+            `SELECT 
+            sum(case when avgScore >= 0 and avgScore < 5 then 1 else 0 end) as '0.0-4.9',
+            sum(case when avgScore >= 5 and avgScore < 5.5 then 1 else 0 end) as '5.0-5.4',
+            sum(case when avgScore >= 5.5 and avgScore < 6 then 1 else 0 end) as '5.5-5.9',
+            sum(case when avgScore >= 6 and avgScore < 7 then 1 else 0 end) as '6.0-6.9',
+            sum(case when avgScore >= 7 and avgScore < 8 then 1 else 0 end) as '7.0-7.9',
+            sum(case when avgScore >= 8 and avgScore < 8.5 then 1 else 0 end) as '8.0-8.4',
+            sum(case when avgScore >= 8.5 and avgScore < 9 then 1 else 0 end) as '8.5-8.9',
+            sum(case when avgScore >= 9 and avgScore <= 10 then 1 else 0 end) as '9.0-10'
+            FROM (
+                SELECT st.student_id, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
+                FROM transcripts t
+                INNER JOIN evaluations e ON t.evaluation_id = e.id
+                INNER JOIN student_terms st ON t.student_term_id = st.id
+                WHERE st.term_id = :termId
+                GROUP BY st.student_id
+            ) as temp`,
+            {
+                replacements: {
+                    termId,
+                },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy thống kê bảng điểm thành công!',
+            statistic: statisticTranscripts[0],
+        });
+    } catch (error) {
+        Error.sendError(res, error);
+    }
+};

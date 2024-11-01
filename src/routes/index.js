@@ -17,6 +17,7 @@ const notificationLecturer = require('./notificationLecturer.route');
 const notification = require('./notification.route');
 const assign = require('./assign.route');
 const analysis = require('./analysis.route');
+const suggest = require('./suggest.route');
 
 function router(app) {
     app.use(APP_ROUTER.MAJOR, major);
@@ -36,6 +37,7 @@ function router(app) {
     app.use(APP_ROUTER.NOTIFICATION, notification);
     app.use(APP_ROUTER.ASSIGN, assign);
     app.use(APP_ROUTER.ANALYSIS, analysis);
+    app.use(APP_ROUTER.SUGGEST, suggest);
 }
 
 module.exports = router;
