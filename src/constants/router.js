@@ -133,8 +133,17 @@ const APP_ROUTER = {
     ASSIGN: '/api/v1/assigns',
     GROUP_STUDENT_NO_ASSIGN_BY_TYPE: '/type-evaluation/:type/group-student/no-assign',
 
-    //ACHIEVEMENT
-    ACHIEVEMENT: '/api/v1/achievements',
+    //ARTICLES
+    ARTICLE: '/api/v1/articles',
+    ARTICLE_BY_GROUP_STUDENT: '/group-student/:id',
+    ARTICLE_BY_STATUS: '/:id/status',
+
+    //EVENTS
+    EVENT: '/api/v1/events',
+    EVENT_GROUP_STUDENT: '/group-student',
+    EVENT_BY_GROUP_STUDENT: '/group-student/:id',
+    EVENT_BY_SUBMIT: '/:id/submit',
+    EVENT_BY_COMMENT: '/:id/comment',
 };
 
 module.exports = { APP_ROUTER };

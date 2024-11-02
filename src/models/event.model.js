@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define(
-        'Achievement',
+        'Event',
         {
             id: {
                 type: DataTypes.UUID,
@@ -14,14 +14,13 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            bonusScore: {
-                type: DataTypes.FLOAT,
+            deadline: {
+                type: DataTypes.DATE,
                 allowNull: false,
-                field: 'bonus_score',
             },
         },
         {
-            tableName: 'achievements',
+            tableName: 'events',
             createdAt: 'created_at',
             updatedAt: 'updated_at',
         },
