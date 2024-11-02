@@ -14,12 +14,14 @@ const TopicModel = require('./topic.model');
 const TranscriptModel = require('./transcript.model');
 const EvaluationModel = require('./evaluation.model');
 const GroupStudentModel = require('./groupStudent.model');
-const AchievementModel = require('./achievement.model');
 const AssignModel = require('./assign.model');
 const StudentTermModel = require('./studentTerm.model');
 const NotificationStudentModel = require('./notificationStudent.model');
 const NotificationLecturerModel = require('./notificationLecturer.model');
 const NotificationModel = require('./notification.model');
+const ArticleModel = require('./article.model');
+const EventModel = require('./event.model');
+const EventGroupStudentModel = require('./eventGroupStudent.model');
 
 // Models
 const Major = MajorModel(sequelize, DataTypes);
@@ -35,12 +37,14 @@ const Topic = TopicModel(sequelize, DataTypes);
 const Transcript = TranscriptModel(sequelize, DataTypes);
 const Evaluation = EvaluationModel(sequelize, DataTypes);
 const GroupStudent = GroupStudentModel(sequelize, DataTypes);
-const Achievement = AchievementModel(sequelize, DataTypes);
 const Assign = AssignModel(sequelize, DataTypes);
 const StudentTerm = StudentTermModel(sequelize, DataTypes);
 const NotificationStudent = NotificationStudentModel(sequelize, DataTypes);
 const NotificationLecturer = NotificationLecturerModel(sequelize, DataTypes);
 const Notification = NotificationModel(sequelize, DataTypes);
+const Article = ArticleModel(sequelize, DataTypes);
+const Event = EventModel(sequelize, DataTypes);
+const EventGroupStudent = EventGroupStudentModel(sequelize, DataTypes);
 
 // Associations
 Major.hasMany(Student, {
@@ -213,16 +217,6 @@ StudentTerm.belongsTo(GroupStudent, {
     as: 'groupStudent',
 });
 
-StudentTerm.hasMany(Achievement, {
-    foreignKey: 'student_term_id',
-    as: 'achievements',
-});
-
-Achievement.belongsTo(StudentTerm, {
-    foreignKey: 'student_term_id',
-    as: 'studentTerm',
-});
-
 StudentTerm.hasMany(Transcript, {
     foreignKey: 'student_term_id',
     as: 'transcripts',
@@ -323,6 +317,46 @@ Transcript.belongsTo(LecturerTerm, {
     as: 'lecturerTerm',
 });
 
+GroupStudent.hasOne(Article, {
+    foreignKey: 'group_student_id',
+    as: 'article',
+});
+
+Article.belongsTo(GroupStudent, {
+    foreignKey: 'group_student_id',
+    as: 'groupStudent',
+});
+
+LecturerTerm.hasMany(Event, {
+    foreignKey: 'lecturer_term_id',
+    as: 'events',
+});
+
+Event.belongsTo(LecturerTerm, {
+    foreignKey: 'lecturer_term_id',
+    as: 'lecturerTerm',
+});
+
+Event.hasMany(EventGroupStudent, {
+    foreignKey: 'event_id',
+    as: 'eventGroupStudents',
+});
+
+EventGroupStudent.belongsTo(Event, {
+    foreignKey: 'event_id',
+    as: 'event',
+});
+
+GroupStudent.hasMany(EventGroupStudent, {
+    foreignKey: 'group_student_id',
+    as: 'eventGroupStudents',
+});
+
+EventGroupStudent.belongsTo(GroupStudent, {
+    foreignKey: 'group_student_id',
+    as: 'groupStudent',
+});
+
 // (async () => await sequelize.sync({ alter: true }))();
 (async () => await sequelize.sync({}))();
 
@@ -339,11 +373,13 @@ module.exports = {
     Term,
     TermDetail,
     Topic,
-    Achievement,
     Assign,
     Evaluation,
     NotificationStudent,
     NotificationLecturer,
     Notification,
     Transcript,
+    Article,
+    Event,
+    EventGroupStudent,
 };

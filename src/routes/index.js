@@ -11,13 +11,14 @@ const groupLecturer = require('./groupLecturer.route');
 const evaluation = require('./evaluation.route');
 const groupStudent = require('./groupStudent.route');
 const transcript = require('./transcript.route');
-const achievement = require('./achievement.route');
 const notificationStudent = require('./notificationStudent.route');
 const notificationLecturer = require('./notificationLecturer.route');
 const notification = require('./notification.route');
 const assign = require('./assign.route');
 const analysis = require('./analysis.route');
 const suggest = require('./suggest.route');
+const article = require('./article.route');
+const event = require('./event.route');
 
 function router(app) {
     app.use(APP_ROUTER.MAJOR, major);
@@ -31,13 +32,14 @@ function router(app) {
     app.use(APP_ROUTER.EVALUATION, evaluation);
     app.use(APP_ROUTER.GROUP_STUDENT, groupStudent);
     app.use(APP_ROUTER.TRANSCRIPT, transcript);
-    app.use(APP_ROUTER.ACHIEVEMENT, achievement);
     app.use(APP_ROUTER.NOTIFICATION_STUDENT, notificationStudent);
     app.use(APP_ROUTER.NOTIFICATION_LECTURER, notificationLecturer);
     app.use(APP_ROUTER.NOTIFICATION, notification);
     app.use(APP_ROUTER.ASSIGN, assign);
     app.use(APP_ROUTER.ANALYSIS, analysis);
     app.use(APP_ROUTER.SUGGEST, suggest);
+    app.use(APP_ROUTER.ARTICLE, article);
+    app.use(APP_ROUTER.EVENT, event);
 }
 
 module.exports = router;
