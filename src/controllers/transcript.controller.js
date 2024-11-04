@@ -255,6 +255,74 @@ exports.getTranscriptByStudentId = async (req, res) => {
     }
 };
 
+exports.exportTranscripts = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        if (!termId) {
+            return Error.sendWarning(res, 'Hãy chọn học kỳ!');
+        }
+
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // column: Mã nhóm, Mã SV, Họ tên SV, GVHD, Tên đề tài, #HĐPB, GVPB
+        let transcripts = await sequelize.query(
+            `SELECT gs.id, gs.name as 'Mã nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', t.name as 'Tên đề tài', gl.name as '#HĐPB', GROUP_CONCAT(l.full_name) as 'GVPB'
+                FROM assigns a
+                INNER JOIN group_students gs ON a.group_student_id = gs.id
+                INNER JOIN student_terms st ON st.group_student_id = gs.id
+                INNER JOIN students s ON st.student_id = s.id
+                INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
+                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                INNER JOIN topics t ON gs.topic_id = t.id
+                WHERE lt.term_id = :termId AND a.type = 'REVIEWER'
+                GROUP BY gs.id, gs.name, s.username, s.full_name, gl.name, a.type`,
+            {
+                replacements: { termId },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        for (let i = 0; i < transcripts.length; i++) {
+            transcripts[i]['STT'] = i + 1;
+
+            const lecturerSupport = await sequelize.query(
+                `SELECT l.full_name as fullName, l.degree
+                FROM group_students gs
+                INNER JOIN topics t ON gs.topic_id = t.id
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE gs.id = :groupStudentId`,
+                {
+                    replacements: { groupStudentId: transcripts[i].id },
+                    type: sequelize.QueryTypes.SELECT,
+                },
+            );
+
+            transcripts[i]['GVHD'] =
+                checkDegree(lecturerSupport[0].degree) + '. ' + lecturerSupport[0].fullName;
+
+            delete transcripts[i].id;
+
+            transcripts[i]['GVPB1'] = transcripts[i]['GVPB'].split(', ')[0];
+            transcripts[i]['GVPB2'] = transcripts[i]['GVPB'].split(', ')[1];
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất bảng điểm thành công!',
+            transcripts,
+        });
+    } catch (error) {
+        Error.sendError(res, error);
+    }
+};
+
 exports.createTranscriptList = async (req, res) => {
     try {
         const { transcripts } = req.body;
