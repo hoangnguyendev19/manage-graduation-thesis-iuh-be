@@ -46,12 +46,14 @@ const APP_ROUTER = {
 
     // LECTURER_TERM
     LECTURER_TERM: '/api/v1/lecturer-terms',
+    LECTURER_TERM_EXPORT_ASSIGN: '/export-assign',
     LECTURER_TERM_TO_ADDING: '/to-adding',
 
     //STUDENTS
     STUDENT: '/api/v1/students',
     STUDENT_STATUS: '/:id/status',
     STUDENTS_NO_HAVE_GROUP: '/no-have-group',
+    STUDENT_EXPORT_TEST: '/export-test',
 
     //TERMS
     TERM: '/api/v1/terms',

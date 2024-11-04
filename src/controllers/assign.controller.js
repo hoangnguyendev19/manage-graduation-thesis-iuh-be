@@ -5,6 +5,7 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const fs = require('fs');
 const path = require('path');
+const { checkDegree } = require('../helper/handler');
 
 const checkTypeGroup = (value) => {
     switch (value) {
@@ -83,7 +84,7 @@ exports.exportAssigns = async (req, res) => {
             }
 
             const lecturerSupport = await sequelize.query(
-                `SELECT l.full_name as fullName 
+                `SELECT l.full_name as fullName, l.degree
                 FROM group_students gs
                 INNER JOIN topics t ON gs.topic_id = t.id
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
@@ -95,7 +96,8 @@ exports.exportAssigns = async (req, res) => {
                 },
             );
 
-            assigns[i]['GVHD'] = lecturerSupport[0].fullName;
+            assigns[i]['GVHD'] =
+                checkDegree(lecturerSupport[0].degree) + '. ' + lecturerSupport[0].fullName;
 
             delete assigns[i].id;
 

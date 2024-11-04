@@ -9,6 +9,7 @@ const {
     createStudent,
     importStudents,
     exportStudents,
+    exportTestStudents,
     updateStudent,
     deleteStudent,
     resetPassword,
@@ -73,6 +74,13 @@ router.get(
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     exportStudents,
+);
+
+router.get(
+    APP_ROUTER.STUDENT_EXPORT_TEST,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    exportTestStudents,
 );
 
 router.post(

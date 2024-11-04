@@ -667,6 +667,59 @@ exports.exportStudents = async (req, res) => {
     }
 };
 
+exports.exportTestStudents = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        // check if termId exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const students = await sequelize.query(
+            `SELECT s.id, s.username as 'Mã số', s.full_name as fullName, s.clazz_name as 'Lớp học', SUM(t.score) / SUM(e.score_max) * 10 as avgScore
+            FROM students s
+            LEFT JOIN student_terms st ON s.id = st.student_id
+            LEFT JOIN transcripts t ON st.id = t.student_term_id
+            LEFT JOIN evaluations e ON t.evaluation_id = e.id
+            WHERE st.term_id = :termId
+            GROUP BY s.id, s.username, s.full_name, s.clazz_name
+            ORDER BY s.full_name ASC`,
+            {
+                replacements: { termId },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        for (let i = 0; i < students.length; i++) {
+            students[i]['STT'] = i + 1;
+            students[i]['Họ đệm'] = students[i]['fullName'].split(' ').slice(0, -1).join(' ');
+            students[i]['Tên'] = students[i]['fullName'].split(' ').slice(-1).join(' ');
+            students[i]['Số tờ'] = '';
+            students[i]['Mã đề'] = '';
+            students[i]['Ký tên'] = '';
+            students[i]['Cuối kỳ'] = students[i]['avgScore']
+                ? students[i]['avgScore'].toFixed(2)
+                : '';
+            students[i]['Ghi chú'] = '';
+
+            delete students[i]['id'];
+            delete students[i]['fullName'];
+            delete students[i]['avgScore'];
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất danh sách sinh viên có điểm thành công!',
+            students,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.deleteStudent = async (req, res) => {
     try {
         const { id } = req.params;
