@@ -30,8 +30,8 @@ const APP_ROUTER = {
     ANALYSIS_TOPICS: '/topics',
     ANALYSIS_LECTURERS: '/lecturers',
 
-    // UPLOAD
-    UPLOAD: '/api/v1/uploads',
+    // CHECK
+    CHECK: '/api/v1/checks',
 
     //MAJORS
     MAJOR: '/api/v1/majors',
@@ -84,6 +84,7 @@ const APP_ROUTER = {
     TOPIC_BY_GROUP_LECTURER: '/group-lecturer/:id',
     TOPIC_BY_LECTURER: '/lecturer/:lecturerId',
     TOPIC_APPROVED: '/approved',
+    TOPIC_KEYWORDS: '/keywords',
 
     //GROUP_LECTURERS
     GROUP_LECTURER: '/api/v1/group-lecturers',

@@ -6,8 +6,6 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
 const { validationResult } = require('express-validator');
 const { checkDegree } = require('../helper/handler');
-const fs = require('fs');
-const path = require('path');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
@@ -166,7 +164,7 @@ exports.exportLecturerAssigns = async (req, res) => {
 
 exports.getLecturerTerms = async (req, res) => {
     try {
-        const { termId, searchField } = req.query;
+        const { termId } = req.query;
 
         // Check if termId exists
         const term = await Term.findByPk(termId);
@@ -174,73 +172,59 @@ exports.getLecturerTerms = async (req, res) => {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
-        let lecturerTerms = [];
-        if (searchField === 'default') {
-            lecturerTerms = await sequelize.query(
-                `SELECT lt.id, l.id as lecturerId, l.username, l.full_name AS fullName, m.name AS majorName
-                FROM lecturer_terms lt
-                INNER JOIN lecturers l ON l.id = lt.lecturer_id
-                INNER JOIN majors m ON m.id = l.major_id
-                WHERE lt.term_id = :termId`,
+        const lecturerTerms = await sequelize.query(
+            `SELECT lt.id, l.id as lecturerId, l.username, l.full_name AS fullName, m.name AS majorName
+            FROM lecturer_terms lt
+            INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            INNER JOIN majors m ON m.id = l.major_id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: {
+                    termId: termId,
+                    type: QueryTypes.SELECT,
+                },
+            },
+        );
+
+        let newLecturerTerms = [];
+
+        for (let i = 0; i < lecturerTerms[0].length; i++) {
+            const lt = lecturerTerms[0][i];
+
+            const keywords = await sequelize.query(
+                `SELECT DISTINCT t.keywords
+                FROM topics t
+                WHERE t.lecturer_term_id = :id`,
                 {
-                    replacements: { termId },
+                    replacements: {
+                        id: lt.id,
+                    },
                     type: QueryTypes.SELECT,
                 },
             );
 
-            lecturerTerms = lecturerTerms.map((lec) => ({
-                ...lec,
-                total: 0,
-                keyword: null,
-            }));
-        } else {
-            const filePath = path.join('src', 'vectorDB', 'lecturers.json');
+            const keywordsArr = keywords.map((keyword) => keyword.keywords.split(', '));
 
-            // Read the JSON file asynchronously with a promise
-            const data = await fs.promises.readFile(filePath, 'utf8');
+            let newKeywordsArr = [];
+            for (const keyword of keywordsArr) {
+                newKeywordsArr = newKeywordsArr.concat(keyword);
+            }
 
-            const jsonData = JSON.parse(data);
-            const newJsonData = jsonData.flatMap((item) =>
-                item.categories.map((category) => ({
-                    lecturerTermId: item.lecturerTermId,
-                    total: category.total,
-                    keyword: category.category_name,
-                })),
+            const keywordsCount = _.countBy(newKeywordsArr);
+            const keywordsSorted = Object.keys(keywordsCount).sort(
+                (a, b) => keywordsCount[b] - keywordsCount[a],
             );
 
-            const result = await Promise.all(
-                newJsonData.map(async (jData) => {
-                    const { lecturerTermId, total, keyword } = jData;
-
-                    const lecturerTerm = await sequelize.query(
-                        `SELECT lt.id, l.id as lecturerId, l.username, l.full_name as fullName, m.name as majorName
-                        FROM lecturers l
-                        INNER JOIN majors m ON l.major_id = m.id
-                        INNER JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-                        WHERE lt.id = :lecturerTermId`,
-                        {
-                            replacements: { lecturerTermId },
-                            type: QueryTypes.SELECT,
-                        },
-                    );
-
-                    if (!lecturerTerm || lecturerTerm.length === 0) return null;
-
-                    return {
-                        ...lecturerTerm[0],
-                        total,
-                        keyword,
-                    };
-                }),
-            );
-
-            lecturerTerms.push(...result.filter((item) => item !== null));
+            newLecturerTerms.push({
+                ...lt,
+                keywords: keywordsSorted,
+            });
         }
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách giảng viên trong học kì thành công',
-            lecturerTerms,
+            lecturerTerms: newLecturerTerms,
         });
     } catch (error) {
         console.log('🚀 ~ exports.getLecturerTerms= ~ error:', error);

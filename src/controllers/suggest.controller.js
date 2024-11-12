@@ -16,6 +16,7 @@ exports.suggestTopics = async (req, res) => {
                 'expected_result',
                 'standard_output',
                 'require_input',
+                'keywords',
             ],
             include: [
                 {

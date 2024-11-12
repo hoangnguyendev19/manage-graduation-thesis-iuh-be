@@ -20,6 +20,7 @@ const {
     exportTopics,
     exportTopicsByLecturerId,
     importTopicsFromTermIdToSelectedTermId,
+    getKeywords,
 } = require('../controllers/topic.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
@@ -36,6 +37,8 @@ router.get(APP_ROUTER.QUERY, getTopicsOfSearch);
 router.get(APP_ROUTER.COUNT, countTopicsByTermId);
 
 router.get(APP_ROUTER.COUNT_BY_LECTURER, protectLecturer, countTopicsByLecturerId);
+
+router.get(APP_ROUTER.TOPIC_KEYWORDS, getKeywords);
 
 router.post(
     APP_ROUTER.IMPORT,
