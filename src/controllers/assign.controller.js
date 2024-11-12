@@ -3,8 +3,6 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/connectDB');
-const fs = require('fs');
-const path = require('path');
 const { checkDegree } = require('../helper/handler');
 
 const checkTypeGroup = (value) => {
@@ -380,7 +378,6 @@ exports.getGroupStudentNoAssign = async (req, res) => {
     try {
         const { type } = req.params;
         const { termId } = req.query;
-        const filePath = path.join('src', 'vectorDB', 'topics.json');
 
         const assigns = await Assign.findAll({
             attributes: ['group_student_id'],
@@ -394,7 +391,7 @@ exports.getGroupStudentNoAssign = async (req, res) => {
         const notInCondition = myNotIn.length > 0 ? `AND gs.id NOT IN (${myNotIn.join(',')})` : '';
 
         const result = await sequelize.query(
-            `SELECT gs.id, gs.name, t.name AS topicName, l.full_name AS lecturerName, lt.lecturer_id AS lecturerId, lt.id AS lecturerTermId
+            `SELECT gs.id, gs.name, t.name AS topicName, t.keywords, l.full_name AS lecturerName, lt.lecturer_id AS lecturerId, lt.id AS lecturerTermId
             FROM group_students gs
             INNER JOIN topics t ON gs.topic_id = t.id
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
@@ -406,33 +403,10 @@ exports.getGroupStudentNoAssign = async (req, res) => {
             },
         );
 
-        fs.readFile(filePath, 'utf8', async (err, data) => {
-            if (err) {
-                return Error.sendError(res, err);
-            }
-
-            try {
-                const jsonData = JSON.parse(data);
-
-                const updatedResult = result.map((groupStudent) => {
-                    const objData = jsonData.find(
-                        (jData) => jData.groupStudentId === groupStudent.id,
-                    );
-
-                    return {
-                        ...groupStudent,
-                        keyword: objData ? objData.category_name : '',
-                    };
-                });
-
-                return res.status(HTTP_STATUS.OK).json({
-                    success: true,
-                    message: 'Lấy danh sách sinh viên chưa được phân công!',
-                    groupStudent: updatedResult,
-                });
-            } catch (err) {
-                return Error.sendError(res, err);
-            }
+        return res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách sinh viên chưa được phân công!',
+            groupStudent: result,
         });
     } catch (error) {
         console.error(error);

@@ -916,3 +916,43 @@ exports.deleteTopic = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
+exports.getKeywords = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        const keywords = await sequelize.query(
+            `SELECT DISTINCT t.keywords
+            FROM topics t
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId`,
+            {
+                replacements: {
+                    termId,
+                },
+                type: QueryTypes.SELECT,
+            },
+        );
+
+        const keywordsArr = keywords.map((keyword) => keyword.keywords.split(', '));
+
+        let newKeywordsArr = [];
+        for (const keyword of keywordsArr) {
+            newKeywordsArr = newKeywordsArr.concat(keyword);
+        }
+
+        const keywordsCount = _.countBy(newKeywordsArr);
+        const keywordsSorted = Object.keys(keywordsCount).sort(
+            (a, b) => keywordsCount[b] - keywordsCount[a],
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy từ khoá thành công!',
+            keywords: keywordsSorted,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};

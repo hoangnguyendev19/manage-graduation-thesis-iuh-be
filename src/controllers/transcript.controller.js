@@ -32,7 +32,7 @@ exports.getTranscriptByType = async (req, res) => {
         const transcripts = await sequelize.query(
             `SELECT t.evaluation_id as evaluationId, e.name as evaluationName,
             e.score_max as scoreMax, t.id as transcriptId, t.score, s.id as studentId,
-            s.username, s.full_name as fullName
+            s.username, s.full_name as fullName, st.status
             FROM transcripts t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN evaluations e ON t.evaluation_id = e.id
@@ -60,6 +60,7 @@ exports.getTranscriptByType = async (req, res) => {
                 studentId,
                 username,
                 fullName,
+                status,
             } = trans;
 
             if (!acc[evaluationId]) {
@@ -77,6 +78,7 @@ exports.getTranscriptByType = async (req, res) => {
                 studentId,
                 username,
                 fullName,
+                status,
             });
 
             return acc;
