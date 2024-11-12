@@ -55,6 +55,10 @@ module.exports = (sequelize, DataTypes) => {
                 defaultValue: 'PENDING',
                 allowNull: false,
             },
+            keywords: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
         },
         {
             tableName: 'topics',

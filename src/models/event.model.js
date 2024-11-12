@@ -14,9 +14,15 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
-            deadline: {
+            startDate: {
                 type: DataTypes.DATE,
                 allowNull: false,
+                field: 'start_date',
+            },
+            endDate: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                field: 'end_date',
             },
         },
         {

@@ -111,12 +111,7 @@ router.post(
     unlockAccount,
 );
 
-router.put(
-    APP_ROUTER.STUDENT_STATUS,
-    protectLecturer,
-    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    updateStatus,
-);
+router.put(APP_ROUTER.STUDENT_STATUS, protectLecturer, updateStatus);
 
 router.put(
     APP_ROUTER.ID,
