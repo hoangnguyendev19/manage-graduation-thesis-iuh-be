@@ -23,10 +23,8 @@ exports.getEvents = async (req, res) => {
         }
 
         const events = await sequelize.query(
-            `SELECT e.id, e.name, e.deadline, gs.name as groupName, gs.id as groupStudentId, eg.link, eg.comment, e.created_at as createdAt, e.updated_at as updatedAt
+            `SELECT e.id, e.name, e.start_date as startDate, e.end_date as endDate
             FROM events e
-            INNER JOIN event_group_students eg ON e.id = eg.event_id
-            INNER JOIN group_students gs ON eg.group_student_id = gs.id
             INNER JOIN lecturer_terms lt ON e.lecturer_term_id = lt.id
             WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
             {
@@ -46,12 +44,62 @@ exports.getEvents = async (req, res) => {
     }
 };
 
+exports.getEventById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        let event = await sequelize.query(
+            `SELECT e.id, e.name, e.start_date as startDate, e.end_date as endDate, gs.id as groupStudentId, gs.name as groupStudentName, t.name as topicName, eg.link, eg.comment
+            FROM events e
+            INNER JOIN event_group_students eg ON e.id = eg.event_id
+            INNER JOIN group_students gs ON eg.group_student_id = gs.id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            WHERE e.id = :id`,
+            {
+                replacements: { id },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        if (event.length === 0) {
+            return Error.sendNotFound(res, 'Sự kiện không tồn tại!');
+        }
+
+        event = event.reduce(
+            (acc, cur) => {
+                acc.id = cur.id;
+                acc.name = cur.name;
+                acc.startDate = cur.startDate;
+                acc.endDate = cur.endDate;
+                acc.groupStudents.push({
+                    id: cur.groupStudentId,
+                    name: cur.groupStudentName,
+                    topicName: cur.topicName,
+                    link: cur.link,
+                    comment: cur.comment,
+                });
+                return acc;
+            },
+            { groupStudents: [] },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy thông tin sự kiện thành công!',
+            event,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getEventsByGroupStudentId = async (req, res) => {
     try {
         const { id } = req.params;
 
         const events = await sequelize.query(
-            `SELECT e.id, e.name, e.deadline, eg.link, eg.comment, e.created_at as createdAt, e.updated_at as updatedAt
+            `SELECT e.id, e.name, e.start_date as startDate, e.end_date as endDate, eg.link, eg.comment
             FROM events e
             INNER JOIN event_group_students eg ON e.id = eg.event_id
             WHERE eg.group_student_id = :id`,
@@ -74,7 +122,7 @@ exports.getEventsByGroupStudentId = async (req, res) => {
 
 exports.createEvent = async (req, res) => {
     try {
-        const { name, deadline, groupStudentIds, termId } = req.body;
+        const { name, startDate, endDate, groupStudentIds, termId } = req.body;
 
         // check if termId exists
         const term = await Term.findByPk(termId);
@@ -92,13 +140,14 @@ exports.createEvent = async (req, res) => {
 
         const event = await Event.create({
             name,
-            deadline,
+            startDate,
+            endDate,
             lecturer_term_id: lecturerTerm.id,
         });
 
         const notification = await Notification.create({
             title: name,
-            content: `Giảng viên hướng dẫn đã tạo sự kiện ${name} cho nhóm sinh viên. Thời hạn nộp bài: ${deadline}`,
+            content: `Giảng viên hướng dẫn đã tạo sự kiện ${name} cho nhóm sinh viên. Thời hạn nộp bài: từ ${startDate} đến ${endDate}.`,
             type: 'STUDENT',
             created_by: req.user.id,
         });
@@ -167,7 +216,7 @@ exports.createEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, deadline } = req.body;
+        const { name, startDate, endDate } = req.body;
 
         const event = await Event.findByPk(id);
 
@@ -175,7 +224,7 @@ exports.updateEvent = async (req, res) => {
             return Error.sendNotFound(res, 'Sự kiện không tồn tại!');
         }
 
-        await event.update({ name, deadline });
+        await event.update({ name, startDate, endDate });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

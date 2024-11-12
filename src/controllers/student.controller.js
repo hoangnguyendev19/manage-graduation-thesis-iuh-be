@@ -1,4 +1,11 @@
-const { Student, Major, StudentTerm, Term } = require('../models/index');
+const {
+    Student,
+    Major,
+    StudentTerm,
+    Term,
+    NotificationStudent,
+    Notification,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const {
     generateAccessToken,
@@ -835,6 +842,13 @@ exports.updateStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { termId, status } = req.body;
+
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const studentTerm = await StudentTerm.findOne({
             where: {
                 term_id: termId,
@@ -847,6 +861,25 @@ exports.updateStatus = async (req, res) => {
         }
 
         await studentTerm.update({ status });
+
+        const notification = await Notification.create({
+            // 'FAIL_ADVISOR'(hướng dẫn),'FAIL_REVIEWER'(phản biện),'FAIL_REPORT'(báo cáo)
+            title: 'Thông báo trạng thái học tập',
+            content: `Bạn đã bị đánh dấu không đạt ${
+                status === 'FAIL_ADVISOR'
+                    ? 'hướng dẫn'
+                    : status === 'FAIL_REVIEWER'
+                      ? 'phản biện'
+                      : 'báo cáo'
+            } trong học kỳ này!`,
+            type: 'STUDENT',
+            create_by: req.user.id,
+        });
+
+        await NotificationStudent.create({
+            notification_id: notification.id,
+            student_id: id,
+        });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

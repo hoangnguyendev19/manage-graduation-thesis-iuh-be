@@ -2,6 +2,7 @@ const express = require('express');
 const { APP_ROUTER } = require('../constants/router');
 const {
     getEvents,
+    getEventById,
     getEventsByGroupStudentId,
     createEvent,
     updateEvent,
@@ -26,6 +27,8 @@ router.put(APP_ROUTER.ID, protectLecturer, updateEvent);
 router.post(APP_ROUTER.INDEX, protectLecturer, createEvent);
 
 router.get(APP_ROUTER.EVENT_BY_GROUP_STUDENT, protectStudent, getEventsByGroupStudentId);
+
+router.get(APP_ROUTER.ID, protectLecturer, getEventById);
 
 router.get(APP_ROUTER.INDEX, protectLecturer, getEvents);
 
