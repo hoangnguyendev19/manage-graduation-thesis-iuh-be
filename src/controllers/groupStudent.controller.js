@@ -17,7 +17,7 @@ exports.getGroupStudents = async (req, res) => {
         }
 
         let groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, s.username, s.full_name as fullName
+            `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, s.username, s.full_name as fullName, st.status
             FROM group_students gs 
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             LEFT JOIN students s ON st.student_id = s.id
@@ -43,12 +43,20 @@ exports.getGroupStudents = async (req, res) => {
                     topicId: groupStudent.topicId,
                     topicName: groupStudent.topicName,
                     lecturerName: groupStudent.lecturerName,
-                    members: [{ username: groupStudent.username, fullName: groupStudent.fullName }],
+
+                    members: [
+                        {
+                            username: groupStudent.username,
+                            fullName: groupStudent.fullName,
+                            status: groupStudent.status,
+                        },
+                    ],
                 });
             } else {
                 group.members.push({
                     username: groupStudent.username,
                     fullName: groupStudent.fullName,
+                    status: groupStudent.status,
                 });
             }
 
@@ -115,19 +123,49 @@ exports.getGroupStudentsByLecturerId = async (req, res) => {
     try {
         const { termId, lecturerId } = req.query;
 
-        const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, tc.name as topicName, COUNT(st.student_id) as numOfMembers FROM group_students gs
+        let groupStudents = await sequelize.query(
+            `SELECT gs.id, gs.name, tc.name as topicName, s.username, s.full_name as fullName, st.status
+            FROM group_students gs
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
+            LEFT JOIN students s ON st.student_id = s.id
             WHERE gs.term_id = :termId and lt.lecturer_id = :lecturerId
-            GROUP BY gs.id
             ORDER BY gs.name ASC`,
             {
                 type: QueryTypes.SELECT,
                 replacements: { termId, lecturerId },
             },
         );
+
+        groupStudents = groupStudents.reduce((acc, groupStudent) => {
+            const group = acc.find((g) => g.id === groupStudent.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupStudent.id,
+                    name: groupStudent.name,
+                    topicId: groupStudent.topicId,
+                    topicName: groupStudent.topicName,
+                    lecturerName: groupStudent.lecturerName,
+                    members: [
+                        {
+                            username: groupStudent.username,
+                            fullName: groupStudent.fullName,
+                            status: groupStudent.status,
+                        },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    username: groupStudent.username,
+                    fullName: groupStudent.fullName,
+                    status: groupStudent.status,
+                });
+            }
+
+            return acc;
+        }, []);
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -437,7 +475,7 @@ exports.getMyGroupStudent = async (req, res) => {
             where: {
                 group_student_id: studentTerm.group_student_id,
             },
-            attributes: ['student_id', 'isAdmin'],
+            attributes: ['student_id', 'isAdmin', 'status'],
             include: {
                 model: Student,
                 attributes: ['username', 'fullName', 'gender', 'phone', 'email'],
