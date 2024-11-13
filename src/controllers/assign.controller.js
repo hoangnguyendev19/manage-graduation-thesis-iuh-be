@@ -230,22 +230,47 @@ exports.createAssign = async (req, res) => {
             );
         }
 
-        for (let i = 0; i < listGroupStudentId.length; i++) {
-            const isExistAssign = await Assign.findOne({
-                where: {
-                    type: type.toUpperCase(),
-                    group_student_id: listGroupStudentId[i],
-                },
-            });
+        const existingAssigns = await Assign.findAll({
+            where: {
+                type: type.toUpperCase(),
+                group_student_id: listGroupStudentId,
+            },
+        });
 
-            const groupStudent = await GroupStudent.findByPk(listGroupStudentId[i], {
+        const existingAssignsMap = new Map(
+            existingAssigns.map((assign) => [assign.group_student_id, assign]),
+        );
+
+        for (let i = 0; i < listGroupStudentId.length; i++) {
+            const groupStudentId = listGroupStudentId[i];
+            const groupStudent = await GroupStudent.findByPk(groupStudentId, {
                 attributes: ['id', 'name'],
             });
 
-            if (isExistAssign) {
+            if (existingAssignsMap.has(groupStudentId)) {
                 return Error.sendConflict(
                     res,
                     `Nhóm sinh viên ${groupStudent.name} đã được phân công chấm điểm`,
+                );
+            }
+
+            const failStatus = type === 'reviewer' ? 'FAIL_ADVISOR' : 'FAIL_REVIEWER';
+            const failStudents = await sequelize.query(
+                `SELECT st.id
+                FROM student_terms st
+                WHERE st.group_student_id = :groupStudentId AND st.status = :failStatus`,
+                {
+                    type: QueryTypes.SELECT,
+                    replacements: { groupStudentId, failStatus },
+                },
+            );
+
+            if (failStudents.length == 2) {
+                return Error.sendConflict(
+                    res,
+                    `Nhóm sinh viên ${
+                        groupStudent.name
+                    } đã bị đánh rớt nên không được phân ${checkTypeGroup(type.toUpperCase())}`,
                 );
             }
 
@@ -260,7 +285,7 @@ exports.createAssign = async (req, res) => {
                 {
                     replacements: {
                         groupLecturerId,
-                        groupStudentId: listGroupStudentId[i],
+                        groupStudentId,
                     },
                     type: QueryTypes.SELECT,
                 },
@@ -279,7 +304,7 @@ exports.createAssign = async (req, res) => {
 
             await Assign.create({
                 group_lecturer_id: groupLecturerId,
-                group_student_id: listGroupStudentId[i],
+                group_student_id: groupStudentId,
                 type: type.toUpperCase(),
             });
         }
@@ -386,9 +411,10 @@ exports.getGroupStudentNoAssign = async (req, res) => {
             },
         });
 
-        const myNotIn = assigns.map((ass) => `'${ass.group_student_id}'`);
+        const assignedGroupStudentIds = assigns.map((ass) => ass.group_student_id);
 
-        const notInCondition = myNotIn.length > 0 ? `AND gs.id NOT IN (${myNotIn.join(',')})` : '';
+        const notInCondition =
+            assignedGroupStudentIds.length > 0 ? `AND gs.id NOT IN (:assignedGroupStudentIds)` : '';
 
         const result = await sequelize.query(
             `SELECT gs.id, gs.name, t.name AS topicName, t.keywords, l.full_name AS lecturerName, lt.lecturer_id AS lecturerId, lt.id AS lecturerTermId
@@ -398,15 +424,49 @@ exports.getGroupStudentNoAssign = async (req, res) => {
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
             WHERE gs.term_id = :termId ${notInCondition}`,
             {
-                replacements: { termId },
+                replacements: { termId, assignedGroupStudentIds },
                 type: QueryTypes.SELECT,
             },
         );
 
+        const groupStudent = [];
+
+        for (const gs of result) {
+            let failStudentsQuery = '';
+            let failStatus = '';
+
+            if (type === 'reviewer') {
+                failStatus = 'FAIL_ADVISOR';
+            } else {
+                failStatus = 'FAIL_REVIEWER';
+            }
+
+            failStudentsQuery = `SELECT st.id
+                FROM student_terms st
+                WHERE st.group_student_id = :groupStudentId AND st.status = :failStatus`;
+
+            const failStudents = await sequelize.query(failStudentsQuery, {
+                type: QueryTypes.SELECT,
+                replacements: { groupStudentId: gs.id, failStatus },
+            });
+
+            if (failStudents.length < 2) {
+                groupStudent.push({
+                    id: gs.id,
+                    name: gs.name,
+                    topicName: gs.topicName,
+                    keywords: gs.keywords,
+                    lecturerName: gs.lecturerName,
+                    lecturerId: gs.lecturerId,
+                    lecturerTermId: gs.lecturerTermId,
+                });
+            }
+        }
+
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách sinh viên chưa được phân công!',
-            groupStudent: result,
+            groupStudent,
         });
     } catch (error) {
         console.error(error);
