@@ -1,7 +1,6 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 const router = require('./routes/index');
 const { connectDB } = require('./configs/connectDB');
 
@@ -22,16 +21,16 @@ app.use(
     }),
 );
 
+// Body Parsing Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 router(app);
 
-// Connect to DB
+// Database Connection
 connectDB();
 
+// Start the Server
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log('🚀> Server is up and running on port : ' + port));

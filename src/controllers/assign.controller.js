@@ -52,7 +52,7 @@ exports.exportAssigns = async (req, res) => {
             );
         } else if (type === 'report') {
             assigns = await sequelize.query(
-                `SELECT gs.id, gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
+                `SELECT gs.id, gs.name as 'Mã nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
                 FROM assigns a
                 INNER JOIN group_students gs ON a.group_student_id = gs.id
                 INNER JOIN student_terms st ON st.group_student_id = gs.id
@@ -148,7 +148,7 @@ exports.exportAssignsByLecturerId = async (req, res) => {
             );
         } else if (type === 'report') {
             assigns = await sequelize.query(
-                `SELECT gs.id, gs.name as 'STT Nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
+                `SELECT gs.id, gs.name as 'Mã nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', gl.name as '#HĐPB', a.type as 'Ghi chú', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'HD TV'
                 FROM assigns a
                 INNER JOIN group_students gs ON a.group_student_id = gs.id
                 INNER JOIN student_terms st ON st.group_student_id = gs.id
