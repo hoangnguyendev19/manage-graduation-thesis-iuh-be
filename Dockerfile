@@ -1,18 +1,18 @@
-FROM node:18.04-alpine
+# Use a Node.js base image
+FROM node:18
 
-# Create app directory
-WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /app
 
-# Install app dependencies
+# Copy package.json and install dependencies
 COPY package*.json ./
-
 RUN npm install
 
-# Bundle app source
+# Copy the application code
 COPY . .
 
-# Expose the port the app runs with environment variable
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Run the app with npm start command
-CMD [ "npm", "start" ]
+# Start the app
+CMD ["npm", "start"]
