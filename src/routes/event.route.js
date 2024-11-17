@@ -14,11 +14,13 @@ const {
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
 
+const upload = require('../configs/fileConfig');
+
 const router = express.Router();
 
 router.put(APP_ROUTER.EVENT_BY_COMMENT, protectLecturer, commentEvent);
 
-router.put(APP_ROUTER.EVENT_BY_SUBMIT, protectStudent, submitEvent);
+router.put(APP_ROUTER.EVENT_BY_SUBMIT, protectStudent, upload.single('file'), submitEvent);
 
 router.delete(APP_ROUTER.ID, protectLecturer, deleteEvent);
 

@@ -153,24 +153,28 @@ exports.createEvent = async (req, res) => {
         });
 
         if (groupStudentIds.length !== 0) {
-            groupStudentIds.forEach(async (groupStudentId) => {
-                await EventGroupStudent.create({
-                    event_id: event.id,
-                    group_student_id: groupStudentId,
-                });
-
-                const studentIds = await StudentTerm.findAll({
-                    attributes: ['student_id'],
-                    where: { group_student_id: groupStudentId },
-                });
-
-                studentIds.forEach(async (studentId) => {
-                    await NotificationStudent.create({
-                        notification_id: notification.id,
-                        student_id: studentId.student_id,
+            await Promise.all(
+                groupStudentIds.map(async (groupStudentId) => {
+                    await EventGroupStudent.create({
+                        event_id: event.id,
+                        group_student_id: groupStudentId,
                     });
-                });
-            });
+
+                    const studentIds = await StudentTerm.findAll({
+                        attributes: ['student_id'],
+                        where: { group_student_id: groupStudentId },
+                    });
+
+                    await Promise.all(
+                        studentIds.map(async (studentId) => {
+                            await NotificationStudent.create({
+                                notification_id: notification.id,
+                                student_id: studentId.student_id,
+                            });
+                        }),
+                    );
+                }),
+            );
         } else {
             const groupStudents = await sequelize.query(
                 `SELECT gs.id
@@ -183,24 +187,28 @@ exports.createEvent = async (req, res) => {
                 },
             );
 
-            groupStudents.forEach(async (groupStudent) => {
-                await EventGroupStudent.create({
-                    event_id: event.id,
-                    group_student_id: groupStudent.id,
-                });
-
-                const studentIds = await StudentTerm.findAll({
-                    attributes: ['student_id'],
-                    where: { group_student_id: groupStudent.id },
-                });
-
-                studentIds.forEach(async (studentId) => {
-                    await NotificationStudent.create({
-                        notification_id: notification.id,
-                        student_id: studentId.student_id,
+            await Promise.all(
+                groupStudents.map(async (groupStudent) => {
+                    await EventGroupStudent.create({
+                        event_id: event.id,
+                        group_student_id: groupStudent.id,
                     });
-                });
-            });
+
+                    const studentIds = await StudentTerm.findAll({
+                        attributes: ['student_id'],
+                        where: { group_student_id: groupStudent.id },
+                    });
+
+                    await Promise.all(
+                        studentIds.map(async (studentId) => {
+                            await NotificationStudent.create({
+                                notification_id: notification.id,
+                                student_id: studentId.student_id,
+                            });
+                        }),
+                    );
+                }),
+            );
         }
 
         res.status(HTTP_STATUS.CREATED).json({
@@ -263,9 +271,20 @@ exports.deleteEvent = async (req, res) => {
 };
 
 exports.submitEvent = async (req, res) => {
+    // Ensure the file is properly uploaded
+    if (!req.file) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+            success: false,
+            message: 'No file uploaded.',
+        });
+    }
+
     try {
         const { id } = req.params;
-        const { link, groupStudentId } = req.body;
+        const { groupStudentId } = req.body;
+
+        const fileName = req.file.filename;
+        const filePath = `/uploads/${fileName}`; // Relative path to `public` folder
 
         const event = await Event.findByPk(id);
         if (!event) {
@@ -285,7 +304,7 @@ exports.submitEvent = async (req, res) => {
             return Error.sendNotFound(res, 'Sự kiện không tồn tại!');
         }
 
-        await eventGroupStudent.update({ link });
+        await eventGroupStudent.update({ link: filePath });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
