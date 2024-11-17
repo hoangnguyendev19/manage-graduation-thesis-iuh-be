@@ -33,7 +33,6 @@ const APP_ROUTER = {
     // CHECK
     CHECK: '/api/v1/checks',
     CHECK_PLAGIARISM: '/plagiarism',
-    CHECK_AI_CONTENT: '/ai-content',
 
     //MAJORS
     MAJOR: '/api/v1/majors',
