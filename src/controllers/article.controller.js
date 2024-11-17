@@ -86,8 +86,16 @@ exports.getArticleByGroupStudentId = async (req, res) => {
 };
 
 exports.createArticle = async (req, res) => {
+    // Ensure the file is properly uploaded
+    if (!req.file) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+            success: false,
+            message: 'No file uploaded.',
+        });
+    }
+
     try {
-        const { name, type, author, authorNumber, publicDate, link, groupStudentId } = req.body;
+        const { name, type, author, authorNumber, publicDate, groupStudentId } = req.body;
 
         // check if groupStudentId exists
         const groupStudent = await GroupStudent.findByPk(groupStudentId);
@@ -101,8 +109,11 @@ exports.createArticle = async (req, res) => {
         });
 
         if (articleExists) {
-            return Error.sendBadRequest(res, 'Bài viết đã tồn tại!');
+            return Error.sendConflict(res, 'Bài viết đã tồn tại!');
         }
+
+        const fileName = req.file.filename;
+        const filePath = `/uploads/${fileName}`; // Relative path to `public` folder
 
         const article = await Article.create({
             name,
@@ -110,7 +121,7 @@ exports.createArticle = async (req, res) => {
             author,
             authorNumber,
             publicDate,
-            link,
+            link: filePath,
             group_student_id: groupStudentId,
         });
 
@@ -126,9 +137,17 @@ exports.createArticle = async (req, res) => {
 };
 
 exports.updateArticle = async (req, res) => {
+    // Ensure the file is properly uploaded
+    if (!req.file) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+            success: false,
+            message: 'No file uploaded.',
+        });
+    }
+
     try {
         const { id } = req.params;
-        const { name, type, author, authorNumber, publicDate, link } = req.body;
+        const { name, type, author, authorNumber, publicDate } = req.body;
 
         const article = await Article.findByPk(id);
 
@@ -136,13 +155,16 @@ exports.updateArticle = async (req, res) => {
             return Error.sendNotFound(res, 'Bài viết không tồn tại!');
         }
 
+        const fileName = req.file.filename;
+        const filePath = `/uploads/${fileName}`; // Relative path to `public` folder
+
         await article.update({
             name,
             type,
             author,
             authorNumber,
             publicDate,
-            link,
+            link: filePath,
         });
 
         res.status(HTTP_STATUS.OK).json({

@@ -25,6 +25,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Static Files Middleware
+app.use(express.static('public'));
+
 // Routes
 router(app);
 

@@ -12,6 +12,8 @@ const {
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
 
+const upload = require('../configs/fileConfig');
+
 const router = express.Router();
 
 router.put(
@@ -21,9 +23,9 @@ router.put(
     updateStatusArticle,
 );
 
-router.put(APP_ROUTER.ID, protectStudent, updateArticle);
+router.put(APP_ROUTER.ID, protectStudent, upload.single('file'), updateArticle);
 
-router.post(APP_ROUTER.INDEX, protectStudent, createArticle);
+router.post(APP_ROUTER.INDEX, protectStudent, upload.single('file'), createArticle);
 
 router.get(APP_ROUTER.ARTICLE_BY_GROUP_STUDENT, protectStudent, getArticleByGroupStudentId);
 

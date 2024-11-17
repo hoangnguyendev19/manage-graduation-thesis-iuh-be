@@ -11,15 +11,6 @@ exports.checkPlagiarism = async (req, res) => {
         });
     }
 
-    // File size validation (optional)
-    if (req.file.size > 10 * 1024 * 1024) {
-        // 10 MB limit
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-            success: false,
-            message: 'File size exceeds the 10MB limit.',
-        });
-    }
-
     // Create form data object
     const form = new FormData();
 
