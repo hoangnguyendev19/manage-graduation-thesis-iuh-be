@@ -2,6 +2,7 @@ const { Transcript, StudentTerm, LecturerTerm, Evaluation, Term } = require('../
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
+const { checkDegree } = require('../helper/handler');
 
 exports.getTranscriptByType = async (req, res) => {
     try {
@@ -257,6 +258,48 @@ exports.getTranscriptByStudentId = async (req, res) => {
     }
 };
 
+const getTranscriptByTypeAndStudentTermId = async (type, studentTermId, lecturerTermId = null) => {
+    const query = `SELECT e.id, t.score, e.score_max as scoreMax
+    FROM transcripts t
+    INNER JOIN evaluations e ON t.evaluation_id = e.id
+    WHERE t.student_term_id = :studentTermId AND e.type = :type${
+        lecturerTermId ? ' AND t.lecturer_term_id = :lecturerTermId' : ''
+    }`;
+
+    const replacements = { studentTermId, type };
+    if (lecturerTermId) replacements.lecturerTermId = lecturerTermId;
+
+    return await sequelize.query(query, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT,
+    });
+};
+
+const addTranscriptScores = (transcript, transcriptData, role) => {
+    transcriptData.forEach((data, index) => {
+        transcript[`LO${index + 1}(${data.scoreMax})(${role})`] = data.score;
+    });
+
+    const totalScore = transcriptData.reduce((total, data) => total + data.score, 0);
+    const totalMaxScore = transcriptData.reduce((total, data) => total + data.scoreMax, 0);
+
+    transcript[`Tổng(${totalMaxScore})(${role})`] = totalScore;
+    transcript[`Điểm ${role}`] = Math.round((totalScore / totalMaxScore) * 10 * 100) / 100;
+};
+
+const calculateAverageScore = (transcripts) => {
+    const totalScore = transcripts.reduce(
+        (total, transcript) => total + transcript.reduce((sum, data) => sum + data.score, 0),
+        0,
+    );
+    const totalMaxScore = transcripts.reduce(
+        (total, transcript) => total + transcript.reduce((sum, data) => sum + data.scoreMax, 0),
+        0,
+    );
+
+    return Math.round((totalScore / totalMaxScore) * 10 * 100) / 100;
+};
+
 exports.exportTranscripts = async (req, res) => {
     try {
         const { termId } = req.query;
@@ -270,9 +313,8 @@ exports.exportTranscripts = async (req, res) => {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        // column: Mã nhóm, Mã SV, Họ tên SV, GVHD, Tên đề tài, #HĐPB, GVPB
-        let transcripts = await sequelize.query(
-            `SELECT gs.id, gs.name as 'Mã nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', t.name as 'Tên đề tài', gl.name as '#HĐPB', GROUP_CONCAT(l.full_name) as 'GVPB'
+        const transcripts = await sequelize.query(
+            `SELECT gs.id, gs.name as 'Mã nhóm', st.id as studentTermId, s.username as 'Mã SV', s.full_name as 'Họ tên SV', t.name as 'Tên đề tài', gl.name as '#HĐPB', GROUP_CONCAT(lt.id SEPARATOR ', ') as 'lecturerTermIds', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'GVPB', GROUP_CONCAT(l.degree SEPARATOR ', ') as 'degree'
                 FROM assigns a
                 INNER JOIN group_students gs ON a.group_student_id = gs.id
                 INNER JOIN student_terms st ON st.group_student_id = gs.id
@@ -283,15 +325,15 @@ exports.exportTranscripts = async (req, res) => {
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
                 INNER JOIN topics t ON gs.topic_id = t.id
                 WHERE lt.term_id = :termId AND a.type = 'REVIEWER'
-                GROUP BY gs.id, gs.name, s.username, s.full_name, gl.name, a.type`,
+                GROUP BY gs.id, gs.name, st.id, s.username, s.full_name, gl.name, a.type, t.name`,
             {
                 replacements: { termId },
                 type: sequelize.QueryTypes.SELECT,
             },
         );
 
-        for (let i = 0; i < transcripts.length; i++) {
-            transcripts[i]['STT'] = i + 1;
+        for (const transcript of transcripts) {
+            transcript['STT'] = transcripts.indexOf(transcript) + 1;
 
             const lecturerSupport = await sequelize.query(
                 `SELECT l.full_name as fullName, l.degree
@@ -301,18 +343,52 @@ exports.exportTranscripts = async (req, res) => {
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
                 WHERE gs.id = :groupStudentId`,
                 {
-                    replacements: { groupStudentId: transcripts[i].id },
+                    replacements: { groupStudentId: transcript.id },
                     type: sequelize.QueryTypes.SELECT,
                 },
             );
 
-            transcripts[i]['GVHD'] =
-                checkDegree(lecturerSupport[0].degree) + '. ' + lecturerSupport[0].fullName;
+            transcript['GVHD'] = `${checkDegree(lecturerSupport[0].degree)}. ${
+                lecturerSupport[0].fullName
+            }`;
 
-            delete transcripts[i].id;
+            const [firstReviewer, secondReviewer] = transcript['GVPB'].split(', ');
+            const [firstDegree, secondDegree] = transcript['degree'].split(', ');
 
-            transcripts[i]['GVPB1'] = transcripts[i]['GVPB'].split(', ')[0];
-            transcripts[i]['GVPB2'] = transcripts[i]['GVPB'].split(', ')[1];
+            transcript['GVPB1'] = `${checkDegree(firstDegree)}. ${firstReviewer}`;
+            transcript['GVPB2'] = `${checkDegree(secondDegree)}. ${secondReviewer}`;
+
+            const advisorTranscript = await getTranscriptByTypeAndStudentTermId(
+                'ADVISOR',
+                transcript.studentTermId,
+            );
+            addTranscriptScores(transcript, advisorTranscript, 'GVHD');
+
+            const firstReviewerTranscript = await getTranscriptByTypeAndStudentTermId(
+                'REVIEWER',
+                transcript.studentTermId,
+                transcript.lecturerTermIds.split(', ')[0],
+            );
+            addTranscriptScores(transcript, firstReviewerTranscript, 'PB1');
+
+            const secondReviewerTranscript = await getTranscriptByTypeAndStudentTermId(
+                'REVIEWER',
+                transcript.studentTermId,
+                transcript.lecturerTermIds.split(', ')[1],
+            );
+            addTranscriptScores(transcript, secondReviewerTranscript, 'PB2');
+
+            transcript['Trung bình (HD, PB)'] = calculateAverageScore([
+                advisorTranscript,
+                firstReviewerTranscript,
+                secondReviewerTranscript,
+            ]);
+
+            delete transcript.id;
+            delete transcript['GVPB'];
+            delete transcript.degree;
+            delete transcript.studentTermId;
+            delete transcript.lecturerTermIds;
         }
 
         res.status(HTTP_STATUS.OK).json({
