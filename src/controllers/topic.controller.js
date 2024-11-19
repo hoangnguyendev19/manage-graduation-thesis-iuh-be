@@ -522,6 +522,8 @@ exports.updateTopic = async (req, res) => {
         topic.requireInput = requireInput;
         topic.quantityGroupMax = quantityGroupMax;
         topic.keywords = keywords;
+        topic.status = 'PENDING';
+        topic.note = null;
 
         await topic.save();
 
