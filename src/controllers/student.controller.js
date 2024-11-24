@@ -1049,8 +1049,16 @@ exports.forgotPassword = async (req, res) => {
             );
         }
 
-        const generatePassword = Math.random().toString(36).slice(-8).toUpperCase();
+        const now = moment();
 
+        if (now.diff(moment(student.updated_at), 'days') < 1) {
+            return Error.sendWarning(
+                res,
+                'Bạn chỉ có thể yêu cầu làm mới mật khẩu một lần mỗi ngày hoặc liên hệ với giảng viên chủ quản để được hỗ trợ!',
+            );
+        }
+
+        const generatePassword = Math.random().toString(36).slice(-8).toUpperCase();
         const newPassword = await hashPassword(generatePassword);
 
         student.password = newPassword;
@@ -1061,7 +1069,11 @@ exports.forgotPassword = async (req, res) => {
             to: student.email,
             subject: 'Xác nhận mật khẩu mới',
             html: `
-            <p>Mật khẩu mới của bạn là: ${generatePassword}</p>
+            <p>Xin chào ${student.fullName},</p>
+            <p>Mật khẩu mới của bạn là: <strong>${generatePassword}</strong></p>
+            <p>Vui lòng đăng nhập và thay đổi mật khẩu ngay sau khi đăng nhập.</p>
+            <p>Trân trọng,</p>
+            <p>Đội ngũ hỗ trợ</p>
           `,
         };
 

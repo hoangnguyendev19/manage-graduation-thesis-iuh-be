@@ -447,7 +447,7 @@ exports.createTopic = async (req, res) => {
         }
 
         // Fetch the last topic key in the term
-        const oldTopic = await sequelize.query(
+        const lastTopic = await sequelize.query(
             `SELECT t.key FROM topics t
             LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             WHERE lt.term_id = :termId
@@ -459,11 +459,9 @@ exports.createTopic = async (req, res) => {
             },
         );
 
-        let key = '';
-        if (oldTopic.length === 0) {
-            key = '001';
-        } else {
-            const currentKey = parseInt(oldTopic[0].key, 10) + 1;
+        let key = '001';
+        if (lastTopic.length > 0) {
+            const currentKey = parseInt(lastTopic[0].key, 10) + 1;
             key = currentKey.toString().padStart(3, '0');
         }
 
@@ -659,13 +657,13 @@ exports.importTopics = async (req, res) => {
                 requireInput,
                 standardOutput,
                 keywords,
-                lecturerTermId: isExistLecturer.id,
+                lecturer_term_id: isExistLecturer.id,
             });
         }
 
         // Get the last topic key for the term
         const oldTopic = await sequelize.query(
-            `SELECT * FROM topics t
+            `SELECT t.key FROM topics t
             LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             WHERE lt.term_id = :termId
             ORDER BY t.key DESC
