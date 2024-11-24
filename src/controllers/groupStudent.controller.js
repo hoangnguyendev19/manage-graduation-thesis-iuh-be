@@ -515,18 +515,27 @@ exports.createGroupStudent = async (req, res) => {
 
         let group = null;
 
-        const groupStudentCount = await GroupStudent.count({
-            where: {
-                term_id: termId,
+        const lastGroupStudent = await sequelize.query(
+            `SELECT gs.name
+            FROM group_students gs
+            WHERE gs.term_id = :termId
+            ORDER BY gs.name DESC
+            LIMIT 1`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { termId },
             },
-        });
+        );
 
-        const numberOfDigits = groupStudentCount.toString().length;
-        const groupNumber = (groupStudentCount + 1).toString().padStart(numberOfDigits, '0');
+        let name = '001';
+        if (lastGroupStudent.length > 0) {
+            const currentName = parseInt(lastGroupStudent[0].name, 10) + 1;
+            name = currentName.toString().padStart(3, '0');
+        }
 
         if (studentIds.length === 0) {
             group = await GroupStudent.create({
-                name: `${groupNumber}`,
+                name,
                 term_id: termId,
             });
 
