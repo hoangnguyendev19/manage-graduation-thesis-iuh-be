@@ -17,6 +17,7 @@ const notification = require('./notification.route');
 const assign = require('./assign.route');
 const suggest = require('./suggest.route');
 const article = require('./article.route');
+const finalReport = require('./finalReport.route');
 const event = require('./event.route');
 const check = require('./check.route');
 
@@ -38,6 +39,7 @@ function router(app) {
     app.use(APP_ROUTER.ASSIGN, assign);
     app.use(APP_ROUTER.SUGGEST, suggest);
     app.use(APP_ROUTER.ARTICLE, article);
+    app.use(APP_ROUTER.FINAL_REPORT, finalReport);
     app.use(APP_ROUTER.EVENT, event);
     app.use(APP_ROUTER.CHECK, check);
 }

@@ -512,7 +512,13 @@ exports.updateTopic = async (req, res) => {
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
-        topic.name = name;
+
+        if (topic.status !== 'APPROVED') {
+            topic.name = name;
+            topic.status = 'PENDING';
+            topic.note = null;
+        }
+
         topic.description = description;
         topic.target = target;
         topic.expectedResult = expectedResult;
@@ -520,8 +526,6 @@ exports.updateTopic = async (req, res) => {
         topic.requireInput = requireInput;
         topic.quantityGroupMax = quantityGroupMax;
         topic.keywords = keywords;
-        topic.status = 'PENDING';
-        topic.note = null;
 
         await topic.save();
 

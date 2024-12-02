@@ -873,7 +873,7 @@ exports.updateStatus = async (req, res) => {
                       : 'báo cáo'
             } trong học kỳ này!`,
             type: 'STUDENT',
-            create_by: req.user.id,
+            created_by: req.user.id,
         });
 
         await NotificationStudent.create({

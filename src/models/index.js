@@ -20,6 +20,7 @@ const NotificationStudentModel = require('./notificationStudent.model');
 const NotificationLecturerModel = require('./notificationLecturer.model');
 const NotificationModel = require('./notification.model');
 const ArticleModel = require('./article.model');
+const FinalReportModel = require('./finalReport.model');
 const EventModel = require('./event.model');
 const EventGroupStudentModel = require('./eventGroupStudent.model');
 
@@ -43,6 +44,7 @@ const NotificationStudent = NotificationStudentModel(sequelize, DataTypes);
 const NotificationLecturer = NotificationLecturerModel(sequelize, DataTypes);
 const Notification = NotificationModel(sequelize, DataTypes);
 const Article = ArticleModel(sequelize, DataTypes);
+const FinalReport = FinalReportModel(sequelize, DataTypes);
 const Event = EventModel(sequelize, DataTypes);
 const EventGroupStudent = EventGroupStudentModel(sequelize, DataTypes);
 
@@ -317,16 +319,6 @@ Transcript.belongsTo(LecturerTerm, {
     as: 'lecturerTerm',
 });
 
-GroupStudent.hasOne(Article, {
-    foreignKey: 'group_student_id',
-    as: 'article',
-});
-
-Article.belongsTo(GroupStudent, {
-    foreignKey: 'group_student_id',
-    as: 'groupStudent',
-});
-
 LecturerTerm.hasMany(Event, {
     foreignKey: 'lecturer_term_id',
     as: 'events',
@@ -357,6 +349,26 @@ EventGroupStudent.belongsTo(GroupStudent, {
     as: 'groupStudent',
 });
 
+StudentTerm.hasMany(Article, {
+    foreignKey: 'student_term_id',
+    as: 'articles',
+});
+
+Article.belongsTo(StudentTerm, {
+    foreignKey: 'student_term_id',
+    as: 'studentTerm',
+});
+
+GroupStudent.hasOne(FinalReport, {
+    foreignKey: 'group_student_id',
+    as: 'finalReport',
+});
+
+FinalReport.belongsTo(GroupStudent, {
+    foreignKey: 'group_student_id',
+    as: 'groupStudent',
+});
+
 // (async () => await sequelize.sync({ alter: true }))();
 (async () => await sequelize.sync({}))();
 
@@ -380,6 +392,7 @@ module.exports = {
     Notification,
     Transcript,
     Article,
+    FinalReport,
     Event,
     EventGroupStudent,
 };
