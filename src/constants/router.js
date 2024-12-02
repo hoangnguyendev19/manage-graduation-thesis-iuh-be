@@ -66,7 +66,9 @@ const APP_ROUTER = {
     TERM_DISCUSSION: '/:id/discussion',
     TERM_REPORT: '/:id/report',
     TERM_PUBLIC_RESULT: '/:id/public-result',
+    TERM_BONUS_SCORE: '/:id/bonus-score',
     TERM_BY_LECTURER: '/lecturer',
+    TERM_BY_STUDENT: '/student',
 
     //TRANSCRIPTS
     TRANSCRIPT: '/api/v1/transcripts',
@@ -139,7 +141,8 @@ const APP_ROUTER = {
 
     //ARTICLES
     ARTICLE: '/api/v1/articles',
-    ARTICLE_BY_GROUP_STUDENT: '/group-student/:id',
+    ARTICLE_BY_STUDENT: '/student',
+    ARTICLE_BY_LECTURER: '/lecturer',
     ARTICLE_BY_STATUS: '/:id/status',
 
     //EVENTS
@@ -148,6 +151,12 @@ const APP_ROUTER = {
     EVENT_BY_GROUP_STUDENT: '/group-student/:id',
     EVENT_BY_SUBMIT: '/:id/submit',
     EVENT_BY_COMMENT: '/:id/comment',
+
+    //FINAL_REPORTS
+    FINAL_REPORT: '/api/v1/final-reports',
+    FINAL_REPORT_BY_GROUP_STUDENT: '/group-student',
+    FINAL_REPORT_BY_LECTURER: '/lecturer',
+    FINAL_REPORT_COMMENT: '/:id/comment',
 };
 
 module.exports = { APP_ROUTER };

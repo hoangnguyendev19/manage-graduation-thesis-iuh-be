@@ -1,7 +1,8 @@
-const { Article, Term, GroupStudent } = require('../models/index');
+const { Article, Term, GroupStudent, StudentTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
+const fs = require('fs');
 
 exports.getArticles = async (req, res) => {
     try {
@@ -14,12 +15,50 @@ exports.getArticles = async (req, res) => {
         }
 
         const articles = await sequelize.query(
-            `SELECT a.id, a.name, a.type, a.author, a.author_number as authorNumber, a.public_date as publicDate, a.status, a.link, a.bonus_score as bonusScore, gs.name as groupName
+            `SELECT a.id, a.name, a.author_number as authorNumber, a.status, a.link, a.bonus_score as bonusScore, s.username, s.full_name as fullName, gs.name as groupName
             FROM articles a
-            INNER JOIN group_students gs ON a.group_student_id = gs.id
+            INNER JOIN student_terms st ON a.student_term_id = st.id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN group_students gs ON st.group_student_id = gs.id
             WHERE gs.term_id = :termId`,
             {
-                replacements: { termId },
+                replacements: { termId, lecturerId: req.user.id },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy danh sách bài viết thành công!',
+            articles,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getArticlesByLecturerId = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        // check if termId exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const articles = await sequelize.query(
+            `SELECT a.id, a.name, a.author_number as authorNumber, a.status, a.link, a.bonus_score as bonusScore, s.username, s.full_name as fullName, gs.name as groupName
+            FROM articles a
+            INNER JOIN student_terms st ON a.student_term_id = st.id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN group_students gs ON st.group_student_id = gs.id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId`,
+            {
+                replacements: { termId, lecturerId: req.user.id },
                 type: sequelize.QueryTypes.SELECT,
             },
         );
@@ -39,16 +78,27 @@ exports.getArticleById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const article = await Article.findByPk(id);
+        const article = await sequelize.query(
+            `SELECT a.id, a.name, a.type, a.author, a.author_number as authorNumber, a.public_date as publicDate, a.status, a.link, a.bonus_score as bonusScore, a.comment, s.username, s.full_name as fullName, gs.name as groupName
+            FROM articles a
+            INNER JOIN student_terms st ON a.student_term_id = st.id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN group_students gs ON st.group_student_id = gs.id
+            WHERE a.id = :id`,
+            {
+                replacements: { id },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
 
-        if (!article) {
+        if (article.length === 0) {
             return Error.sendNotFound(res, 'Bài viết không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy bài viết thành công!',
-            article,
+            article: article[0],
         });
     } catch (error) {
         console.log(error);
@@ -56,28 +106,39 @@ exports.getArticleById = async (req, res) => {
     }
 };
 
-exports.getArticleByGroupStudentId = async (req, res) => {
+exports.getArticlesByStudentId = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { termId } = req.query;
 
-        // check if groupStudentId exists
-        const groupStudent = await GroupStudent.findByPk(id);
-        if (!groupStudent) {
-            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        // check if termId exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        const article = await Article.findOne({
-            where: { group_student_id: id },
+        const studentTerm = await StudentTerm.findOne({
+            attributes: ['id'],
+            where: { term_id: termId, student_id: req.user.id },
         });
 
-        if (!article) {
-            return Error.sendNotFound(res, 'Bài viết không tồn tại!');
-        }
+        const articles = await Article.findAll({
+            attributes: [
+                'id',
+                'name',
+                'authorNumber',
+                'publicDate',
+                'status',
+                'link',
+                'bonusScore',
+                'comment',
+            ],
+            where: { student_term_id: studentTerm.id },
+        });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lấy bài viết thành công!',
-            article,
+            message: 'Lấy danh sách bài báo khoa học thành công!',
+            articles,
         });
     } catch (error) {
         console.log(error);
@@ -95,25 +156,15 @@ exports.createArticle = async (req, res) => {
     }
 
     try {
-        const { name, type, author, authorNumber, publicDate, groupStudentId } = req.body;
-
-        // check if groupStudentId exists
-        const groupStudent = await GroupStudent.findByPk(groupStudentId);
-        if (!groupStudent) {
-            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
-        }
-
-        // check if article exists
-        const articleExists = await Article.findOne({
-            where: { group_student_id: groupStudentId },
-        });
-
-        if (articleExists) {
-            return Error.sendConflict(res, 'Bài viết đã tồn tại!');
-        }
+        const { name, type, author, authorNumber, publicDate, termId } = req.body;
 
         const fileName = req.file.filename;
-        const filePath = `/uploads/${fileName}`; // Relative path to `public` folder
+        const filePath = `/temp/${fileName}`; // Relative path to `public` folder
+
+        const studentTermId = await StudentTerm.findOne({
+            attributes: ['id'],
+            where: { term_id: termId, student_id: req.user.id },
+        });
 
         const article = await Article.create({
             name,
@@ -122,7 +173,7 @@ exports.createArticle = async (req, res) => {
             authorNumber,
             publicDate,
             link: filePath,
-            group_student_id: groupStudentId,
+            student_term_id: studentTermId.id,
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -155,8 +206,19 @@ exports.updateArticle = async (req, res) => {
             return Error.sendNotFound(res, 'Bài viết không tồn tại!');
         }
 
+        if (article.status === 'APPROVED') {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'Không thể cập nhật bài viết đã được chấp nhận!',
+            });
+        }
+
+        // Delete the old file
+        const oldFilePath = article.link; // format: '/temp/fileName'
+        fs.unlinkSync(`public${oldFilePath}`); // Delete the file
+
         const fileName = req.file.filename;
-        const filePath = `/uploads/${fileName}`; // Relative path to `public` folder
+        const filePath = `/temp/${fileName}`; // Relative path to `public` folder
 
         await article.update({
             name,
@@ -165,6 +227,7 @@ exports.updateArticle = async (req, res) => {
             authorNumber,
             publicDate,
             link: filePath,
+            status: 'PENDING',
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -181,7 +244,7 @@ exports.updateArticle = async (req, res) => {
 exports.updateStatusArticle = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, comment } = req.body;
+        const { status, comment, bonusScore } = req.body;
 
         const article = await Article.findByPk(id);
 
@@ -189,7 +252,21 @@ exports.updateStatusArticle = async (req, res) => {
             return Error.sendNotFound(res, 'Bài viết không tồn tại!');
         }
 
-        await article.update({ status, comment, bonusScore: status === 'APPROVED' ? 2 : 0 });
+        if (status === 'REJECTED' && bonusScore !== 0) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'Điểm thưởng phải bằng 0 khi từ chối bài viết!',
+            });
+        }
+
+        if (status === 'APPROVED' && bonusScore === 0) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+                success: false,
+                message: 'Điểm thưởng phải lớn hơn 0 khi chấp nhận bài viết!',
+            });
+        }
+
+        await article.update({ status, comment, bonusScore });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

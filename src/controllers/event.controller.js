@@ -11,6 +11,7 @@ const {
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
+const fs = require('fs');
 
 exports.getEvents = async (req, res) => {
     try {
@@ -284,7 +285,7 @@ exports.submitEvent = async (req, res) => {
         const { groupStudentId } = req.body;
 
         const fileName = req.file.filename;
-        const filePath = `/uploads/${fileName}`; // Relative path to `public` folder
+        const filePath = `/temp/${fileName}`; // Relative path to `public` folder
 
         const event = await Event.findByPk(id);
         if (!event) {
@@ -302,6 +303,12 @@ exports.submitEvent = async (req, res) => {
 
         if (!eventGroupStudent) {
             return Error.sendNotFound(res, 'Sự kiện không tồn tại!');
+        }
+
+        if (eventGroupStudent.link) {
+            // Delete the old file
+            const oldFilePath = eventGroupStudent.link;
+            fs.unlinkSync(`public${oldFilePath}`); // Delete the file
         }
 
         await eventGroupStudent.update({ link: filePath });
