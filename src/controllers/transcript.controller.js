@@ -150,12 +150,28 @@ exports.getTranscriptSummary = async (req, res) => {
         }
 
         const transcripts = await sequelize.query(
-            `SELECT st.student_id as id, e.type, sum(t.score) / sum(e.score_max) * 10 as avgScore
+            `SELECT st.id, e.type, sum(t.score) / sum(e.score_max) * 10 as avgScore
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             INNER JOIN student_terms st ON t.student_term_id = st.id
+            INNER JOIN articles a ON t.student_term_id = a.student_term_id
             WHERE st.term_id = :termId AND st.student_id = :studentId
-            GROUP BY st.student_id, e.type`,
+            GROUP BY st.id, e.type`,
+            {
+                replacements: {
+                    termId,
+                    studentId: req.user.id,
+                },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        const result = await sequelize.query(
+            `SELECT sum(bonus_score) as bonusScore
+            FROM articles a
+            INNER JOIN student_terms st ON a.student_term_id = st.id
+            WHERE st.term_id = :termId AND st.student_id = :studentId
+            GROUP BY st.id`,
             {
                 replacements: {
                     termId,
@@ -166,23 +182,17 @@ exports.getTranscriptSummary = async (req, res) => {
         );
 
         const advisor = transcripts.find((transcript) => transcript.type === 'ADVISOR');
-
         const reviewer = transcripts.find((transcript) => transcript.type === 'REVIEWER');
-
         const report = transcripts.find((transcript) => transcript.type === 'REPORT');
 
-        const advisorScore = advisor ? Number(advisor.avgScore).toFixed(2) : 0;
-        const reviewerScore = reviewer ? Number(reviewer.avgScore).toFixed(2) : 0;
-        const reportScore = report ? Number(report.avgScore).toFixed(2) : 0;
+        const advisorScore = Number(advisor?.avgScore.toFixed(2) || 0);
+        const reviewerScore = Number(reviewer?.avgScore.toFixed(2) || 0);
+        const reportScore = Number(report?.avgScore.toFixed(2) || 0);
 
-        let totalAverageScore = 0;
-        if (transcripts.length !== 0) {
-            totalAverageScore = transcripts.reduce(
-                (total, transcript) => total + transcript.avgScore,
-                0,
-            );
-            totalAverageScore = Number(totalAverageScore / transcripts.length).toFixed(2);
-        }
+        const bonusScore = result[0]?.bonusScore || 0;
+
+        const totalAvgScore =
+            Number(((advisorScore + reviewerScore + reportScore) / 3).toFixed(2)) + bonusScore;
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -191,7 +201,8 @@ exports.getTranscriptSummary = async (req, res) => {
                 advisorScore,
                 reviewerScore,
                 reportScore,
-                totalAverageScore,
+                bonusScore,
+                totalAvgScore,
             },
         });
     } catch (error) {
@@ -258,48 +269,6 @@ exports.getTranscriptByStudentId = async (req, res) => {
     }
 };
 
-const getTranscriptByTypeAndStudentTermId = async (type, studentTermId, lecturerTermId = null) => {
-    const query = `SELECT e.id, t.score, e.score_max as scoreMax
-    FROM transcripts t
-    INNER JOIN evaluations e ON t.evaluation_id = e.id
-    WHERE t.student_term_id = :studentTermId AND e.type = :type${
-        lecturerTermId ? ' AND t.lecturer_term_id = :lecturerTermId' : ''
-    }`;
-
-    const replacements = { studentTermId, type };
-    if (lecturerTermId) replacements.lecturerTermId = lecturerTermId;
-
-    return await sequelize.query(query, {
-        replacements,
-        type: sequelize.QueryTypes.SELECT,
-    });
-};
-
-const addTranscriptScores = (transcript, transcriptData, role) => {
-    transcriptData.forEach((data, index) => {
-        transcript[`LO${index + 1}(${data.scoreMax})(${role})`] = data.score;
-    });
-
-    const totalScore = transcriptData.reduce((total, data) => total + data.score, 0);
-    const totalMaxScore = transcriptData.reduce((total, data) => total + data.scoreMax, 0);
-
-    transcript[`Tổng(${totalMaxScore})(${role})`] = totalScore;
-    transcript[`Điểm ${role}`] = Math.round((totalScore / totalMaxScore) * 10 * 100) / 100;
-};
-
-const calculateAverageScore = (transcripts) => {
-    const totalScore = transcripts.reduce(
-        (total, transcript) => total + transcript.reduce((sum, data) => sum + data.score, 0),
-        0,
-    );
-    const totalMaxScore = transcripts.reduce(
-        (total, transcript) => total + transcript.reduce((sum, data) => sum + data.scoreMax, 0),
-        0,
-    );
-
-    return Math.round((totalScore / totalMaxScore) * 10 * 100) / 100;
-};
-
 exports.exportTranscripts = async (req, res) => {
     try {
         const { termId } = req.query;
@@ -313,83 +282,309 @@ exports.exportTranscripts = async (req, res) => {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        const transcripts = await sequelize.query(
-            `SELECT gs.id, gs.name as 'Mã nhóm', st.id as studentTermId, s.username as 'Mã SV', s.full_name as 'Họ tên SV', t.name as 'Tên đề tài', gl.name as '#HĐPB', GROUP_CONCAT(lt.id SEPARATOR ', ') as 'lecturerTermIds', GROUP_CONCAT(l.full_name SEPARATOR ', ') as 'GVPB', GROUP_CONCAT(l.degree SEPARATOR ', ') as 'degree'
-                FROM assigns a
-                INNER JOIN group_students gs ON a.group_student_id = gs.id
-                INNER JOIN student_terms st ON st.group_student_id = gs.id
-                INNER JOIN students s ON st.student_id = s.id
-                INNER JOIN group_lecturers gl ON a.group_lecturer_id = gl.id
-                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
-                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                INNER JOIN topics t ON gs.topic_id = t.id
-                WHERE lt.term_id = :termId AND a.type = 'REVIEWER'
-                GROUP BY gs.id, gs.name, st.id, s.username, s.full_name, gl.name, a.type, t.name`,
+        // Advisor
+        const advisorTranscripts = await sequelize.query(
+            `SELECT st.id, s.username as 'Mã SV', s.full_name as 'Họ tên SV', gs.name as 'Mã nhóm', tc.name as 'Tên đề tài', CONCAT(l.degree, '. ', l.full_name) as 'GVHD', GROUP_CONCAT(CONCAT(t.score, '/', e.score_max) SEPARATOR ', ') as 'Điểm GVHD', CONCAT(sum(t.score), '/', sum(e.score_max)) as 'Tổng điểm GVHD'
+                FROM students s
+                LEFT JOIN student_terms st ON st.student_id = s.id
+                LEFT JOIN transcripts t ON t.student_term_id = st.id
+                LEFT JOIN group_students gs ON st.group_student_id = gs.id
+                LEFT JOIN topics tc ON gs.topic_id = tc.id
+                LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                LEFT JOIN lecturers l ON lt.lecturer_id = l.id
+                LEFT JOIN evaluations e ON t.evaluation_id = e.id
+                WHERE st.term_id = :termId AND e.type = 'ADVISOR'
+                GROUP BY st.id, s.username, s.full_name, gs.name, tc.name, l.degree, l.full_name`,
             {
                 replacements: { termId },
                 type: sequelize.QueryTypes.SELECT,
             },
         );
 
-        for (const transcript of transcripts) {
-            transcript['STT'] = transcripts.indexOf(transcript) + 1;
-
-            const lecturerSupport = await sequelize.query(
-                `SELECT l.full_name as fullName, l.degree
-                FROM group_students gs
-                INNER JOIN topics t ON gs.topic_id = t.id
+        // Reviewer
+        let reviewerTranscripts = await sequelize.query(
+            `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
+                FROM students s
+                INNER JOIN student_terms st ON st.student_id = s.id
+                INNER JOIN transcripts t ON t.student_term_id = st.id
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE gs.id = :groupStudentId`,
-                {
-                    replacements: { groupStudentId: transcript.id },
-                    type: sequelize.QueryTypes.SELECT,
-                },
-            );
+                INNER JOIN evaluations e ON t.evaluation_id = e.id
+                WHERE st.term_id = :termId AND e.type = 'REVIEWER'
+                GROUP BY st.id, l.degree, l.full_name`,
+            {
+                replacements: { termId },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
 
-            transcript['GVHD'] = `${checkDegree(lecturerSupport[0].degree)}. ${
-                lecturerSupport[0].fullName
-            }`;
+        reviewerTranscripts = reviewerTranscripts.reduce((acc, transcript) => {
+            const trans = acc.find((item) => item.id === transcript.id);
 
-            const [firstReviewer, secondReviewer] = transcript['GVPB'].split(', ');
-            const [firstDegree, secondDegree] = transcript['degree'].split(', ');
+            if (!trans) {
+                acc.push({
+                    id: transcript.id,
+                    [`GVPB1`]: transcript.lecturerName,
+                    [`Điểm GVPB1`]: transcript.score,
+                    [`Tổng điểm GVPB1`]: transcript.totalScore,
+                });
+            } else {
+                trans[`GVPB2`] = transcript.lecturerName;
+                trans[`Điểm GVPB2`] = transcript.score;
+                trans[`Tổng điểm GVPB2`] = transcript.totalScore;
+            }
 
-            transcript['GVPB1'] = `${checkDegree(firstDegree)}. ${firstReviewer}`;
-            transcript['GVPB2'] = `${checkDegree(secondDegree)}. ${secondReviewer}`;
+            return acc;
+        }, []);
 
-            const advisorTranscript = await getTranscriptByTypeAndStudentTermId(
-                'ADVISOR',
-                transcript.studentTermId,
-            );
-            addTranscriptScores(transcript, advisorTranscript, 'GVHD');
+        // Report
+        let reportTranscripts = await sequelize.query(
+            `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
+                FROM students s
+                INNER JOIN student_terms st ON st.student_id = s.id
+                INNER JOIN transcripts t ON t.student_term_id = st.id
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                INNER JOIN evaluations e ON t.evaluation_id = e.id
+                WHERE st.term_id = :termId AND e.type = 'REPORT'
+                GROUP BY st.id, l.degree, l.full_name`,
+            {
+                replacements: { termId },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
 
-            const firstReviewerTranscript = await getTranscriptByTypeAndStudentTermId(
-                'REVIEWER',
-                transcript.studentTermId,
-                transcript.lecturerTermIds.split(', ')[0],
-            );
-            addTranscriptScores(transcript, firstReviewerTranscript, 'PB1');
+        reportTranscripts = reportTranscripts.reduce((acc, transcript) => {
+            const trans = acc.find((item) => item.id === transcript.id);
 
-            const secondReviewerTranscript = await getTranscriptByTypeAndStudentTermId(
-                'REVIEWER',
-                transcript.studentTermId,
-                transcript.lecturerTermIds.split(', ')[1],
-            );
-            addTranscriptScores(transcript, secondReviewerTranscript, 'PB2');
+            if (!trans) {
+                acc.push({
+                    id: transcript.id,
+                    [`GVHĐ1`]: transcript.lecturerName,
+                    [`Điểm GVHĐ1`]: transcript.score,
+                    [`Tổng điểm GVHĐ1`]: transcript.totalScore,
+                });
+            } else if (!trans[`GVHĐ2`]) {
+                trans[`GVHĐ2`] = transcript.lecturerName;
+                trans[`Điểm GVHĐ2`] = transcript.score;
+                trans[`Tổng điểm GVHĐ2`] = transcript.totalScore;
+            } else {
+                trans[`GVHĐ3`] = transcript.lecturerName;
+                trans[`Điểm GVHĐ3`] = transcript.score;
+                trans[`Tổng điểm GVHĐ3`] = transcript.totalScore;
+            }
 
-            transcript['Trung bình (HD, PB)'] = calculateAverageScore([
-                advisorTranscript,
-                firstReviewerTranscript,
-                secondReviewerTranscript,
-            ]);
+            return acc;
+        }, []);
 
-            delete transcript.id;
-            delete transcript['GVPB'];
-            delete transcript.degree;
-            delete transcript.studentTermId;
-            delete transcript.lecturerTermIds;
-        }
+        const transcripts = await Promise.all(
+            advisorTranscripts.map(async (trans) => {
+                const reviewerTrans = reviewerTranscripts.find((item) => item.id === trans.id);
+                const reportTrans = reportTranscripts.find((item) => item.id === trans.id);
+
+                const bonusScore = await sequelize.query(
+                    `SELECT s.id, sum(a.bonus_score) as totalBonusScore
+                    FROM students s
+                    LEFT JOIN student_terms st ON st.student_id = s.id
+                    LEFT JOIN articles a ON a.student_term_id = st.id
+                    WHERE st.id = :studentTermId
+                    GROUP BY s.id`,
+                    {
+                        replacements: { studentTermId: trans.id },
+                        type: sequelize.QueryTypes.SELECT,
+                    },
+                );
+
+                // Add advisor scores
+                const loAdvisor = trans['Điểm GVHD'].split(', ').map((score, index) => {
+                    const [scoreValue, scoreMax] = score.split('/');
+
+                    return {
+                        score: Number(scoreValue),
+                        scoreMax: Number(scoreMax),
+                    };
+                });
+
+                const [totalValueAdvisor, totalMaxAdvisor] = trans['Tổng điểm GVHD'].split('/');
+
+                // Add reviewer scores
+                const LoReviewer1 = reviewerTrans['Điểm GVPB1'].split(', ').map((score, index) => {
+                    const [scoreValue, scoreMax] = score.split('/');
+
+                    return {
+                        score: Number(scoreValue),
+                        scoreMax: Number(scoreMax),
+                    };
+                });
+
+                const [totalValueReviewer1, totalMaxReviewer1] =
+                    reviewerTrans['Tổng điểm GVPB1'].split('/');
+
+                const LoReviewer2 = reviewerTrans['Điểm GVPB2'].split(', ').map((score, index) => {
+                    const [scoreValue, scoreMax] = score.split('/');
+
+                    return {
+                        score: Number(scoreValue),
+                        scoreMax: Number(scoreMax),
+                    };
+                });
+
+                const [totalValueReviewer2, totalMaxReviewer2] =
+                    reviewerTrans['Tổng điểm GVPB2'].split('/');
+
+                // Add report scores
+                const LoReport1 = reportTrans['Điểm GVHĐ1'].split(', ').map((score, index) => {
+                    const [scoreValue, scoreMax] = score.split('/');
+
+                    return {
+                        score: Number(scoreValue),
+                        scoreMax: Number(scoreMax),
+                    };
+                });
+
+                const [totalValueReport1, totalMaxReport1] =
+                    reportTrans['Tổng điểm GVHĐ1'].split('/');
+
+                const LoReport2 = reportTrans['Điểm GVHĐ2'].split(', ').map((score, index) => {
+                    const [scoreValue, scoreMax] = score.split('/');
+
+                    return {
+                        score: Number(scoreValue),
+                        scoreMax: Number(scoreMax),
+                    };
+                });
+
+                const [totalValueReport2, totalMaxReport2] =
+                    reportTrans['Tổng điểm GVHĐ2'].split('/');
+
+                const LoReport3 = reportTrans['Điểm GVHĐ3'].split(', ').map((score, index) => {
+                    const [scoreValue, scoreMax] = score.split('/');
+
+                    return {
+                        score: Number(scoreValue),
+                        scoreMax: Number(scoreMax),
+                    };
+                });
+
+                const [totalValueReport3, totalMaxReport3] =
+                    reportTrans['Tổng điểm GVHĐ3'].split('/');
+
+                return {
+                    ['Mã SV']: trans['Mã SV'],
+                    ['Họ tên SV']: trans['Họ tên SV'],
+                    ['Mã nhóm']: trans['Mã nhóm'],
+                    ['Tên đề tài']: trans['Tên đề tài'],
+                    ['GVHD']:
+                        checkDegree(trans['GVHD'].split('. ')[0]) +
+                        '. ' +
+                        trans['GVHD'].split('. ')[1],
+                    ...loAdvisor.reduce((acc, data, index) => {
+                        acc[`LO${index + 1}(${data.scoreMax})-GVHD`] = data.score;
+                        return acc;
+                    }, {}),
+                    [`Tổng(${totalMaxAdvisor})-GVHD`]: Number(totalValueAdvisor),
+                    ['Trung bình-GVHD']: Number(
+                        ((Number(totalValueAdvisor) / Number(totalMaxAdvisor)) * 10).toFixed(2),
+                    ),
+                    ['GVPB1']:
+                        checkDegree(reviewerTrans['GVPB1'].split('. ')[0]) +
+                        '. ' +
+                        reviewerTrans['GVPB1'].split('. ')[1],
+                    ...LoReviewer1.reduce((acc, data, index) => {
+                        acc[`LO${index + 1}(${data.scoreMax})-GVPB1`] = data.score;
+                        return acc;
+                    }, {}),
+                    [`Tổng(${totalMaxReviewer1})-GVPB1`]: Number(totalValueReviewer1),
+                    ['Trung bình-GVPB1']: Number(
+                        ((Number(totalValueReviewer1) / Number(totalMaxReviewer1)) * 10).toFixed(2),
+                    ),
+                    ['GVPB2']:
+                        checkDegree(reviewerTrans['GVPB2'].split('. ')[0]) +
+                        '. ' +
+                        reviewerTrans['GVPB2'].split('. ')[1],
+                    ...LoReviewer2.reduce((acc, data, index) => {
+                        acc[`LO${index + 1}(${data.scoreMax})-GVPB2`] = data.score;
+                        return acc;
+                    }, {}),
+                    [`Tổng(${totalMaxReviewer2})-GVPB2`]: Number(totalValueReviewer2),
+                    ['Trung bình-GVPB2']: Number(
+                        ((Number(totalValueReviewer2) / Number(totalMaxReviewer2)) * 10).toFixed(2),
+                    ),
+                    ['GVHĐ1']:
+                        checkDegree(reportTrans['GVHĐ1'].split('. ')[0]) +
+                        '. ' +
+                        reportTrans['GVHĐ1'].split('. ')[1],
+                    ...LoReport1.reduce((acc, data, index) => {
+                        acc[`LO${index + 1}(${data.scoreMax})-GVHĐ1`] = data.score;
+                        return acc;
+                    }, {}),
+                    [`Tổng(${totalMaxReport1})-GVHĐ1`]: Number(totalValueReport1),
+                    ['Trung bình-GVHĐ1']: Number(
+                        ((Number(totalValueReport1) / Number(totalMaxReport1)) * 10).toFixed(2),
+                    ),
+                    ['GVHĐ2']:
+                        checkDegree(reportTrans['GVHĐ2'].split('. ')[0]) +
+                        '. ' +
+                        reportTrans['GVHĐ2'].split('. ')[1],
+                    ...LoReport2.reduce((acc, data, index) => {
+                        acc[`LO${index + 1}(${data.scoreMax})-GVHĐ2`] = data.score;
+                        return acc;
+                    }, {}),
+                    [`Tổng(${totalMaxReport2})-GVHĐ2`]: Number(totalValueReport2),
+                    ['Trung bình-GVHĐ2']: Number(
+                        ((Number(totalValueReport2) / Number(totalMaxReport2)) * 10).toFixed(2),
+                    ),
+                    ['GVHĐ3']:
+                        checkDegree(reportTrans['GVHĐ3'].split('. ')[0]) +
+                        '. ' +
+                        reportTrans['GVHĐ3'].split('. ')[1],
+                    ...LoReport3.reduce((acc, data, index) => {
+                        acc[`LO${index + 1}(${data.scoreMax})-GVHĐ3`] = data.score;
+                        return acc;
+                    }, {}),
+                    [`Tổng(${totalMaxReport3})-GVHĐ3`]: Number(totalValueReport3),
+                    ['Trung bình-GVHĐ3']: Number(
+                        ((Number(totalValueReport3) / Number(totalMaxReport3)) * 10).toFixed(2),
+                    ),
+                    ['Trung bình-(HD, PB, HĐ)']: Number(
+                        (
+                            ((Number(totalValueAdvisor) +
+                                Number(totalValueReviewer1) +
+                                Number(totalValueReviewer2) +
+                                Number(totalValueReport1) +
+                                Number(totalValueReport2) +
+                                Number(totalValueReport3)) /
+                                (Number(totalMaxAdvisor) +
+                                    Number(totalMaxReviewer1) +
+                                    Number(totalMaxReviewer2) +
+                                    Number(totalMaxReport1) +
+                                    Number(totalMaxReport2) +
+                                    Number(totalMaxReport3))) *
+                            10
+                        ).toFixed(2),
+                    ),
+                    ['Điểm cộng']: bonusScore[0]?.totalBonusScore || 0,
+                    ['Điểm tổng kết']:
+                        Number(
+                            (
+                                ((Number(totalValueAdvisor) +
+                                    Number(totalValueReviewer1) +
+                                    Number(totalValueReviewer2) +
+                                    Number(totalValueReport1) +
+                                    Number(totalValueReport2) +
+                                    Number(totalValueReport3)) /
+                                    (Number(totalMaxAdvisor) +
+                                        Number(totalMaxReviewer1) +
+                                        Number(totalMaxReviewer2) +
+                                        Number(totalMaxReport1) +
+                                        Number(totalMaxReport2) +
+                                        Number(totalMaxReport3))) *
+                                10
+                            ).toFixed(2),
+                        ) + (bonusScore[0]?.totalBonusScore || 0),
+                };
+            }),
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

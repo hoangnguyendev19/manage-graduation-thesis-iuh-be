@@ -120,6 +120,12 @@ exports.getStudentsOfSearch = async (req, res) => {
     try {
         const { termId, page = 1, limit = 10, keywords, searchField, sort = 'ASC' } = req.query;
 
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
         const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
         const offset = (validPage - 1) * validLimit;
@@ -131,19 +137,20 @@ exports.getStudentsOfSearch = async (req, res) => {
 
         let searchQuery = '';
         if (searchField && keywords) {
-            searchQuery = `AND st.${searchField} LIKE :keywords`;
+            searchQuery = `AND s.${searchField} LIKE :keywords`;
         }
 
-        const orderBy = sort ? `ORDER BY st.${searchField} ${sort}` : 'ORDER BY st.created_at DESC';
+        const orderBy = sort ? `ORDER BY s.${searchField} ${sort}` : 'ORDER BY s.full_name ASC';
 
         let students = await sequelize.query(
-            `SELECT st.id, st.username, st.full_name AS fullName, st.phone, st.email, st.gender, 
-                    st.date_of_birth AS dateOfBirth, st.clazz_name AS clazzName, st.type_training AS typeTraining, 
-                    st.is_active AS isActive, st.major_id AS majorId, m.name AS majorName
-            FROM students st 
-            LEFT JOIN majors m ON st.major_id = m.id 
-            LEFT JOIN student_terms stt ON st.id = stt.student_id
-            WHERE stt.term_id = :termId ${searchQuery}
+            `SELECT s.id, s.username, s.full_name as fullName, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, s.is_active as isActive
+            FROM students s
+            LEFT JOIN student_terms st ON s.id = st.student_id
+            LEFT JOIN group_students gs ON st.group_student_id = gs.id
+            LEFT JOIN topics t ON gs.topic_id = t.id
+            LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            LEFT JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE st.term_id = :termId ${searchQuery}
             ${orderBy}
             LIMIT :limit OFFSET :offset`,
             {
@@ -159,26 +166,32 @@ exports.getStudentsOfSearch = async (req, res) => {
 
         const countResult = await sequelize.query(
             `SELECT COUNT(*) AS total 
-            FROM students st
-            LEFT JOIN majors m ON st.major_id = m.id
-            LEFT JOIN student_terms stt ON st.id = stt.student_id
-            WHERE stt.term_id = :termId ${searchQuery}`,
+            FROM students s
+            LEFT JOIN student_terms st ON s.id = st.student_id
+            WHERE st.term_id = :termId ${searchQuery}`,
             {
                 replacements: {
                     termId,
-                    keywords: searchField === 'full_name' ? `%${keywords}%` : `${keywords}%`,
+                    keywords:
+                        searchField && keywords
+                            ? searchField === 'full_name'
+                                ? `%${keywords}`
+                                : `${keywords}%`
+                            : null,
                 },
                 type: QueryTypes.SELECT,
             },
         );
 
+        students = students.map((stu) => {
+            return {
+                ...stu,
+                isActive: Boolean(stu.isActive),
+            };
+        });
+
         const total = countResult[0].total;
         const totalPage = _.ceil(total / validLimit);
-
-        students = students.map((stu) => ({
-            ...stu,
-            isActive: Boolean(stu.isActive),
-        }));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -315,14 +328,12 @@ exports.searchStudents = async (req, res) => {
 exports.getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
+
         const student = await Student.findOne({
             where: { id },
             attributes: {
                 exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
-                include: [
-                    ['major_id', 'majorId'],
-                    [sequelize.col('major.name'), 'majorName'],
-                ],
+                include: [[sequelize.col('major.name'), 'majorName']],
             },
             include: [
                 {
@@ -332,10 +343,6 @@ exports.getStudentById = async (req, res) => {
                 },
             ],
         });
-
-        if (!student) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
-        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

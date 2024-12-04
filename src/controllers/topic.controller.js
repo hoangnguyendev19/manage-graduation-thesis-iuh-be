@@ -11,6 +11,12 @@ exports.getTopicsOfSearch = async (req, res) => {
     try {
         const { termId, keywords = '', searchField, page = 1, limit = 10, sort } = req.query;
 
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
         const validLimit = _.toInteger(limit) > 0 ? _.toInteger(limit) : 10;
         const validPage = _.toInteger(page) > 0 ? _.toInteger(page) : 1;
         const offset = (validPage - 1) * validLimit;
