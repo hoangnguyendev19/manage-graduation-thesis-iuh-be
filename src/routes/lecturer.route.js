@@ -94,9 +94,9 @@ router.delete(
     deleteLecturer,
 );
 
-router.get(APP_ROUTER.ID, getLecturerById);
+router.get(APP_ROUTER.ID, protectLecturer, getLecturerById);
 
-router.get(APP_ROUTER.INDEX, getLecturers);
+router.get(APP_ROUTER.INDEX, protectLecturer, getLecturers);
 
 router.post(
     APP_ROUTER.INDEX,

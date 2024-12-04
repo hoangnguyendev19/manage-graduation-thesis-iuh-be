@@ -47,7 +47,7 @@ router.post(APP_ROUTER.FORGOT_PASSWORD, validateForgotPassword, forgotPassword);
 
 router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
-router.get(APP_ROUTER.QUERY, getStudentsOfSearch);
+router.get(APP_ROUTER.QUERY, protectLecturer, getStudentsOfSearch);
 
 router.get(APP_ROUTER.SEARCH, searchStudents);
 
@@ -127,9 +127,9 @@ router.delete(
     deleteStudent,
 );
 
-router.get(APP_ROUTER.ID, getStudentById);
+router.get(APP_ROUTER.ID, protectLecturer, getStudentById);
 
-router.get(APP_ROUTER.INDEX, getStudents);
+router.get(APP_ROUTER.INDEX, protectLecturer, getStudents);
 
 router.post(
     APP_ROUTER.INDEX,

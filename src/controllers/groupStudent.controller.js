@@ -276,24 +276,26 @@ exports.getGroupStudentById = async (req, res) => {
             return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
-        let members = await StudentTerm.findAll({
-            where: {
-                group_student_id: id,
+        let members = await sequelize.query(
+            `SELECT st.id, st.status, st.is_admin as isAdmin, s.id as studentId, s.username, s.full_name as fullName, sum(a.bonus_score) as bonusScore
+            FROM student_terms st
+            INNER JOIN students s ON st.student_id = s.id
+            LEFT JOIN articles a ON st.id = a.student_term_id
+            WHERE st.group_student_id = :id
+            GROUP BY st.id, st.status, st.is_admin, s.id, s.username, s.full_name`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { id },
             },
-            attributes: ['id', 'status', 'isAdmin'],
-            include: {
-                model: Student,
-                attributes: ['id', 'username', 'fullName', 'clazzName'],
-                as: 'student',
-            },
-        });
+        );
 
         const membersWithTranscripts = await Promise.all(
             members.map(async (member) => {
                 const transcripts = await sequelize.query(
-                    `SELECT e.type, SUM(score) as sumScore FROM transcripts t
+                    `SELECT e.type, sum(t.score) / sum(e.score_max) * 10 as avgScore
+                    FROM transcripts t
                     LEFT JOIN evaluations e ON t.evaluation_id = e.id
-                    WHERE student_term_id = :studentTermId
+                    WHERE t.student_term_id = :studentTermId
                     GROUP BY e.type`,
                     {
                         type: QueryTypes.SELECT,
@@ -301,9 +303,25 @@ exports.getGroupStudentById = async (req, res) => {
                     },
                 );
 
+                const advisor = transcripts.find((transcript) => transcript.type === 'ADVISOR');
+                const reviewer = transcripts.find((transcript) => transcript.type === 'REVIEWER');
+                const report = transcripts.find((transcript) => transcript.type === 'REPORT');
+
+                const advisorScore = Number(advisor?.avgScore.toFixed(2) || 0);
+                const reviewerScore = Number(reviewer?.avgScore.toFixed(2) || 0);
+                const reportScore = Number(report?.avgScore.toFixed(2) || 0);
+
+                const totalAvgScore =
+                    Number(((advisorScore + reviewerScore + reportScore) / 3).toFixed(2)) +
+                    (member.bonusScore || 0);
+
                 return {
-                    ...member.toJSON(),
-                    transcripts,
+                    ...member,
+                    bonusScore: member.bonusScore || 0,
+                    advisorScore,
+                    reviewerScore,
+                    reportScore,
+                    totalAvgScore,
                 };
             }),
         );

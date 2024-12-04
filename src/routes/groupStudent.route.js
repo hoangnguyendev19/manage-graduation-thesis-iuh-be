@@ -109,7 +109,7 @@ router.put(
     removeTopic,
 );
 
-router.get(APP_ROUTER.ID, getGroupStudentById);
+router.get(APP_ROUTER.ID, protectLecturer, getGroupStudentById);
 
 router.delete(
     APP_ROUTER.ID,
