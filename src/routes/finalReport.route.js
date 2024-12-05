@@ -33,7 +33,7 @@ router.get(APP_ROUTER.FINAL_REPORT_BY_LECTURER, protectLecturer, getFinalReports
 router.get(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     getFinalReports,
 );
 

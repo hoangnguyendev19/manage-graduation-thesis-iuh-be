@@ -56,14 +56,14 @@ router.get(APP_ROUTER.SEARCH, searchGroupStudentByName);
 router.post(
     APP_ROUTER.IMPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     importGroupStudent,
 );
 
 router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     exportGroupStudents,
 );
 
@@ -74,14 +74,14 @@ router.put(APP_ROUTER.GROUP_STUDENT_ASSIGN_ADMIN, protectStudent, assignAdminGro
 router.put(
     APP_ROUTER.GROUP_STUDENT_ADD_MEMBER,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     addMemberGroupStudent,
 );
 
 router.put(
     APP_ROUTER.GROUP_STUDENT_DELETE_MEMBER,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteMemberGroupStudent,
 );
 
@@ -98,14 +98,14 @@ router.put(APP_ROUTER.GROUP_STUDENT_CANCEL_TOPIC, protectStudent, cancelTopic);
 router.put(
     APP_ROUTER.GROUP_STUDENT_ASSIGN_TOPIC,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     assignTopic,
 );
 
 router.put(
     APP_ROUTER.GROUP_STUDENT_REMOVE_TOPIC,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     removeTopic,
 );
 
@@ -114,7 +114,7 @@ router.get(APP_ROUTER.ID, protectLecturer, getGroupStudentById);
 router.delete(
     APP_ROUTER.ID,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteGroupStudent,
 );
 
@@ -123,7 +123,7 @@ router.get(APP_ROUTER.INDEX, getGroupStudents);
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateGroupStudent,
     createGroupStudent,
 );

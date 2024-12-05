@@ -23,21 +23,21 @@ const router = express.Router();
 router.post(
     APP_ROUTER.IMPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     importLecturerTerms,
 );
 
 router.get(
     APP_ROUTER.LECTURER_TERM_EXPORT_ASSIGN,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     exportLecturerAssigns,
 );
 
 router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     exportLecturerTerms,
 );
 
@@ -52,7 +52,7 @@ router.get(APP_ROUTER.ID, protectLecturer, getLecturerTermById);
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateLecturerTerm,
     createLecturerTerm,
 );
@@ -60,7 +60,7 @@ router.post(
 router.delete(
     APP_ROUTER.ID,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteLecturerTerm,
 );
 

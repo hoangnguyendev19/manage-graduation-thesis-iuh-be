@@ -416,6 +416,7 @@ exports.createTopic = async (req, res) => {
             standardOutput,
             requireInput,
             keywords,
+            lecturerId,
         } = req.body;
 
         const { termId } = req.query;
@@ -426,12 +427,10 @@ exports.createTopic = async (req, res) => {
             return Error.sendWarning(res, errors.array()[0].msg);
         }
 
-        const lecturer_id = req.user.id;
-
         // Check if lecturer is valid for this term
         const lecturerTerm = await LecturerTerm.findOne({
             where: {
-                lecturer_id: lecturer_id,
+                lecturer_id: lecturerId,
                 term_id: termId,
             },
         });

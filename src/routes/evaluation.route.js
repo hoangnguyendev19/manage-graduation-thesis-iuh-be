@@ -23,7 +23,7 @@ router.get(APP_ROUTER.SCORES, getEvaluationsForScoring);
 router.post(
     APP_ROUTER.IMPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     upload.single('file'),
     importEvaluations,
 );
@@ -31,7 +31,7 @@ router.post(
 router.post(
     APP_ROUTER.IMPORT_FROM_SELECT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     importEvaluationsFromTermIdToSelectedTermId,
 );
 
@@ -40,7 +40,7 @@ router.get(APP_ROUTER.ID, getEvaluationById);
 router.put(
     APP_ROUTER.ID,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateEvaluation,
     updateEvaluation,
 );
@@ -48,7 +48,7 @@ router.put(
 router.delete(
     APP_ROUTER.ID,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteEvaluation,
 );
 
@@ -57,7 +57,7 @@ router.get(APP_ROUTER.INDEX, getEvaluations);
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateEvaluation,
     createEvaluation,
 );

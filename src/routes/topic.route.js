@@ -43,7 +43,7 @@ router.get(APP_ROUTER.TOPIC_KEYWORDS, getKeywords);
 router.post(
     APP_ROUTER.IMPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     upload.single('file'),
     importTopics,
 );
@@ -51,7 +51,7 @@ router.post(
 router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     exportTopics,
 );
 
@@ -60,21 +60,21 @@ router.get(APP_ROUTER.EXPORT_ME, protectLecturer, exportTopicsByLecturerId);
 router.post(
     APP_ROUTER.IMPORT_FROM_SELECT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     importTopicsFromTermIdToSelectedTermId,
 );
 
 router.put(
     APP_ROUTER.TOPIC_QUANTITY_GROUP_MAX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     updateQuantityGroupMax,
 );
 
 router.put(
     APP_ROUTER.TOPIC_STATUS,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     updateStatusTopic,
 );
 

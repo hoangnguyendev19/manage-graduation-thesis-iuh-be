@@ -32,7 +32,7 @@ router.get(APP_ROUTER.ID, getArticleById);
 router.get(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     getArticles,
 );
 
