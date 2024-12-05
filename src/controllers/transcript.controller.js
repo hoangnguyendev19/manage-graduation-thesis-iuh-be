@@ -284,7 +284,7 @@ exports.exportTranscripts = async (req, res) => {
 
         // Advisor
         const advisorTranscripts = await sequelize.query(
-            `SELECT st.id, s.username as 'Mã SV', s.full_name as 'Họ tên SV', gs.name as 'Mã nhóm', tc.name as 'Tên đề tài', CONCAT(l.degree, '. ', l.full_name) as 'GVHD', GROUP_CONCAT(CONCAT(t.score, '/', e.score_max) SEPARATOR ', ') as 'Điểm GVHD', CONCAT(sum(t.score), '/', sum(e.score_max)) as 'Tổng điểm GVHD'
+            `SELECT st.id, s.username as 'Mã SV', s.full_name as 'Họ tên SV', gs.name as 'Mã nhóm', tc.name as 'Tên đề tài', CONCAT(l.degree, '. ', l.full_name) as 'GVHD', GROUP_CONCAT(CONCAT(e.key, '/', t.score, '/', e.score_max) SEPARATOR ', ') as 'Điểm GVHD', CONCAT(sum(t.score), '/', sum(e.score_max)) as 'Tổng điểm GVHD'
                 FROM students s
                 LEFT JOIN student_terms st ON st.student_id = s.id
                 LEFT JOIN transcripts t ON t.student_term_id = st.id
@@ -303,7 +303,7 @@ exports.exportTranscripts = async (req, res) => {
 
         // Reviewer
         let reviewerTranscripts = await sequelize.query(
-            `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
+            `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(e.key, '/', t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
                 FROM students s
                 INNER JOIN student_terms st ON st.student_id = s.id
                 INNER JOIN transcripts t ON t.student_term_id = st.id
@@ -339,7 +339,7 @@ exports.exportTranscripts = async (req, res) => {
 
         // Report
         let reportTranscripts = await sequelize.query(
-            `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
+            `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(e.key, '/', t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
                 FROM students s
                 INNER JOIN student_terms st ON st.student_id = s.id
                 INNER JOIN transcripts t ON t.student_term_id = st.id
@@ -396,10 +396,11 @@ exports.exportTranscripts = async (req, res) => {
                 );
 
                 // Add advisor scores
-                const loAdvisor = trans['Điểm GVHD'].split(', ').map((score, index) => {
-                    const [scoreValue, scoreMax] = score.split('/');
+                const LoAdvisor = trans['Điểm GVHD'].split(', ').map((score, index) => {
+                    const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
+                        loName,
                         score: Number(scoreValue),
                         scoreMax: Number(scoreMax),
                     };
@@ -409,9 +410,10 @@ exports.exportTranscripts = async (req, res) => {
 
                 // Add reviewer scores
                 const LoReviewer1 = reviewerTrans['Điểm GVPB1'].split(', ').map((score, index) => {
-                    const [scoreValue, scoreMax] = score.split('/');
+                    const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
+                        loName,
                         score: Number(scoreValue),
                         scoreMax: Number(scoreMax),
                     };
@@ -421,9 +423,10 @@ exports.exportTranscripts = async (req, res) => {
                     reviewerTrans['Tổng điểm GVPB1'].split('/');
 
                 const LoReviewer2 = reviewerTrans['Điểm GVPB2'].split(', ').map((score, index) => {
-                    const [scoreValue, scoreMax] = score.split('/');
+                    const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
+                        loName,
                         score: Number(scoreValue),
                         scoreMax: Number(scoreMax),
                     };
@@ -434,9 +437,10 @@ exports.exportTranscripts = async (req, res) => {
 
                 // Add report scores
                 const LoReport1 = reportTrans['Điểm GVHĐ1'].split(', ').map((score, index) => {
-                    const [scoreValue, scoreMax] = score.split('/');
+                    const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
+                        loName,
                         score: Number(scoreValue),
                         scoreMax: Number(scoreMax),
                     };
@@ -446,9 +450,10 @@ exports.exportTranscripts = async (req, res) => {
                     reportTrans['Tổng điểm GVHĐ1'].split('/');
 
                 const LoReport2 = reportTrans['Điểm GVHĐ2'].split(', ').map((score, index) => {
-                    const [scoreValue, scoreMax] = score.split('/');
+                    const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
+                        loName,
                         score: Number(scoreValue),
                         scoreMax: Number(scoreMax),
                     };
@@ -458,9 +463,10 @@ exports.exportTranscripts = async (req, res) => {
                     reportTrans['Tổng điểm GVHĐ2'].split('/');
 
                 const LoReport3 = reportTrans['Điểm GVHĐ3'].split(', ').map((score, index) => {
-                    const [scoreValue, scoreMax] = score.split('/');
+                    const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
+                        loName,
                         score: Number(scoreValue),
                         scoreMax: Number(scoreMax),
                     };
@@ -478,8 +484,8 @@ exports.exportTranscripts = async (req, res) => {
                         checkDegree(trans['GVHD'].split('. ')[0]) +
                         '. ' +
                         trans['GVHD'].split('. ')[1],
-                    ...loAdvisor.reduce((acc, data, index) => {
-                        acc[`LO${index + 1}(${data.scoreMax})-GVHD`] = data.score;
+                    ...LoAdvisor.reduce((acc, data, index) => {
+                        acc[`${data.loName}(${data.scoreMax})-GVHD`] = data.score;
                         return acc;
                     }, {}),
                     [`Tổng(${totalMaxAdvisor})-GVHD`]: Number(totalValueAdvisor),
@@ -491,7 +497,7 @@ exports.exportTranscripts = async (req, res) => {
                         '. ' +
                         reviewerTrans['GVPB1'].split('. ')[1],
                     ...LoReviewer1.reduce((acc, data, index) => {
-                        acc[`LO${index + 1}(${data.scoreMax})-GVPB1`] = data.score;
+                        acc[`${data.loName}(${data.scoreMax})-GVPB1`] = data.score;
                         return acc;
                     }, {}),
                     [`Tổng(${totalMaxReviewer1})-GVPB1`]: Number(totalValueReviewer1),
@@ -503,7 +509,7 @@ exports.exportTranscripts = async (req, res) => {
                         '. ' +
                         reviewerTrans['GVPB2'].split('. ')[1],
                     ...LoReviewer2.reduce((acc, data, index) => {
-                        acc[`LO${index + 1}(${data.scoreMax})-GVPB2`] = data.score;
+                        acc[`${data.loName}(${data.scoreMax})-GVPB2`] = data.score;
                         return acc;
                     }, {}),
                     [`Tổng(${totalMaxReviewer2})-GVPB2`]: Number(totalValueReviewer2),
@@ -515,7 +521,7 @@ exports.exportTranscripts = async (req, res) => {
                         '. ' +
                         reportTrans['GVHĐ1'].split('. ')[1],
                     ...LoReport1.reduce((acc, data, index) => {
-                        acc[`LO${index + 1}(${data.scoreMax})-GVHĐ1`] = data.score;
+                        acc[`${data.loName}(${data.scoreMax})-GVHĐ1`] = data.score;
                         return acc;
                     }, {}),
                     [`Tổng(${totalMaxReport1})-GVHĐ1`]: Number(totalValueReport1),
@@ -527,7 +533,7 @@ exports.exportTranscripts = async (req, res) => {
                         '. ' +
                         reportTrans['GVHĐ2'].split('. ')[1],
                     ...LoReport2.reduce((acc, data, index) => {
-                        acc[`LO${index + 1}(${data.scoreMax})-GVHĐ2`] = data.score;
+                        acc[`${data.loName}(${data.scoreMax})-GVHĐ2`] = data.score;
                         return acc;
                     }, {}),
                     [`Tổng(${totalMaxReport2})-GVHĐ2`]: Number(totalValueReport2),
@@ -539,7 +545,7 @@ exports.exportTranscripts = async (req, res) => {
                         '. ' +
                         reportTrans['GVHĐ3'].split('. ')[1],
                     ...LoReport3.reduce((acc, data, index) => {
-                        acc[`LO${index + 1}(${data.scoreMax})-GVHĐ3`] = data.score;
+                        acc[`${data.loName}(${data.scoreMax})-GVHĐ3`] = data.score;
                         return acc;
                     }, {}),
                     [`Tổng(${totalMaxReport3})-GVHĐ3`]: Number(totalValueReport3),

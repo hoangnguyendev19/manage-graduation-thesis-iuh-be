@@ -7,6 +7,13 @@ const { validationResult } = require('express-validator');
 exports.getEvaluations = async (req, res) => {
     try {
         const { termId, type } = req.query;
+
+        // Check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const evaluations = await Evaluation.findAll({
             where: {
                 term_id: termId,
@@ -28,12 +35,19 @@ exports.getEvaluations = async (req, res) => {
 exports.getEvaluationsForScoring = async (req, res) => {
     try {
         const { termId, type } = req.query;
+
+        // Check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const evaluations = await Evaluation.findAll({
             where: {
                 term_id: termId,
                 type: type,
             },
-            attributes: ['id', 'name', 'scoreMax'],
+            attributes: ['id', 'key', 'name', 'scoreMax'],
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -50,10 +64,12 @@ exports.getEvaluationsForScoring = async (req, res) => {
 exports.getEvaluationById = async (req, res) => {
     try {
         const { id } = req.params;
+
         const evaluation = await Evaluation.findByPk(id);
         if (!evaluation) {
             return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
         }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin đánh giá thành công!',
@@ -67,7 +83,7 @@ exports.getEvaluationById = async (req, res) => {
 
 exports.createEvaluation = async (req, res) => {
     try {
-        const { name, scoreMax, type, termId, description } = req.body;
+        const { key, name, scoreMax, type, termId, description } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -75,6 +91,7 @@ exports.createEvaluation = async (req, res) => {
         }
 
         const evaluation = await Evaluation.create({
+            key,
             name,
             scoreMax,
             type,
@@ -97,6 +114,12 @@ exports.importEvaluations = async (req, res) => {
     try {
         const { termId, type } = req.body;
 
+        // Check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         if (!req.file) {
             return Error.sendWarning(res, 'Hãy chọn file để import!');
         }
@@ -105,36 +128,26 @@ exports.importEvaluations = async (req, res) => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
 
-        let evaluations = [];
-        // STT	LO	A-Failed B-Fair	C-Accepted	D-Excellent	Max grade
-        for (const evaluation of jsonData) {
-            if (
-                !evaluation['LO'] ||
-                !evaluation['Max grade'] ||
-                !evaluation['A-Failed'] ||
-                !evaluation['B-Fair'] ||
-                !evaluation['C-Accepted'] ||
-                !evaluation['D-Excellent']
-            ) {
-                return Error.sendWarning(
-                    res,
-                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
-                );
-            }
+        if (jsonData.length % 2 !== 0) {
+            return Error.sendWarning(
+                res,
+                'File không đúng định dạng! Bạn hãy kiểm tra lại số dòng trong file excel.',
+            );
+        }
 
-            const name = evaluation['LO'];
-            const scoreMax = Number(evaluation['Max grade'].toString().trim());
-            const description =
-                evaluation['A-Failed'] +
-                ' ; ' +
-                evaluation['B-Fair'] +
-                ' ; ' +
-                evaluation['C-Accepted'] +
-                ' ; ' +
-                evaluation['D-Excellent'];
-            const term_id = termId;
+        const evaluations = [];
+        // STT	LO	A-Failed B-Fair	C-Accepted	D-Excellent	Max
+        for (let i = 0; i < jsonData.length; i += 2) {
+            const evaluation = {
+                key: `LO${jsonData[i].STT}`,
+                name: jsonData[i].LO,
+                scoreMax: jsonData[i + 1]['Max'],
+                description: `${jsonData[i].Failed} - ${jsonData[i + 1].Failed}; ${jsonData[i].Fair} - ${jsonData[i + 1].Fair}; ${jsonData[i].Accepted} - ${jsonData[i + 1].Accepted}; ${jsonData[i].Excellent} - ${jsonData[i + 1].Excellent}`,
+                term_id: termId,
+                type,
+            };
 
-            evaluations.push({ name, scoreMax, type, description, term_id });
+            evaluations.push(evaluation);
         }
 
         await Evaluation.bulkCreate(evaluations);
@@ -153,6 +166,18 @@ exports.importEvaluationsFromTermIdToSelectedTermId = async (req, res) => {
     try {
         const { termId, selectedTermId, type } = req.body;
 
+        // Check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        // Check if selected term exists
+        const selectedTerm = await Term.findByPk(selectedTermId);
+        if (!selectedTerm) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const evaluations = await Evaluation.findAll({
             where: {
                 term_id: termId,
@@ -162,6 +187,7 @@ exports.importEvaluationsFromTermIdToSelectedTermId = async (req, res) => {
 
         for (const evaluation of evaluations) {
             await Evaluation.create({
+                key: evaluation.key,
                 name: evaluation.name,
                 scoreMax: evaluation.scoreMax,
                 description: evaluation.description,
@@ -183,7 +209,7 @@ exports.importEvaluationsFromTermIdToSelectedTermId = async (req, res) => {
 exports.updateEvaluation = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, scoreMax, type, description } = req.body;
+        const { key, name, scoreMax, description } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -195,9 +221,9 @@ exports.updateEvaluation = async (req, res) => {
             return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
         }
 
+        evaluation.key = key;
         evaluation.name = name;
         evaluation.scoreMax = scoreMax;
-        evaluation.type = type;
         evaluation.description = description;
         await evaluation.save();
 
