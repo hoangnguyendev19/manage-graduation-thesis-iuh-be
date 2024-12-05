@@ -582,7 +582,7 @@ exports.createGroupStudent = async (req, res) => {
         }
 
         group = await GroupStudent.create({
-            name: `${groupNumber}`,
+            name: `${name}`,
             term_id: termId,
         });
 

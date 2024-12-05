@@ -18,28 +18,28 @@ router.get(APP_ROUTER.GROUP_STUDENT_NO_ASSIGN_BY_TYPE, getGroupStudentNoAssign);
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     createAssign,
 );
 
 router.put(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     updateAssign,
 );
 
 router.delete(
     APP_ROUTER.ID + APP_ROUTER.ASSIGN_BY_TYPE,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteAssign,
 );
 
 router.get(
     APP_ROUTER.EXPORT,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     exportAssigns,
 );
 

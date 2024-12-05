@@ -46,14 +46,14 @@ router.get(APP_ROUTER.SEARCH, searchGroupLecturerByName);
 router.post(
     APP_ROUTER.GROUP_LECTURER_MEMBER,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     addMemberToGroupLecturer,
 );
 
 router.put(
     APP_ROUTER.GROUP_LECTURER_MEMBER,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     removeLecturerFromGroupLecturer,
 );
 
@@ -62,14 +62,14 @@ router.get(APP_ROUTER.ID, getGroupLecturerById);
 router.delete(
     APP_ROUTER.ID,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteGroupLecturer,
 );
 
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
-    checkRole(['HEAD_LECTURER', 'HEAD_COURSE']),
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateGroupLecturer,
     createGroupLecturer,
 );
