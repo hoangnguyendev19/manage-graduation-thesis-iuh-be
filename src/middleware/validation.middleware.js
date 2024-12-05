@@ -192,17 +192,11 @@ exports.validateGroupLecturer = [
 ];
 
 exports.validateEvaluation = [
-    check('type')
+    check('key')
         .notEmpty()
-        .withMessage('Loại đánh giá không được để trống!')
-        .isIn(['ADVISOR', 'REVIEWER', 'REPORT'])
-        .withMessage('Loại đánh giá không hợp lệ!'),
-
-    // check('termId')
-    //     .notEmpty()
-    //     .withMessage('ID học kỳ không được để trống!')
-    //     .isUUID()
-    //     .withMessage('ID học kỳ không hợp lệ!'),
+        .withMessage('Key không được để trống!')
+        .isLength({ min: 3 })
+        .withMessage('Key phải có ít nhất 3 ký tự!'),
 
     check('name')
         .notEmpty()

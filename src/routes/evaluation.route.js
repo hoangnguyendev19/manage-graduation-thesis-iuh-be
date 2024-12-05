@@ -18,7 +18,12 @@ const upload = require('../configs/uploadConfig');
 
 const router = express.Router();
 
-router.get(APP_ROUTER.SCORES, getEvaluationsForScoring);
+router.post(
+    APP_ROUTER.IMPORT_FROM_SELECT,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    importEvaluationsFromTermIdToSelectedTermId,
+);
 
 router.post(
     APP_ROUTER.IMPORT,
@@ -29,13 +34,12 @@ router.post(
 );
 
 router.post(
-    APP_ROUTER.IMPORT_FROM_SELECT,
+    APP_ROUTER.INDEX,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    importEvaluationsFromTermIdToSelectedTermId,
+    validateEvaluation,
+    createEvaluation,
 );
-
-router.get(APP_ROUTER.ID, getEvaluationById);
 
 router.put(
     APP_ROUTER.ID,
@@ -52,14 +56,10 @@ router.delete(
     deleteEvaluation,
 );
 
-router.get(APP_ROUTER.INDEX, getEvaluations);
+router.get(APP_ROUTER.EVALUATION_SCORES, getEvaluationsForScoring);
 
-router.post(
-    APP_ROUTER.INDEX,
-    protectLecturer,
-    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateEvaluation,
-    createEvaluation,
-);
+router.get(APP_ROUTER.ID, getEvaluationById);
+
+router.get(APP_ROUTER.INDEX, getEvaluations);
 
 module.exports = router;

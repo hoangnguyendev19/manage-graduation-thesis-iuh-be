@@ -133,7 +133,7 @@ const APP_ROUTER = {
 
     //EVALUATIONS
     EVALUATION: '/api/v1/evaluations',
-    SCORES: '/scores',
+    EVALUATION_SCORES: '/scores',
 
     //ASSIGNS
     ASSIGN: '/api/v1/assigns',
