@@ -82,7 +82,7 @@ exports.getGroupStudentsByTypeAssign = async (req, res) => {
 
         if (type === 'ADVISOR') {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, gs.link, tc.name as topicName
                 FROM group_students gs
                 INNER JOIN topics tc ON gs.topic_id = tc.id
                 INNER JOIN lecturer_terms lt ON lt.id = tc.lecturer_term_id
@@ -94,7 +94,7 @@ exports.getGroupStudentsByTypeAssign = async (req, res) => {
             );
         } else {
             groupStudents = await sequelize.query(
-                `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName
+                `SELECT gs.id, gs.name, gs.topic_id as topicId, gs.link, tc.name as topicName
                 FROM group_students gs
                 INNER JOIN topics tc ON gs.topic_id = tc.id
                 INNER JOIN assigns a ON gs.id = a.group_student_id
@@ -476,11 +476,10 @@ exports.countGroupStudentsByLecturerId = async (req, res) => {
 exports.getMyGroupStudent = async (req, res) => {
     try {
         const { termId } = req.query;
-        const { id } = req.user;
 
         const studentTerm = await StudentTerm.findOne({
             where: {
-                student_id: id,
+                student_id: req.user.id,
                 term_id: termId,
             },
         });
@@ -505,7 +504,7 @@ exports.getMyGroupStudent = async (req, res) => {
             where: {
                 id: studentTerm.group_student_id,
             },
-            attributes: ['id', 'name', 'topic_id'],
+            attributes: ['id', 'name', 'link', 'topic_id'],
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -1188,6 +1187,29 @@ exports.cancelTopic = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Huỷ chọn đề tài thành công!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.submitLink = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { link } = req.body;
+
+        const groupStudent = await GroupStudent.findByPk(id);
+        if (!groupStudent) {
+            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        }
+
+        groupStudent.link = link;
+        await groupStudent.save();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Nộp link tài liệu thành công!',
         });
     } catch (error) {
         console.log(error);

@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
+            link: {
+                type: DataTypes.TEXT('medium'),
+                allowNull: true,
+            },
         },
         {
             tableName: 'group_students',

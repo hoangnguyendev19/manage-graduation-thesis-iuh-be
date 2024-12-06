@@ -29,6 +29,7 @@ const {
     searchGroupStudentByName,
     exportGroupStudents,
     exportGroupStudentsByLecturerId,
+    submitLink,
 } = require('../controllers/groupStudent.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -109,7 +110,7 @@ router.put(
     removeTopic,
 );
 
-router.get(APP_ROUTER.ID, protectLecturer, getGroupStudentById);
+router.get(APP_ROUTER.ID, getGroupStudentById);
 
 router.delete(
     APP_ROUTER.ID,
@@ -119,6 +120,8 @@ router.delete(
 );
 
 router.get(APP_ROUTER.INDEX, getGroupStudents);
+
+router.put(APP_ROUTER.GROUP_STUDENT_SUBMIT, protectStudent, submitLink);
 
 router.post(
     APP_ROUTER.INDEX,

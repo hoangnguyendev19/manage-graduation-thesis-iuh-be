@@ -271,6 +271,153 @@ exports.getTranscriptByStudentId = async (req, res) => {
     }
 };
 
+exports.getTranscriptsByTypeAssign = async (req, res) => {
+    try {
+        const { termId, type = 'ADVISOR' } = req.query;
+
+        const transcripts = [];
+
+        if (type === 'ADVISOR') {
+            let students = await sequelize.query(
+                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax
+                FROM students s
+                INNER JOIN student_terms st ON s.id = st.student_id
+                INNER JOIN group_students gs ON st.group_student_id = gs.id
+                INNER JOIN topics t ON gs.topic_id = t.id
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN evaluations e ON st.term_id = e.term_id
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND e.type = :type`,
+                {
+                    type: sequelize.QueryTypes.SELECT,
+                    replacements: { termId, lecturerId: req.user.id, type },
+                },
+            );
+
+            students = students.reduce((acc, student) => {
+                const stu = acc.find((item) => item.id === student.id);
+
+                if (!stu) {
+                    acc.push({
+                        id: student.id,
+                        studentTermId: student.studentTermId,
+                        username: student.username,
+                        fullName: student.fullName,
+                        groupName: student.groupName,
+                        topicName: student.topicName,
+                        evaluations: [
+                            {
+                                id: student.evaluationId,
+                                key: student.key,
+                                name: student.evaluationName,
+                                scoreMax: student.scoreMax,
+                            },
+                        ],
+                    });
+                } else {
+                    stu.evaluations.push({
+                        id: student.evaluationId,
+                        key: student.key,
+                        name: student.evaluationName,
+                        scoreMax: student.scoreMax,
+                    });
+                }
+                return acc;
+            }, []);
+
+            for (const student of students) {
+                let trans = await sequelize.query(
+                    `SELECT e.id, t.score
+                    FROM transcripts t
+                    INNER JOIN evaluations e ON t.evaluation_id = e.id
+                    WHERE t.student_term_id = :studentTermId`,
+                    {
+                        type: sequelize.QueryTypes.SELECT,
+                        replacements: { studentTermId: student.studentTermId },
+                    },
+                );
+
+                const newEvaluations = student.evaluations.map((evaluation) => {
+                    const eva = trans.find((item) => item.id === evaluation.id);
+
+                    return {
+                        ...evaluation,
+                        score: eva?.score || 0,
+                    };
+                });
+
+                transcripts.push({
+                    ...student,
+                    studentTermId: undefined,
+                    evaluations: newEvaluations,
+                });
+            }
+        } else {
+            let students = await sequelize.query(
+                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, gs.name as groupName, gs.link, t.name as topicName
+                FROM students s
+                INNER JOIN student_terms st ON s.id = st.student_id
+                INNER JOIN group_students gs ON st.group_student_id = gs.id
+                INNER JOIN topics t ON gs.topic_id = t.id
+                INNER JOIN assigns a ON gs.id = a.group_student_id
+                INNER JOIN group_lecturer_members glm ON a.group_lecturer_id = glm.group_lecturer_id
+                INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND a.type = :type`,
+                {
+                    type: sequelize.QueryTypes.SELECT,
+                    replacements: { termId, lecturerId: req.user.id, type },
+                },
+            );
+
+            for (const student of students) {
+                let evaluations = await sequelize.query(
+                    `SELECT e.id, e.key, e.name, e.score_max as scoreMax
+                    FROM evaluations e
+                    WHERE e.type = :type`,
+                    {
+                        type: sequelize.QueryTypes.SELECT,
+                        replacements: { type: type.split('_')[0] },
+                    },
+                );
+
+                const trans = await sequelize.query(
+                    `SELECT e.id, t.score
+                    FROM transcripts t
+                    INNER JOIN evaluations e ON t.evaluation_id = e.id
+                    WHERE t.student_term_id = :studentTermId`,
+                    {
+                        type: sequelize.QueryTypes.SELECT,
+                        replacements: { studentTermId: student.studentTermId },
+                    },
+                );
+
+                const newEvaluations = evaluations.map((evaluation) => {
+                    const eva = trans.find((item) => item.id === evaluation.id);
+
+                    return {
+                        ...evaluation,
+                        score: eva?.score || 0,
+                    };
+                });
+
+                transcripts.push({
+                    ...student,
+                    studentTermId: undefined,
+                    evaluations: newEvaluations,
+                });
+            }
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy bảng điểm thành công!',
+            transcripts,
+        });
+    } catch (error) {
+        console.log('🚀 ~ getGroupStudentsByTypeAssign ~ error:', error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.exportTranscripts = async (req, res) => {
     try {
         const { termId } = req.query;
