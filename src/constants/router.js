@@ -78,6 +78,7 @@ const APP_ROUTER = {
     TRANSCRIPT_BY_STUDENT: '/student',
     TRANSCRIPT_BY_GROUP_STUDENT: '/group-student',
     TRANSCRIPT_STATISTIC: '/statistic',
+    TRANSCRIPT_BY_TYPE_ASSIGN: '/assign',
 
     //TOPICS
     TOPIC: '/api/v1/topics',
@@ -114,6 +115,7 @@ const APP_ROUTER = {
     GROUP_STUDENT_CHOOSE_TOPIC: '/:id/choose-topic',
     GROUP_STUDENT_CANCEL_TOPIC: '/:id/cancel-topic',
     GROUP_STUDENT_MEMBER: '/:id/members',
+    GROUP_STUDENT_SUBMIT: '/:id/submit',
 
     //NOTIFICATIONS
     NOTIFICATION: '/api/v1/notifications',
