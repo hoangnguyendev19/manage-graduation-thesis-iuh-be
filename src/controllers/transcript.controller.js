@@ -31,7 +31,7 @@ exports.getTranscriptByType = async (req, res) => {
 
         const studentTermIds = studentTerms.map((studentTerm) => studentTerm.id);
         const transcripts = await sequelize.query(
-            `SELECT t.evaluation_id as evaluationId, e.name as evaluationName,
+            `SELECT t.evaluation_id as evaluationId, e.key as evaluationKey, e.name as evaluationName,
             e.score_max as scoreMax, t.id as transcriptId, t.score, s.id as studentId,
             s.username, s.full_name as fullName, st.status
             FROM transcripts t
@@ -54,6 +54,7 @@ exports.getTranscriptByType = async (req, res) => {
         const newTranscripts = transcripts.reduce((acc, trans) => {
             const {
                 evaluationId,
+                evaluationKey,
                 evaluationName,
                 scoreMax,
                 transcriptId,
@@ -67,6 +68,7 @@ exports.getTranscriptByType = async (req, res) => {
             if (!acc[evaluationId]) {
                 acc[evaluationId] = {
                     evaluationId,
+                    evaluationKey,
                     evaluationName,
                     scoreMax,
                     students: [],
@@ -305,11 +307,11 @@ exports.exportTranscripts = async (req, res) => {
         let reviewerTranscripts = await sequelize.query(
             `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(e.key, '/', t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
                 FROM students s
-                INNER JOIN student_terms st ON st.student_id = s.id
-                INNER JOIN transcripts t ON t.student_term_id = st.id
-                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                INNER JOIN evaluations e ON t.evaluation_id = e.id
+                LEFT JOIN student_terms st ON st.student_id = s.id
+                LEFT JOIN transcripts t ON t.student_term_id = st.id
+                LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                LEFT JOIN lecturers l ON lt.lecturer_id = l.id
+                LEFT JOIN evaluations e ON t.evaluation_id = e.id
                 WHERE st.term_id = :termId AND e.type = 'REVIEWER'
                 GROUP BY st.id, l.degree, l.full_name`,
             {
@@ -341,11 +343,11 @@ exports.exportTranscripts = async (req, res) => {
         let reportTranscripts = await sequelize.query(
             `SELECT st.id, CONCAT(l.degree, '. ', l.full_name) as lecturerName, GROUP_CONCAT(CONCAT(e.key, '/', t.score, '/', e.score_max) SEPARATOR ', ') as score, CONCAT(sum(t.score), '/', sum(e.score_max)) as totalScore
                 FROM students s
-                INNER JOIN student_terms st ON st.student_id = s.id
-                INNER JOIN transcripts t ON t.student_term_id = st.id
-                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                INNER JOIN evaluations e ON t.evaluation_id = e.id
+                LEFT JOIN student_terms st ON st.student_id = s.id
+                LEFT JOIN transcripts t ON t.student_term_id = st.id
+                LEFT JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                LEFT JOIN lecturers l ON lt.lecturer_id = l.id
+                LEFT JOIN evaluations e ON t.evaluation_id = e.id
                 WHERE st.term_id = :termId AND e.type = 'REPORT'
                 GROUP BY st.id, l.degree, l.full_name`,
             {
@@ -382,6 +384,7 @@ exports.exportTranscripts = async (req, res) => {
                 const reviewerTrans = reviewerTranscripts.find((item) => item.id === trans.id);
                 const reportTrans = reportTranscripts.find((item) => item.id === trans.id);
 
+                // Add bonus score
                 const bonusScore = await sequelize.query(
                     `SELECT s.id, sum(a.bonus_score) as totalBonusScore
                     FROM students s
@@ -396,7 +399,7 @@ exports.exportTranscripts = async (req, res) => {
                 );
 
                 // Add advisor scores
-                const LoAdvisor = trans['Điểm GVHD'].split(', ').map((score, index) => {
+                const LoAdvisor = trans['Điểm GVHD'].split(', ').map((score) => {
                     const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
@@ -409,7 +412,7 @@ exports.exportTranscripts = async (req, res) => {
                 const [totalValueAdvisor, totalMaxAdvisor] = trans['Tổng điểm GVHD'].split('/');
 
                 // Add reviewer scores
-                const LoReviewer1 = reviewerTrans['Điểm GVPB1'].split(', ').map((score, index) => {
+                const LoReviewer1 = reviewerTrans['Điểm GVPB1'].split(', ').map((score) => {
                     const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
@@ -422,7 +425,7 @@ exports.exportTranscripts = async (req, res) => {
                 const [totalValueReviewer1, totalMaxReviewer1] =
                     reviewerTrans['Tổng điểm GVPB1'].split('/');
 
-                const LoReviewer2 = reviewerTrans['Điểm GVPB2'].split(', ').map((score, index) => {
+                const LoReviewer2 = reviewerTrans['Điểm GVPB2'].split(', ').map((score) => {
                     const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
@@ -436,7 +439,7 @@ exports.exportTranscripts = async (req, res) => {
                     reviewerTrans['Tổng điểm GVPB2'].split('/');
 
                 // Add report scores
-                const LoReport1 = reportTrans['Điểm GVHĐ1'].split(', ').map((score, index) => {
+                const LoReport1 = reportTrans['Điểm GVHĐ1'].split(', ').map((score) => {
                     const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
@@ -449,7 +452,7 @@ exports.exportTranscripts = async (req, res) => {
                 const [totalValueReport1, totalMaxReport1] =
                     reportTrans['Tổng điểm GVHĐ1'].split('/');
 
-                const LoReport2 = reportTrans['Điểm GVHĐ2'].split(', ').map((score, index) => {
+                const LoReport2 = reportTrans['Điểm GVHĐ2'].split(', ').map((score) => {
                     const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
@@ -462,7 +465,7 @@ exports.exportTranscripts = async (req, res) => {
                 const [totalValueReport2, totalMaxReport2] =
                     reportTrans['Tổng điểm GVHĐ2'].split('/');
 
-                const LoReport3 = reportTrans['Điểm GVHĐ3'].split(', ').map((score, index) => {
+                const LoReport3 = reportTrans['Điểm GVHĐ3'].split(', ').map((score) => {
                     const [loName, scoreValue, scoreMax] = score.split('/');
 
                     return {
@@ -484,7 +487,7 @@ exports.exportTranscripts = async (req, res) => {
                         checkDegree(trans['GVHD'].split('. ')[0]) +
                         '. ' +
                         trans['GVHD'].split('. ')[1],
-                    ...LoAdvisor.reduce((acc, data, index) => {
+                    ...LoAdvisor.reduce((acc, data) => {
                         acc[`${data.loName}(${data.scoreMax})-GVHD`] = data.score;
                         return acc;
                     }, {}),
@@ -496,7 +499,7 @@ exports.exportTranscripts = async (req, res) => {
                         checkDegree(reviewerTrans['GVPB1'].split('. ')[0]) +
                         '. ' +
                         reviewerTrans['GVPB1'].split('. ')[1],
-                    ...LoReviewer1.reduce((acc, data, index) => {
+                    ...LoReviewer1.reduce((acc, data) => {
                         acc[`${data.loName}(${data.scoreMax})-GVPB1`] = data.score;
                         return acc;
                     }, {}),
@@ -508,7 +511,7 @@ exports.exportTranscripts = async (req, res) => {
                         checkDegree(reviewerTrans['GVPB2'].split('. ')[0]) +
                         '. ' +
                         reviewerTrans['GVPB2'].split('. ')[1],
-                    ...LoReviewer2.reduce((acc, data, index) => {
+                    ...LoReviewer2.reduce((acc, data) => {
                         acc[`${data.loName}(${data.scoreMax})-GVPB2`] = data.score;
                         return acc;
                     }, {}),
@@ -520,7 +523,7 @@ exports.exportTranscripts = async (req, res) => {
                         checkDegree(reportTrans['GVHĐ1'].split('. ')[0]) +
                         '. ' +
                         reportTrans['GVHĐ1'].split('. ')[1],
-                    ...LoReport1.reduce((acc, data, index) => {
+                    ...LoReport1.reduce((acc, data) => {
                         acc[`${data.loName}(${data.scoreMax})-GVHĐ1`] = data.score;
                         return acc;
                     }, {}),
@@ -532,7 +535,7 @@ exports.exportTranscripts = async (req, res) => {
                         checkDegree(reportTrans['GVHĐ2'].split('. ')[0]) +
                         '. ' +
                         reportTrans['GVHĐ2'].split('. ')[1],
-                    ...LoReport2.reduce((acc, data, index) => {
+                    ...LoReport2.reduce((acc, data) => {
                         acc[`${data.loName}(${data.scoreMax})-GVHĐ2`] = data.score;
                         return acc;
                     }, {}),
@@ -544,7 +547,7 @@ exports.exportTranscripts = async (req, res) => {
                         checkDegree(reportTrans['GVHĐ3'].split('. ')[0]) +
                         '. ' +
                         reportTrans['GVHĐ3'].split('. ')[1],
-                    ...LoReport3.reduce((acc, data, index) => {
+                    ...LoReport3.reduce((acc, data) => {
                         acc[`${data.loName}(${data.scoreMax})-GVHĐ3`] = data.score;
                         return acc;
                     }, {}),
