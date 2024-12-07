@@ -4,7 +4,6 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     createNotificationStudent,
     createNotificationGroupStudent,
-    createAllNotificationGroupStudentOfMyInstructor,
     createAllNotificationStudentTerms,
     updateReadStatus,
     getMyNotification,
@@ -21,13 +20,6 @@ const {
 const router = express.Router();
 
 router.get(APP_ROUTER.ME, protectStudent, getMyNotification);
-
-router.post(
-    APP_ROUTER.NOTIFICATION_GROUP_STUDENT_MY_INSTRUCTOR,
-    protectLecturer,
-    validateNotification,
-    createAllNotificationGroupStudentOfMyInstructor,
-);
 
 router.post(
     APP_ROUTER.NOTIFICATION_STUDENT_TERM,

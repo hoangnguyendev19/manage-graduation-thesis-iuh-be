@@ -59,7 +59,7 @@ exports.getGroupLecturers = async (req, res) => {
         }
 
         let groupLecturers = await sequelize.query(
-            `SELECT gl.id, gl.name, l.username, l.full_name as fullName
+            `SELECT gl.id, gl.name, gl.start_date as startDate, gl.end_date as endDate, gl.location, l.username, l.full_name as fullName
             FROM group_lecturers gl
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
             INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
@@ -89,6 +89,9 @@ exports.getGroupLecturers = async (req, res) => {
                 acc.push({
                     id: groupLecturer.id,
                     name: groupLecturer.name,
+                    startDate: groupLecturer.startDate,
+                    endDate: groupLecturer.endDate,
+                    location: groupLecturer.location,
                     members: [
                         {
                             username: groupLecturer.username,
@@ -162,13 +165,13 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
         }
 
         let groupLecturers = await sequelize.query(
-            `SELECT gr.id AS groupLecturerId, gr.name, gr.type, l.id AS lecturerId, l.username, l.full_name AS fullName
-            FROM group_lecturers gr
-            INNER JOIN group_lecturer_members grm ON gr.id = grm.group_lecturer_id
-            INNER JOIN lecturer_terms lt ON grm.lecturer_term_id = lt.id
+            `SELECT gl.id, gl.name, gl.type, gl.start_date AS startDate, gl.end_date AS endDate, gl.location, l.id AS lecturerId, l.username, l.full_name AS fullName
+            FROM group_lecturers gl
+            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
             INNER JOIN majors m ON l.major_id = m.id
-            WHERE gr.term_id = :termId AND gr.type = :type`,
+            WHERE gl.term_id = :termId AND gl.type = :type`,
             {
                 replacements: {
                     termId,
@@ -179,13 +182,16 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
         );
 
         groupLecturers = groupLecturers.reduce((acc, curr) => {
-            const group = acc.find((g) => g.groupLecturerId === curr.groupLecturerId);
+            const group = acc.find((g) => g.id === curr.id);
 
             if (!group) {
                 acc.push({
-                    groupLecturerId: curr.groupLecturerId,
+                    groupLecturerId: curr.id,
                     name: curr.name,
                     type: curr.type,
+                    startDate: curr.startDate,
+                    endDate: curr.endDate,
+                    location: curr.location,
                     members: [
                         {
                             id: curr.lecturerId,
@@ -399,7 +405,7 @@ exports.getGroupLecturerById = async (req, res) => {
         const { id } = req.params;
 
         const groupLecturer = await GroupLecturer.findByPk(id, {
-            attributes: ['name', 'type', 'keywords'],
+            attributes: ['name', 'type', 'keywords', 'startDate', 'endDate', 'location'],
         });
 
         if (!groupLecturer) {
@@ -474,6 +480,9 @@ exports.getGroupLecturerById = async (req, res) => {
                 name: groupLecturer.name,
                 type: groupLecturer.type,
                 keywords: groupLecturer.keywords,
+                startDate: groupLecturer.startDate,
+                endDate: groupLecturer.endDate,
+                location: groupLecturer.location,
                 members,
                 groupStudents,
             },
@@ -881,5 +890,31 @@ exports.addMemberToGroupLecturer = async (req, res) => {
     } catch (error) {
         console.error(error);
         return Error.sendError(res, error);
+    }
+};
+
+exports.updateDateAndLocation = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate, location } = req.body;
+
+        const groupLecturer = await GroupLecturer.findByPk(id);
+        if (!groupLecturer) {
+            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
+        }
+
+        await groupLecturer.update({
+            startDate,
+            endDate,
+            location,
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Cập nhật thông tin ngày và địa điểm thành công!',
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
     }
 };

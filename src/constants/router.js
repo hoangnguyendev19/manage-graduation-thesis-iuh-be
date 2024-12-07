@@ -123,13 +123,11 @@ const APP_ROUTER = {
     //NOTIFICATION_STUDENTS
     NOTIFICATION_STUDENT: '/api/v1/notification-students',
     NOTIFICATION_GROUP_STUDENT: '/group-student',
-    NOTIFICATION_GROUP_STUDENT_MY_INSTRUCTOR: '/group-student/my-instructor',
     NOTIFICATION_STUDENT_TERM: '/terms',
     NOTIFICATION_STUDENT_READ: '/:id/read',
 
     //NOTIFICATION_LECTURERS
     NOTIFICATION_LECTURER: '/api/v1/notification-lecturers',
-    NOTIFICATION_GROUP_LECTURER: '/group-lecturer',
     NOTIFICATION_LECTURER_TERM: '/terms',
     NOTIFICATION_LECTURER_READ: '/:id/read',
 
