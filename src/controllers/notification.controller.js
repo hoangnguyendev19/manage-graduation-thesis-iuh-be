@@ -15,23 +15,54 @@ const _ = require('lodash');
 
 exports.getNotifications = async (req, res) => {
     try {
+        const { limit, page, searchField, keywords } = req.query;
+        let offset = (page - 1) * limit;
+
+        const searchQuery = `WHERE n.${searchField} LIKE :keywords AND n.created_by = :lecturerId`;
+        const searchKey = `%${keywords}%`;
+
         const notifications = await sequelize.query(
             `SELECT n.id, n.title, n.type, n.created_at as createdAt
             FROM notifications n
-            WHERE n.created_by = :lecturerId
-            ORDER BY n.created_at DESC`,
+            ${searchQuery}
+            ORDER BY n.created_at DESC
+            LIMIT :limit OFFSET :offset`,
             {
                 type: sequelize.QueryTypes.SELECT,
                 replacements: {
+                    keywords: searchKey,
+                    lecturerId: req.user.id,
+                    limit: _.toInteger(limit),
+                    offset: _.toInteger(offset),
+                },
+            },
+        );
+
+        const countQuery = `WHERE n.${searchField} LIKE :keywords AND n.created_by = :lecturerId`;
+        const count = await sequelize.query(
+            `SELECT COUNT(*) as total
+            FROM notifications n
+            ${countQuery}`,
+            {
+                type: sequelize.QueryTypes.SELECT,
+                replacements: {
+                    keywords: searchKey,
                     lecturerId: req.user.id,
                 },
             },
         );
+        const total = count[0].total;
+        const totalPage = _.ceil(total / _.toInteger(limit));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách thông báo thành công!',
             notifications,
+            params: {
+                page: _.toInteger(page),
+                limit: _.toInteger(limit),
+                totalPage,
+            },
         });
     } catch (error) {
         console.log('🚀 ~ exports.getNotifications= ~ error:', error);
