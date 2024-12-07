@@ -23,6 +23,22 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: true,
             },
+            startDate: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: new Date(),
+                field: 'start_date',
+            },
+            endDate: {
+                type: DataTypes.DATE,
+                allowNull: false,
+                defaultValue: new Date(),
+                field: 'end_date',
+            },
+            location: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
         },
         {
             tableName: 'group_lecturers',

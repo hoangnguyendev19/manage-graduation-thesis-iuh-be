@@ -3,7 +3,6 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     createNotificationLecturer,
-    createNotificationGroupLecturer,
     createAllNotificationLecturerTerms,
     updateReadStatus,
     getMyNotification,
@@ -12,7 +11,6 @@ const {
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const {
     validateNotificationLecturer,
-    validateNotificationGroupLecturer,
     validateNotification,
 } = require('../middleware/validation.middleware');
 const router = express.Router();
@@ -33,14 +31,6 @@ router.post(
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     validateNotificationLecturer,
     createNotificationLecturer,
-);
-
-router.post(
-    APP_ROUTER.NOTIFICATION_GROUP_LECTURER,
-    protectLecturer,
-    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    validateNotificationGroupLecturer,
-    createNotificationGroupLecturer,
 );
 
 router.put(APP_ROUTER.NOTIFICATION_LECTURER_READ, protectLecturer, updateReadStatus);

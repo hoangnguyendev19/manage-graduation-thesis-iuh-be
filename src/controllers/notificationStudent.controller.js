@@ -181,64 +181,6 @@ exports.createNotificationGroupStudent = async (req, res) => {
     }
 };
 
-exports.createAllNotificationGroupStudentOfMyInstructor = async (req, res) => {
-    try {
-        const { title, content, termId } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
-
-        const term = await Term.findByPk(termId);
-        if (!term) {
-            return Error.sendNotFound(res, 'Không tìm thấy kỳ học này!');
-        }
-
-        const studentIds = await sequelize.query(
-            `SELECT st.student_id
-            FROM lecturer_terms lt
-            INNER JOIN topics t ON lt.id = t.lecturer_term_id
-            INNER JOIN group_students gs ON t.id = gs.topic_id
-            INNER JOIN student_terms st ON gs.id = st.group_student_id
-            WHERE lt.lecturer_id = :lecturerId AND lt.term_id = :termId`,
-            {
-                replacements: {
-                    lecturerId: req.user.id,
-                    termId,
-                },
-                type: sequelize.QueryTypes.SELECT,
-            },
-        );
-
-        if (studentIds.length === 0) {
-            return Error.sendNotFound(res, 'Không tìm thấy sinh viên nào trong kỳ học này!');
-        }
-
-        const notification = await Notification.create({
-            title,
-            content,
-            type: 'GROUP_STUDENT',
-            created_by: req.user.id,
-        });
-
-        for (const studentId of studentIds) {
-            await NotificationStudent.create({
-                student_id: studentId.student_id,
-                notification_id: notification.id,
-            });
-        }
-
-        res.status(HTTP_STATUS.CREATED).json({
-            success: true,
-            message: `Gửi thông báo đến toàn bộ nhóm sinh viên của giảng viên thành công.`,
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.updateReadStatus = async (req, res) => {
     try {
         const { id } = req.params;

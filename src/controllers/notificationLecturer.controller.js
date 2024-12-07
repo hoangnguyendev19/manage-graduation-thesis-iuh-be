@@ -1,10 +1,4 @@
-const {
-    NotificationLecturer,
-    LecturerTerm,
-    Notification,
-    GroupLecturerMember,
-    Term,
-} = require('../models/index');
+const { NotificationLecturer, LecturerTerm, Notification, Term } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { validationResult } = require('express-validator');
@@ -140,55 +134,6 @@ exports.createNotificationLecturer = async (req, res) => {
         }));
 
         await NotificationLecturer.bulkCreate(lecturerConvert);
-
-        res.status(HTTP_STATUS.CREATED).json({
-            success: true,
-            message: 'Gửi thông báo thành công.',
-        });
-    } catch (error) {
-        console.log(error);
-        Error.sendError(res, error);
-    }
-};
-
-exports.createNotificationGroupLecturer = async (req, res) => {
-    try {
-        const { title, content, groupLecturerIds } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
-
-        const notification = await Notification.create({
-            title,
-            content,
-            type: 'GROUP_LECTURER',
-            created_by: req.user.id,
-        });
-
-        for (const groupLecturerId of groupLecturerIds) {
-            const lecturerTermIds = await GroupLecturerMember.findAll({
-                where: { group_lecturer_id: groupLecturerId },
-                attributes: ['lecturer_term_id'],
-            });
-
-            if (lecturerTermIds.length === 0) {
-                return Error.sendNotFound(res, 'Không tìm thấy giảng viên nào trong nhóm này.');
-            }
-
-            for (const lecturerTermId of lecturerTermIds) {
-                const lecturerId = await LecturerTerm.findOne({
-                    where: { id: lecturerTermId.lecturer_term_id },
-                    attributes: ['lecturer_id'],
-                });
-
-                await NotificationLecturer.create({
-                    lecturer_id: lecturerId.lecturer_id,
-                    notification_id: notification.id,
-                });
-            }
-        }
 
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
