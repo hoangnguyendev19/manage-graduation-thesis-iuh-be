@@ -510,12 +510,52 @@ exports.getMyGroupStudent = async (req, res) => {
             attributes: ['id', 'name', 'link', 'topic_id'],
         });
 
+        let groupLecturers = await sequelize.query(
+            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, l.username, l.full_name as fullName
+            FROM group_lecturers gl
+            INNER JOIN assigns a ON gl.id = a.group_lecturer_id
+            INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
+            INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE a.group_student_id = :id`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { id: studentTerm.group_student_id },
+            },
+        );
+
+        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
+            const group = acc.find((g) => g.id === groupLecturer.id);
+
+            if (!group) {
+                acc.push({
+                    id: groupLecturer.id,
+                    name: groupLecturer.name,
+                    type: groupLecturer.type,
+                    startDate: groupLecturer.startDate,
+                    endDate: groupLecturer.endDate,
+                    location: groupLecturer.location,
+                    members: [
+                        { username: groupLecturer.username, fullName: groupLecturer.fullName },
+                    ],
+                });
+            } else {
+                group.members.push({
+                    username: groupLecturer.username,
+                    fullName: groupLecturer.fullName,
+                });
+            }
+
+            return acc;
+        }, []);
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin nhóm sinh viên thành công!',
             group: {
                 info: groupStudent,
                 members,
+                groupLecturers,
             },
         });
     } catch (error) {
