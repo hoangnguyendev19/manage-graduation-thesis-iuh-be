@@ -17,7 +17,7 @@ exports.getGroupStudents = async (req, res) => {
         }
 
         let groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, s.username, s.full_name as fullName, st.status
+            `SELECT gs.id, gs.name, gs.link, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, s.username, s.full_name as fullName, st.status
             FROM group_students gs 
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             LEFT JOIN students s ON st.student_id = s.id
@@ -40,6 +40,7 @@ exports.getGroupStudents = async (req, res) => {
                 acc.push({
                     id: groupStudent.id,
                     name: groupStudent.name,
+                    link: groupStudent.link,
                     topicId: groupStudent.topicId,
                     topicName: groupStudent.topicName,
                     lecturerName: groupStudent.lecturerName,
@@ -124,7 +125,7 @@ exports.getGroupStudentsByLecturerId = async (req, res) => {
         const { termId, lecturerId } = req.query;
 
         let groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, tc.name as topicName, s.username, s.full_name as fullName, st.status
+            `SELECT gs.id, gs.name, gs.link, tc.name as topicName, s.username, s.full_name as fullName, st.status
             FROM group_students gs
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
@@ -145,6 +146,7 @@ exports.getGroupStudentsByLecturerId = async (req, res) => {
                 acc.push({
                     id: groupStudent.id,
                     name: groupStudent.name,
+                    link: groupStudent.link,
                     topicId: groupStudent.topicId,
                     topicName: groupStudent.topicName,
                     lecturerName: groupStudent.lecturerName,
