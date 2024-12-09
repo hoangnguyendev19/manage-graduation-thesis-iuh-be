@@ -182,7 +182,7 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
         );
 
         groupLecturers = groupLecturers.reduce((acc, curr) => {
-            const group = acc.find((g) => g.id === curr.id);
+            const group = acc.find((g) => g.groupLecturerId === curr.id);
 
             if (!group) {
                 acc.push({
