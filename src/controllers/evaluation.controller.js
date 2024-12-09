@@ -139,7 +139,8 @@ exports.importEvaluations = async (req, res) => {
         // STT	LO	A-Failed B-Fair	C-Accepted	D-Excellent	Max
         for (let i = 0; i < jsonData.length; i += 2) {
             const evaluation = {
-                key: `LO${jsonData[i].STT}`,
+                // if STT < 10, add 0 before STT => LO01, LO02, ...
+                key: `LO${(i / 2 + 1).toString().padStart(2, '0')}`,
                 name: jsonData[i].LO,
                 scoreMax: jsonData[i + 1]['Max'],
                 description: `${jsonData[i].Failed} - ${jsonData[i + 1].Failed}; ${jsonData[i].Fair} - ${jsonData[i + 1].Fair}; ${jsonData[i].Accepted} - ${jsonData[i + 1].Accepted}; ${jsonData[i].Excellent} - ${jsonData[i + 1].Excellent}`,
