@@ -598,7 +598,7 @@ exports.importTopics = async (req, res) => {
                 !topic['Mô tả'] ||
                 !topic['Yêu cầu đầu vào'] ||
                 !topic['Yêu cầu đầu ra'] ||
-                !topic['Từ khoá']
+                !topic['Từ khóa']
             ) {
                 return Error.sendWarning(
                     res,
@@ -615,7 +615,7 @@ exports.importTopics = async (req, res) => {
             const description = topic['Mô tả'].trim();
             const requireInput = topic['Yêu cầu đầu vào'].trim();
             const standardOutput = topic['Yêu cầu đầu ra'].trim();
-            const keywords = topic['Từ khoá'].trim();
+            const keywords = topic['Từ khóa'].trim();
 
             const lecturer = await Lecturer.findOne({
                 where: {
@@ -732,9 +732,9 @@ exports.exportTopics = async (req, res) => {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
-        // collumns: Mã GV, Tên GV, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra, Từ khoá
+        // collumns: Mã GV, Tên GV, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra, Từ khóa
         let topics = await sequelize.query(
-            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'Mục tiêu đề tài', t.expected_result as 'Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra', t.keywords as 'Từ khoá'
+            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'Mục tiêu đề tài', t.expected_result as 'Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra', t.keywords as 'Từ khóa'
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -775,9 +775,9 @@ exports.exportTopicsByLecturerId = async (req, res) => {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
-        // collumns: Mã GV, Tên GV, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra, Từ khoá
+        // collumns: Mã GV, Tên GV, Tên đề tài, Mô tả, Mục tiêu đề tài, Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng, Yêu cầu đầu vào, Yêu cầu đầu ra, Từ khóa
         let topics = await sequelize.query(
-            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'Mục tiêu đề tài', t.expected_result as 'Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra', t.keywords as 'Từ khoá'
+            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV', t.name as 'Tên đề tài', t.description as 'Mô tả', t.target as 'Mục tiêu đề tài', t.expected_result as 'Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng', t.require_input as 'Yêu cầu đầu vào', t.standard_output as 'Yêu cầu đầu ra', t.keywords as 'Từ khóa'
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -957,7 +957,7 @@ exports.getKeywords = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lấy từ khoá thành công!',
+            message: 'Lấy từ khóa thành công!',
             keywords: keywordsSorted,
         });
     } catch (error) {

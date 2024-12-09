@@ -559,7 +559,7 @@ exports.lockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Khoá tài khoản thành công!',
+            message: 'Khóa tài khoản thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -579,7 +579,7 @@ exports.unlockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Mở khoá tài khoản thành công!',
+            message: 'Mở khóa tài khoản thành công!',
         });
     } catch (error) {
         console.log(error);

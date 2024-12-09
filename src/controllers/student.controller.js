@@ -795,7 +795,7 @@ exports.lockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Khoá tài khoản sinh viên thành công!',
+            message: 'Khóa tài khoản sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -817,7 +817,7 @@ exports.lockAccounts = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Khoá danh sách tài khoản sinh viên thành công!',
+            message: 'Khóa danh sách tài khoản sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
@@ -837,7 +837,7 @@ exports.unlockAccount = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Mở khoá tài khoản sinh viên thành công!',
+            message: 'Mở khóa tài khoản sinh viên thành công!',
         });
     } catch (error) {
         console.log(error);
