@@ -577,7 +577,7 @@ exports.importTopics = async (req, res) => {
     try {
         const { termId } = req.body;
 
-        if (!req.file) {
+        if (!req.file || !req.file.buffer) {
             return Error.sendWarning(res, 'Vui lòng chọn file tải lên');
         }
 
@@ -692,7 +692,8 @@ exports.importTopics = async (req, res) => {
                 expectedResult,
                 standardOutput,
                 requireInput,
-                lecturerTermId,
+                keywords,
+                lecturer_term_id,
             } = topic;
 
             // Create new topics
@@ -705,7 +706,8 @@ exports.importTopics = async (req, res) => {
                 expectedResult,
                 standardOutput,
                 requireInput,
-                lecturer_term_id: lecturerTermId,
+                keywords,
+                lecturer_term_id,
             });
         }
 
