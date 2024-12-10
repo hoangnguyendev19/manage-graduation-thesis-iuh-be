@@ -136,13 +136,62 @@ exports.importEvaluations = async (req, res) => {
         }
 
         const evaluations = [];
-        // STT	LO	A-Failed B-Fair	C-Accepted	D-Excellent	Max
+        // STT	LO	Failed Fair	Accepted  Excellent  Max
         for (let i = 0; i < jsonData.length; i += 2) {
+            if (!jsonData[i].STT) {
+                return Error.sendWarning(
+                    res,
+                    'Tên cột STT không đúng định dạng hoặc cột đó có dữ liệu chứa giá trị rỗng.',
+                );
+            }
+
+            if (!jsonData[i].LO) {
+                return Error.sendWarning(
+                    res,
+                    'Tên cột LO không đúng định dạng hoặc cột đó có dữ liệu chứa giá trị rỗng.',
+                );
+            }
+
+            if (!jsonData[i].Failed) {
+                return Error.sendWarning(
+                    res,
+                    'Tên cột Failed không đúng định dạng hoặc cột đó có dữ liệu chứa giá trị rỗng.',
+                );
+            }
+
+            if (!jsonData[i].Fair) {
+                return Error.sendWarning(
+                    res,
+                    'Tên cột Fair không đúng định dạng hoặc cột đó có dữ liệu chứa giá trị rỗng.',
+                );
+            }
+
+            if (!jsonData[i].Accepted) {
+                return Error.sendWarning(
+                    res,
+                    'Tên cột Accepted không đúng định dạng hoặc cột đó có dữ liệu chứa giá trị rỗng.',
+                );
+            }
+
+            if (!jsonData[i].Excellent) {
+                return Error.sendWarning(
+                    res,
+                    'Tên cột Excellent không đúng định dạng hoặc cột đó có dữ liệu chứa giá trị rỗng.',
+                );
+            }
+
+            if (!jsonData[i + 1].Max) {
+                return Error.sendWarning(
+                    res,
+                    'Tên cột Max không đúng định dạng hoặc cột đó có dữ liệu chứa giá trị rỗng.',
+                );
+            }
+
             const evaluation = {
                 // if STT < 10, add 0 before STT => LO01, LO02, ...
                 key: `LO${(i / 2 + 1).toString().padStart(2, '0')}`,
                 name: jsonData[i].LO,
-                scoreMax: jsonData[i + 1]['Max'],
+                scoreMax: jsonData[i + 1].Max,
                 description: `${jsonData[i].Failed} - ${jsonData[i + 1].Failed}; ${jsonData[i].Fair} - ${jsonData[i + 1].Fair}; ${jsonData[i].Accepted} - ${jsonData[i + 1].Accepted}; ${jsonData[i].Excellent} - ${jsonData[i + 1].Excellent}`,
                 term_id: termId,
                 type,
