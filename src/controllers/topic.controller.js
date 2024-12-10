@@ -589,20 +589,66 @@ exports.importTopics = async (req, res) => {
         let listTopic = [];
 
         for (const topic of jsonData) {
-            if (
-                !topic['Mã GV'] ||
-                !topic['Tên GV'] ||
-                !topic['Tên đề tài'] ||
-                !topic['Mục tiêu đề tài'] ||
-                !topic['Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng'] ||
-                !topic['Mô tả'] ||
-                !topic['Yêu cầu đầu vào'] ||
-                !topic['Yêu cầu đầu ra'] ||
-                !topic['Từ khóa']
-            ) {
+            if (!topic['Mã GV']) {
                 return Error.sendWarning(
                     res,
-                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
+                    `Tên cột Mã GV không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Tên GV']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Tên GV không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Tên đề tài']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Tên đề tài không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Mục tiêu đề tài']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Mục tiêu đề tài không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Dự kiến sản phẩm nghiên cứu của đề tài và khả năng ứng dụng không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Mô tả']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Mô tả không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Yêu cầu đầu vào']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Yêu cầu đầu vào không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Yêu cầu đầu ra']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Yêu cầu đầu ra không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!topic['Từ khóa']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Từ khóa không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
                 );
             }
 
@@ -627,7 +673,7 @@ exports.importTopics = async (req, res) => {
             if (!lecturer) {
                 return Error.sendNotFound(
                     res,
-                    `Giảng viên ${fullName} có mã ${username} không tồn tại.`,
+                    `Giảng viên ${fullName} có mã ${username} không tồn tại trong hệ thống.`,
                 );
             }
 
@@ -642,7 +688,7 @@ exports.importTopics = async (req, res) => {
             if (!isExistLecturer) {
                 return Error.sendNotFound(
                     res,
-                    `Giảng viên ${fullName} có mã ${username} không tồn tại trong kỳ này.`,
+                    `Giảng viên ${fullName} có mã ${username} không tồn tại trong kỳ này!`,
                 );
             }
 
@@ -654,7 +700,7 @@ exports.importTopics = async (req, res) => {
             });
 
             if (existedTopic) {
-                return Error.sendConflict(res, `Tên đề tài ${name} đã tồn tại.`);
+                return Error.sendConflict(res, `Tên đề tài ${name} đã tồn tại trong học kì này!`);
             }
 
             listTopic.push({

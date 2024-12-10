@@ -408,16 +408,17 @@ exports.importLecturers = async (req, res) => {
         const password = await hashPassword('12345678');
         // columns: STT, Mã GV, Họ và tên, Giới tính, Số điện thoại, Email
         for (const lecturer of jsonData) {
-            if (
-                !lecturer['Mã GV'] ||
-                !lecturer['Họ và tên'] ||
-                !lecturer['Giới tính'] ||
-                !lecturer['Số điện thoại'] ||
-                !lecturer['Email']
-            ) {
+            if (!lecturer['Mã GV']) {
                 return Error.sendWarning(
                     res,
-                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
+                    `Tên cột Mã GV không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!lecturer['Họ và tên']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Họ và tên không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
                 );
             }
 

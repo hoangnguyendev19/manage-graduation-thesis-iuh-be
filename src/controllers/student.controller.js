@@ -508,24 +508,54 @@ exports.importStudents = async (req, res) => {
         if (!req.file) {
             return Error.sendWarning(res, 'Hãy chọn file để import!');
         }
+
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(sheet);
         const students = [];
+
         // columns: STT, Mã SV, Họ đệm, Tên, Giới tính, Ngày sinh, Lớp học
         for (const student of jsonData) {
-            if (
-                !student['Mã SV'] ||
-                !student['Họ đệm'] ||
-                !student['Tên'] ||
-                !student['Giới tính'] ||
-                !student['Ngày sinh'] ||
-                !student['Lớp học']
-            ) {
+            if (!lecturer['Mã SV']) {
                 return Error.sendWarning(
                     res,
-                    'File không đúng định dạng! Bạn hãy kiểm tra lại tên cột trong file excel.',
+                    `Tên cột Mã SV không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!lecturer['Họ đệm']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Họ đệm không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!lecturer['Tên']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Tên không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!lecturer['Giới tính']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Giới tính không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!lecturer['Ngày sinh']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Ngày sinh không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!lecturer['Lớp học']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Lớp học không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(topic) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
                 );
             }
 
