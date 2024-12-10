@@ -40,13 +40,7 @@ router.get(APP_ROUTER.COUNT_BY_LECTURER, protectLecturer, countTopicsByLecturerI
 
 router.get(APP_ROUTER.TOPIC_KEYWORDS, getKeywords);
 
-router.post(
-    APP_ROUTER.IMPORT,
-    protectLecturer,
-    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    upload.single('file'),
-    importTopics,
-);
+router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importTopics);
 
 router.get(
     APP_ROUTER.EXPORT,
