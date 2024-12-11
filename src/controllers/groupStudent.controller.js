@@ -1,4 +1,4 @@
-const { GroupStudent, StudentTerm, Student, Topic, Term } = require('../models/index');
+const { GroupStudent, StudentTerm, Student, Topic, Term, Comment } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
@@ -515,7 +515,7 @@ exports.getMyGroupStudent = async (req, res) => {
         });
 
         let groupLecturers = await sequelize.query(
-            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, l.username, l.full_name as fullName
+            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, lt.id as lecturerTermId, l.username, l.full_name as fullName
             FROM group_lecturers gl
             INNER JOIN assigns a ON gl.id = a.group_lecturer_id
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
@@ -528,11 +528,21 @@ exports.getMyGroupStudent = async (req, res) => {
             },
         );
 
-        groupLecturers = groupLecturers.reduce((acc, groupLecturer) => {
-            const group = acc.find((g) => g.id === groupLecturer.id);
+        const newGroupLecturers = [];
+        for (const groupLecturer of groupLecturers) {
+            const group = newGroupLecturers.find((g) => g.id === groupLecturer.id);
+
+            const comment = await Comment.findOne({
+                attributes: ['content'],
+                where: {
+                    group_student_id: studentTerm.group_student_id,
+                    lecturer_term_id: groupLecturer.lecturerTermId,
+                    type: groupLecturer.type,
+                },
+            });
 
             if (!group) {
-                acc.push({
+                newGroupLecturers.push({
                     id: groupLecturer.id,
                     name: groupLecturer.name,
                     type: groupLecturer.type,
@@ -540,18 +550,23 @@ exports.getMyGroupStudent = async (req, res) => {
                     endDate: groupLecturer.endDate,
                     location: groupLecturer.location,
                     members: [
-                        { username: groupLecturer.username, fullName: groupLecturer.fullName },
+                        {
+                            id: groupLecturer.lecturerTermId,
+                            username: groupLecturer.username,
+                            fullName: groupLecturer.fullName,
+                            comment: comment?.content || null,
+                        },
                     ],
                 });
             } else {
                 group.members.push({
+                    id: groupLecturer.lecturerTermId,
                     username: groupLecturer.username,
                     fullName: groupLecturer.fullName,
+                    comment: comment?.content || null,
                 });
             }
-
-            return acc;
-        }, []);
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -559,7 +574,7 @@ exports.getMyGroupStudent = async (req, res) => {
             group: {
                 info: groupStudent,
                 members,
-                groupLecturers,
+                groupLecturers: newGroupLecturers,
             },
         });
     } catch (error) {
