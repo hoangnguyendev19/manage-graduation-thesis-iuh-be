@@ -278,7 +278,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
 
         if (type === 'ADVISOR') {
             let students = await sequelize.query(
-                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax
+                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax
                 FROM students s
                 INNER JOIN student_terms st ON s.id = st.student_id
                 INNER JOIN group_students gs ON st.group_student_id = gs.id
@@ -302,6 +302,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                         username: student.username,
                         fullName: student.fullName,
                         isAdmin: student.isAdmin,
+                        groupStudentId: student.groupStudentId,
                         groupName: student.groupName,
                         link: student.link,
                         topicName: student.topicName,
@@ -354,7 +355,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
             }
         } else {
             let students = await sequelize.query(
-                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.name as groupName, gs.link, t.name as topicName
+                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName
                 FROM students s
                 INNER JOIN student_terms st ON s.id = st.student_id
                 INNER JOIN group_students gs ON st.group_student_id = gs.id
