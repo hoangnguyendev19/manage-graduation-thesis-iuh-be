@@ -157,6 +157,10 @@ const APP_ROUTER = {
     FINAL_REPORT_BY_GROUP_STUDENT: '/group-student',
     FINAL_REPORT_BY_LECTURER: '/lecturer',
     FINAL_REPORT_COMMENT: '/:id/comment',
+
+    // COMMENTS
+    COMMENT: '/api/v1/comments',
+    COMMENT_BY_TYPE: '/type',
 };
 
 module.exports = { APP_ROUTER };

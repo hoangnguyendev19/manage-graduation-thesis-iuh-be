@@ -2,7 +2,6 @@ const {
     NotificationLecturer,
     NotificationStudent,
     Notification,
-    LecturerTerm,
     StudentTerm,
     Student,
     Lecturer,
@@ -129,12 +128,20 @@ exports.getNotificationById = async (req, res) => {
                         attributes: ['group_student_id'],
                     });
 
-                    const groupStudent = await GroupStudent.findOne({
-                        where: { id: studentTerm.group_student_id },
-                        attributes: ['id', 'name'],
-                    });
+                    const groupStudent = await sequelize.query(
+                        `SELECT gs.id, gs.name, t.name as topicName
+                        FROM group_students gs
+                        JOIN topics t ON t.id = gs.topic_id
+                        WHERE gs.id = :groupStudentId`,
+                        {
+                            type: sequelize.QueryTypes.SELECT,
+                            replacements: {
+                                groupStudentId: studentTerm.group_student_id,
+                            },
+                        },
+                    );
 
-                    return { ...groupStudent.dataValues };
+                    return { ...groupStudent[0] };
                 }),
             );
 
@@ -142,13 +149,11 @@ exports.getNotificationById = async (req, res) => {
                 const group = acc.find((group) => group.id === item.id);
 
                 if (!group) {
-                    acc.push({ id: item.id, name: item.name });
+                    acc.push({ id: item.id, name: item.name, topicName: item.topicName });
                 }
 
                 return acc;
             }, []);
-        } else if (notification[0].type === 'GROUP_LECTURER') {
-            details = [];
         }
 
         res.status(HTTP_STATUS.OK).json({

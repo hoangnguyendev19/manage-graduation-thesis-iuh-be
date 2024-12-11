@@ -23,6 +23,7 @@ const ArticleModel = require('./article.model');
 const FinalReportModel = require('./finalReport.model');
 const EventModel = require('./event.model');
 const EventGroupStudentModel = require('./eventGroupStudent.model');
+const CommentModel = require('./comment.model');
 
 // Models
 const Major = MajorModel(sequelize, DataTypes);
@@ -47,6 +48,7 @@ const Article = ArticleModel(sequelize, DataTypes);
 const FinalReport = FinalReportModel(sequelize, DataTypes);
 const Event = EventModel(sequelize, DataTypes);
 const EventGroupStudent = EventGroupStudentModel(sequelize, DataTypes);
+const Comment = CommentModel(sequelize, DataTypes);
 
 // Associations
 Major.hasMany(Student, {
@@ -369,6 +371,26 @@ FinalReport.belongsTo(GroupStudent, {
     as: 'groupStudent',
 });
 
+GroupStudent.hasMany(Comment, {
+    foreignKey: 'group_student_id',
+    as: 'comments',
+});
+
+Comment.belongsTo(GroupStudent, {
+    foreignKey: 'group_student_id',
+    as: 'groupStudent',
+});
+
+LecturerTerm.hasOne(Comment, {
+    foreignKey: 'lecturer_term_id',
+    as: 'comment',
+});
+
+Comment.belongsTo(LecturerTerm, {
+    foreignKey: 'lecturer_term_id',
+    as: 'lecturerTerm',
+});
+
 // (async () => await sequelize.sync({ alter: true }))();
 (async () => await sequelize.sync({}))();
 
@@ -395,4 +417,5 @@ module.exports = {
     FinalReport,
     Event,
     EventGroupStudent,
+    Comment,
 };

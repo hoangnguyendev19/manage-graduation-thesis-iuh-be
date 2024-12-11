@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define(
-        'Assign',
+        'Comment',
         {
             id: {
                 type: DataTypes.UUID,
@@ -10,13 +10,17 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 defaultValue: () => uuidv4(),
             },
+            content: {
+                type: DataTypes.TEXT('medium'),
+                allowNull: false,
+            },
             type: {
-                type: DataTypes.ENUM('REVIEWER', 'REPORT_POSTER', 'REPORT_COUNCIL'),
+                type: DataTypes.ENUM('ADVISOR', 'REVIEWER', 'REPORT_POSTER', 'REPORT_COUNCIL'),
                 allowNull: false,
             },
         },
         {
-            tableName: 'assigns',
+            tableName: 'comments',
             createdAt: 'created_at',
             updatedAt: 'updated_at',
         },
