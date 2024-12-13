@@ -2,6 +2,7 @@ const { Transcript, StudentTerm, LecturerTerm, Evaluation, Term } = require('../
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
+const { checkDegree } = require('../helper/handler');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
     try {
@@ -480,7 +481,7 @@ exports.exportTranscripts = async (req, res) => {
 
         for (const student of students) {
             const trans = await sequelize.query(
-                `SELECT t.score, e.id, lt.id as lecturerTermId, l.full_name as lecturerName
+                `SELECT t.score, e.id, lt.id as lecturerTermId, l.full_name as lecturerName, l.degree
                 FROM transcripts t
                 INNER JOIN evaluations e ON t.evaluation_id = e.id
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
@@ -502,41 +503,41 @@ exports.exportTranscripts = async (req, res) => {
                         ...evaluation,
                         score: eva[0].score,
                         lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: eva[0].lecturerName,
+                        lecturerName: checkDegree(eva[0].degree) + '. ' + eva[0].lecturerName,
                     });
                 } else if (eva.length === 2) {
                     evaluations.push({
                         ...evaluation,
                         score: eva[0].score,
                         lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: eva[0].lecturerName,
+                        lecturerName: checkDegree(eva[0].degree) + '. ' + eva[0].lecturerName,
                     });
 
                     evaluations.push({
                         ...evaluation,
                         score: eva[1].score,
                         lecturerTermId: eva[1].lecturerTermId,
-                        lecturerName: eva[1].lecturerName,
+                        lecturerName: checkDegree(eva[1].degree) + '. ' + eva[1].lecturerName,
                     });
                 } else if (eva.length === 3) {
                     evaluations.push({
                         ...evaluation,
                         score: eva[0].score,
                         lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: eva[0].lecturerName,
+                        lecturerName: checkDegree(eva[0].degree) + '. ' + eva[0].lecturerName,
                     });
 
                     evaluations.push({
                         ...evaluation,
                         score: eva[1].score,
                         lecturerTermId: eva[1].lecturerTermId,
-                        lecturerName: eva[1].lecturerName,
+                        lecturerName: checkDegree(eva[1].degree) + '. ' + eva[1].lecturerName,
                     });
                     evaluations.push({
                         ...evaluation,
                         score: eva[2].score,
                         lecturerTermId: eva[2].lecturerTermId,
-                        lecturerName: eva[2].lecturerName,
+                        lecturerName: checkDegree(eva[2].degree) + '. ' + eva[2].lecturerName,
                     });
                 } else {
                     evaluations.push({
@@ -558,6 +559,7 @@ exports.exportTranscripts = async (req, res) => {
                 evaluations,
             });
         }
+
         const newTrans = transcripts.reduce((acc, transcript) => {
             const { evaluations, ...rest } = transcript;
 
