@@ -479,10 +479,12 @@ exports.exportTranscripts = async (req, res) => {
         }, []);
 
         for (const student of students) {
-            let trans = await sequelize.query(
-                `SELECT e.id, t.score
+            const trans = await sequelize.query(
+                `SELECT t.score, e.id, lt.id as lecturerTermId, l.full_name as lecturerName
                 FROM transcripts t
                 INNER JOIN evaluations e ON t.evaluation_id = e.id
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
                 WHERE t.student_term_id = :studentTermId`,
                 {
                     type: sequelize.QueryTypes.SELECT,
@@ -490,26 +492,120 @@ exports.exportTranscripts = async (req, res) => {
                 },
             );
 
-            const newEvaluations = student.evaluations.map((evaluation) => {
-                const eva = trans.find((item) => item.id === evaluation.id);
+            const evaluations = [];
 
-                return {
-                    ...evaluation,
-                    score: eva?.score || 0,
-                };
+            student.evaluations.map((evaluation) => {
+                const eva = trans.filter((item) => item.id === evaluation.id);
+
+                if (eva.length === 1) {
+                    evaluations.push({
+                        ...evaluation,
+                        score: eva[0].score,
+                        lecturerTermId: eva[0].lecturerTermId,
+                        lecturerName: eva[0].lecturerName,
+                    });
+                } else if (eva.length === 2) {
+                    evaluations.push({
+                        ...evaluation,
+                        score: eva[0].score,
+                        lecturerTermId: eva[0].lecturerTermId,
+                        lecturerName: eva[0].lecturerName,
+                    });
+
+                    evaluations.push({
+                        ...evaluation,
+                        score: eva[1].score,
+                        lecturerTermId: eva[1].lecturerTermId,
+                        lecturerName: eva[1].lecturerName,
+                    });
+                } else if (eva.length === 3) {
+                    evaluations.push({
+                        ...evaluation,
+                        score: eva[0].score,
+                        lecturerTermId: eva[0].lecturerTermId,
+                        lecturerName: eva[0].lecturerName,
+                    });
+
+                    evaluations.push({
+                        ...evaluation,
+                        score: eva[1].score,
+                        lecturerTermId: eva[1].lecturerTermId,
+                        lecturerName: eva[1].lecturerName,
+                    });
+                    evaluations.push({
+                        ...evaluation,
+                        score: eva[2].score,
+                        lecturerTermId: eva[2].lecturerTermId,
+                        lecturerName: eva[2].lecturerName,
+                    });
+                } else {
+                    evaluations.push({
+                        ...evaluation,
+                        score: 0,
+                        lecturerTermId: '',
+                        lecturerName: '',
+                    });
+                }
             });
 
             transcripts.push({
-                ...student,
-                studentTermId: undefined,
-                evaluations: newEvaluations,
+                id: student.id,
+                username: student.username,
+                fullName: student.fullName,
+                groupName: student.groupName,
+                link: student.link,
+                topicName: student.topicName,
+                evaluations,
             });
         }
+        const newTrans = transcripts.reduce((acc, transcript) => {
+            const { evaluations, ...rest } = transcript;
+
+            evaluations.forEach((evaluation) => {
+                acc.push({
+                    ...rest,
+                    lecturerTermId: evaluation.lecturerTermId,
+                    lecturerName: evaluation.lecturerName,
+                    evaluations: [
+                        {
+                            id: evaluation.id,
+                            key: evaluation.key,
+                            name: evaluation.name,
+                            scoreMax: evaluation.scoreMax,
+                            score: evaluation.score,
+                        },
+                    ],
+                });
+            });
+
+            return acc;
+        }, []);
+
+        const result = [];
+        newTrans.map((transcript) => {
+            const trans = result.find(
+                (item) =>
+                    item.id === transcript.id && item.lecturerTermId === transcript.lecturerTermId,
+            );
+
+            if (!trans) {
+                result.push(transcript);
+            } else {
+                result.forEach((item) => {
+                    if (
+                        item.id === transcript.id &&
+                        item.lecturerTermId === transcript.lecturerTermId
+                    ) {
+                        item.evaluations.push(transcript.evaluations[0]);
+                    }
+                });
+            }
+        });
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Xuất bảng điểm thành công!',
-            transcripts,
+            transcripts: result,
         });
     } catch (error) {
         Error.sendError(res, error);
