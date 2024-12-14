@@ -356,7 +356,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
             }
         } else {
             let students = await sequelize.query(
-                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName
+                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName, lt.id as lecturerTermId
                 FROM students s
                 INNER JOIN student_terms st ON s.id = st.student_id
                 INNER JOIN group_students gs ON st.group_student_id = gs.id
@@ -386,10 +386,13 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                     `SELECT e.id, t.score
                     FROM transcripts t
                     INNER JOIN evaluations e ON t.evaluation_id = e.id
-                    WHERE t.student_term_id = :studentTermId`,
+                    WHERE t.student_term_id = :studentTermId AND t.lecturer_term_id = :lecturerTermId`,
                     {
                         type: sequelize.QueryTypes.SELECT,
-                        replacements: { studentTermId: student.studentTermId },
+                        replacements: {
+                            studentTermId: student.studentTermId,
+                            lecturerTermId: student.lecturerTermId,
+                        },
                     },
                 );
 
@@ -405,6 +408,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                 transcripts.push({
                     ...student,
                     studentTermId: undefined,
+                    lecturerTermId: undefined,
                     evaluations: newEvaluations,
                 });
             }
