@@ -415,6 +415,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                     ...student,
                     studentTermId: undefined,
                     lecturerTermId: undefined,
+                    isScored: trans.length !== 0,
                     evaluations: newEvaluations,
                 });
             }
