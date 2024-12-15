@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
             },
             degree: {
-                type: DataTypes.ENUM('BACHELOR', 'MASTER', 'DOCTOR'),
+                type: DataTypes.ENUM('BACHELOR', 'MASTER', 'DOCTOR', 'PROFESSOR'),
                 allowNull: true,
                 defaultValue: 'MASTER',
             },

@@ -6,6 +6,8 @@ exports.checkDegree = (degree) => {
             return 'ThS';
         case 'DOCTOR':
             return 'TS';
+        case 'PROFESSOR':
+            return 'PGS. TS';
         default:
             return 'ThS';
     }
