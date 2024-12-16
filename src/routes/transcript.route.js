@@ -14,6 +14,7 @@ const {
     getGroupStudentMemberToScoring,
     getStatisticTranscript,
     getTranscriptsByTypeAssign,
+    exportAllTranscripts,
 } = require('../controllers/transcript.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
@@ -37,6 +38,13 @@ router.get(
 );
 
 router.get(APP_ROUTER.TRANSCRIPT_BY_TYPE_ASSIGN, protectLecturer, getTranscriptsByTypeAssign);
+
+router.get(
+    APP_ROUTER.TRANSCRIPT_BY_ALL,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    exportAllTranscripts,
+);
 
 router.get(APP_ROUTER.TRANSCRIPT_STATISTIC, protectLecturer, getStatisticTranscript);
 
