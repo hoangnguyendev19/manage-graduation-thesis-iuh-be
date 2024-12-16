@@ -723,12 +723,12 @@ exports.exportAllTranscripts = async (req, res) => {
                 GVHĐ3: reports[2]
                     ? checkDegree(reports[2].degree) + '. ' + reports[2].lecturerName
                     : '',
-                'Điểm GVHD': advisor?.totalScore || 0,
-                'Điểm GVPB1': reviewers[0]?.totalScore || 0,
-                'Điểm GVPB2': reviewers[1]?.totalScore || 0,
-                'Điểm GVHĐ1': reports[0]?.totalScore || 0,
-                'Điểm GVHĐ2': reports[1]?.totalScore || 0,
-                'Điểm GVHĐ3': reports[2]?.totalScore || 0,
+                'Điểm GVHD': Number(advisor?.totalScore.toFixed(2)) || 0,
+                'Điểm GVPB1': Number(reviewers[0]?.totalScore.toFixed(2)) || 0,
+                'Điểm GVPB2': Number(reviewers[1]?.totalScore.toFixed(2)) || 0,
+                'Điểm GVHĐ1': Number(reports[0]?.totalScore.toFixed(2)) || 0,
+                'Điểm GVHĐ2': Number(reports[1]?.totalScore.toFixed(2)) || 0,
+                'Điểm GVHĐ3': Number(reports[2]?.totalScore.toFixed(2)) || 0,
             });
         }
 
