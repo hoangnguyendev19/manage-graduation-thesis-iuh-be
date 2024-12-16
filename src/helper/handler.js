@@ -1,3 +1,5 @@
+const moment = require('moment');
+
 exports.checkDegree = (degree) => {
     switch (degree) {
         case 'BACHELOR':
@@ -11,4 +13,11 @@ exports.checkDegree = (degree) => {
         default:
             return 'ThS';
     }
+};
+
+exports.validateDate = (startDate, endDate) => {
+    const dateNow = moment();
+    const start = moment(startDate);
+    const end = moment(endDate);
+    return dateNow.isBetween(start, end);
 };

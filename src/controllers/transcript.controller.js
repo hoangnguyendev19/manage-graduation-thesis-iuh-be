@@ -1,8 +1,15 @@
-const { Transcript, StudentTerm, LecturerTerm, Evaluation, Term } = require('../models/index');
+const {
+    Transcript,
+    StudentTerm,
+    LecturerTerm,
+    Evaluation,
+    Term,
+    TermDetail,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/connectDB');
-const { checkDegree } = require('../helper/handler');
+const { checkDegree, validateDate } = require('../helper/handler');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
     try {
@@ -151,12 +158,23 @@ exports.getTranscriptSummary = async (req, res) => {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
+        const termDetail = await TermDetail.findOne({
+            where: {
+                term_id: term.id,
+                name: 'PUBLIC_RESULT',
+            },
+        });
+
+        // check if now is between start date and end date of term detail
+        if (validateDate(termDetail.startDate, termDetail.endDate) === false) {
+            return Error.sendWarning(res, 'Hiện tại chưa đến thời gian công bố kết quả!');
+        }
+
         const transcripts = await sequelize.query(
-            `SELECT st.id, e.type, sum(t.score) / sum(e.score_max) * 10 as avgScore
+            `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             INNER JOIN student_terms st ON t.student_term_id = st.id
-            INNER JOIN articles a ON t.student_term_id = a.student_term_id
             WHERE st.term_id = :termId AND st.student_id = :studentId
             GROUP BY st.id, e.type`,
             {
@@ -173,7 +191,7 @@ exports.getTranscriptSummary = async (req, res) => {
             FROM articles a
             INNER JOIN student_terms st ON a.student_term_id = st.id
             WHERE st.term_id = :termId AND st.student_id = :studentId
-            GROUP BY st.id`,
+            GROUP BY a.student_term_id`,
             {
                 replacements: {
                     termId,
@@ -221,6 +239,18 @@ exports.getTranscriptByStudentId = async (req, res) => {
         const term = await Term.findByPk(termId);
         if (!term) {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const termDetail = await TermDetail.findOne({
+            where: {
+                term_id: term.id,
+                name: 'PUBLIC_RESULT',
+            },
+        });
+
+        // check if now is between start date and end date of term detail
+        if (validateDate(termDetail.startDate, termDetail.endDate) === false) {
+            return Error.sendWarning(res, 'Hiện tại chưa đến thời gian công bố kết quả!');
         }
 
         const studentTerm = await StudentTerm.findOne({
@@ -445,13 +475,13 @@ exports.exportTranscripts = async (req, res) => {
 
         let students = await sequelize.query(
             `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax
-                FROM students s
-                INNER JOIN student_terms st ON s.id = st.student_id
-                INNER JOIN group_students gs ON st.group_student_id = gs.id
-                INNER JOIN topics t ON gs.topic_id = t.id
-                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                INNER JOIN evaluations e ON st.term_id = e.term_id
-                WHERE lt.term_id = :termId AND e.type = :type`,
+            FROM students s
+            INNER JOIN student_terms st ON s.id = st.student_id
+            INNER JOIN group_students gs ON st.group_student_id = gs.id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN evaluations e ON st.term_id = e.term_id
+            WHERE st.term_id = :termId AND e.type = :type`,
             {
                 type: sequelize.QueryTypes.SELECT,
                 replacements: { termId, type },
@@ -619,6 +649,93 @@ exports.exportTranscripts = async (req, res) => {
             success: true,
             message: 'Xuất bảng điểm thành công!',
             transcripts: result,
+        });
+    } catch (error) {
+        Error.sendError(res, error);
+    }
+};
+
+exports.exportAllTranscripts = async (req, res) => {
+    try {
+        const { termId } = req.query;
+
+        // Check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const students = await sequelize.query(
+            `SELECT st.id, s.username, s.full_name as fullName, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, l.degree
+            FROM students s
+            INNER JOIN student_terms st ON s.id = st.student_id
+            INNER JOIN group_students gs ON st.group_student_id = gs.id
+            INNER JOIN topics t ON gs.topic_id = t.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
+            WHERE st.term_id = :termId`,
+            {
+                type: sequelize.QueryTypes.SELECT,
+                replacements: { termId },
+            },
+        );
+
+        const result = [];
+
+        for (const student of students) {
+            let transcripts = await sequelize.query(
+                `SELECT lt.id, l.full_name as lecturerName, l.degree, e.type, sum(t.score) as totalScore
+                FROM transcripts t
+                INNER JOIN evaluations e ON t.evaluation_id = e.id
+                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                WHERE t.student_term_id = :studentTermId
+                GROUP BY lt.id, l.full_name, l.degree, e.type`,
+                {
+                    type: sequelize.QueryTypes.SELECT,
+                    replacements: { studentTermId: student.id },
+                },
+            );
+
+            const advisor = transcripts.find((transcript) => transcript.type === 'ADVISOR');
+            const reviewers = transcripts.filter((transcript) => transcript.type === 'REVIEWER');
+            const reports = transcripts.filter((transcript) => transcript.type === 'REPORT');
+
+            result.push({
+                id: student.id,
+                username: student.username,
+                fullName: student.fullName,
+                groupName: student.groupName,
+                topicName: student.topicName,
+                GVHD: checkDegree(student.degree) + '. ' + student.lecturerName,
+                GVPB1: reviewers[0]
+                    ? checkDegree(reviewers[0].degree) + '. ' + reviewers[0].lecturerName
+                    : '',
+                GVPB2: reviewers[1]
+                    ? checkDegree(reviewers[1].degree) + '. ' + reviewers[1].lecturerName
+                    : '',
+                GVHĐ1: reports[0]
+                    ? checkDegree(reports[0].degree) + '. ' + reports[0].lecturerName
+                    : '',
+                GVHĐ2: reports[1]
+                    ? checkDegree(reports[1].degree) + '. ' + reports[1].lecturerName
+                    : '',
+                GVHĐ3: reports[2]
+                    ? checkDegree(reports[2].degree) + '. ' + reports[2].lecturerName
+                    : '',
+                'Điểm GVHD': advisor?.totalScore || 0,
+                'Điểm GVPB1': reviewers[0]?.totalScore || 0,
+                'Điểm GVPB2': reviewers[1]?.totalScore || 0,
+                'Điểm GVHĐ1': reports[0]?.totalScore || 0,
+                'Điểm GVHĐ2': reports[1]?.totalScore || 0,
+                'Điểm GVHĐ3': reports[2]?.totalScore || 0,
+            });
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xuất bảng điểm thành công!',
+            students: result,
         });
     } catch (error) {
         Error.sendError(res, error);

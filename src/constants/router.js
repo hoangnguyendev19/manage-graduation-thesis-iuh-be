@@ -79,6 +79,7 @@ const APP_ROUTER = {
     TRANSCRIPT_BY_GROUP_STUDENT: '/group-student',
     TRANSCRIPT_STATISTIC: '/statistic',
     TRANSCRIPT_BY_TYPE_ASSIGN: '/assign',
+    TRANSCRIPT_BY_ALL: '/all',
 
     //TOPICS
     TOPIC: '/api/v1/topics',
