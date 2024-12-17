@@ -315,7 +315,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
 
         if (type === 'ADVISOR') {
             let students = await sequelize.query(
-                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax, lt.id as lecturerTermId
+                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, st.status, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax, lt.id as lecturerTermId
                 FROM students s
                 INNER JOIN student_terms st ON s.id = st.student_id
                 INNER JOIN group_students gs ON st.group_student_id = gs.id
@@ -340,6 +340,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                         username: student.username,
                         fullName: student.fullName,
                         isAdmin: student.isAdmin,
+                        status: student.status,
                         groupStudentId: student.groupStudentId,
                         groupName: student.groupName,
                         link: student.link,
@@ -399,7 +400,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
             }
         } else {
             let students = await sequelize.query(
-                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName, lt.id as lecturerTermId
+                `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.is_admin as isAdmin, st.status, gs.id as groupStudentId, gs.name as groupName, gs.link, t.name as topicName, lt.id as lecturerTermId
                 FROM students s
                 INNER JOIN student_terms st ON s.id = st.student_id
                 INNER JOIN group_students gs ON st.group_student_id = gs.id
@@ -482,7 +483,7 @@ exports.exportTranscripts = async (req, res) => {
         const transcripts = [];
 
         let students = await sequelize.query(
-            `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax
+            `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, st.status, gs.name as groupName, gs.link, t.name as topicName, e.id as evaluationId, e.key, e.name as evaluationName, e.score_max as scoreMax
             FROM students s
             INNER JOIN student_terms st ON s.id = st.student_id
             INNER JOIN group_students gs ON st.group_student_id = gs.id
@@ -506,6 +507,7 @@ exports.exportTranscripts = async (req, res) => {
                     studentTermId: student.studentTermId,
                     username: student.username,
                     fullName: student.fullName,
+                    status: student.status,
                     groupName: student.groupName,
                     link: student.link,
                     topicName: student.topicName,
@@ -604,6 +606,7 @@ exports.exportTranscripts = async (req, res) => {
                 id: student.id,
                 username: student.username,
                 fullName: student.fullName,
+                status: student.status,
                 groupName: student.groupName,
                 link: student.link,
                 topicName: student.topicName,
@@ -676,7 +679,7 @@ exports.exportAllTranscripts = async (req, res) => {
         }
 
         const students = await sequelize.query(
-            `SELECT st.id, s.username, s.full_name as fullName, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, l.degree
+            `SELECT st.id, s.username, s.full_name as fullName, st.status, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, l.degree
             FROM students s
             INNER JOIN student_terms st ON s.id = st.student_id
             INNER JOIN group_students gs ON st.group_student_id = gs.id
@@ -717,6 +720,7 @@ exports.exportAllTranscripts = async (req, res) => {
                 id: student.id,
                 username: student.username,
                 fullName: student.fullName,
+                status: student.status,
                 groupName: student.groupName,
                 topicName: student.topicName,
                 GVHD: checkDegree(student.degree) + '. ' + student.lecturerName,
