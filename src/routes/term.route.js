@@ -28,21 +28,21 @@ const router = express.Router();
 
 router.get(APP_ROUTER.TERM_NOW, getTermNow);
 
-router.get(APP_ROUTER.TERM_BY_MAJOR, getTermsByMajorId);
+router.get(APP_ROUTER.TERM_BY_MAJOR, protectLecturer, getTermsByMajorId);
 
 router.get(APP_ROUTER.TERM_BY_LECTURER, protectLecturer, getTermsByLecturerId);
 
-router.get(APP_ROUTER.TERM_CHOOSE_GROUP, getTermDetailWithChooseGroup);
+router.get(APP_ROUTER.TERM_CHOOSE_GROUP, protectLecturer, getTermDetailWithChooseGroup);
 
-router.get(APP_ROUTER.TERM_PUBLIC_TOPIC, getTermDetailWithPublicTopic);
+router.get(APP_ROUTER.TERM_PUBLIC_TOPIC, protectLecturer, getTermDetailWithPublicTopic);
 
-router.get(APP_ROUTER.TERM_CHOOSE_TOPIC, getTermDetailWithChooseTopic);
+router.get(APP_ROUTER.TERM_CHOOSE_TOPIC, protectLecturer, getTermDetailWithChooseTopic);
 
-router.get(APP_ROUTER.TERM_DISCUSSION, getTermDetailWithDiscussion);
+router.get(APP_ROUTER.TERM_DISCUSSION, protectLecturer, getTermDetailWithDiscussion);
 
-router.get(APP_ROUTER.TERM_REPORT, getTermDetailWithReport);
+router.get(APP_ROUTER.TERM_REPORT, protectLecturer, getTermDetailWithReport);
 
-router.get(APP_ROUTER.TERM_PUBLIC_RESULT, getTermDetailWithPublicResult);
+router.get(APP_ROUTER.TERM_PUBLIC_RESULT, protectLecturer, getTermDetailWithPublicResult);
 
 router.put(
     APP_ROUTER.TERM_CHOOSE_GROUP,
@@ -86,7 +86,7 @@ router.put(
     updatePublicResultTerm,
 );
 
-router.get(APP_ROUTER.ID, getTermById);
+router.get(APP_ROUTER.ID, protectLecturer, getTermById);
 
 router.put(
     APP_ROUTER.ID,
@@ -95,7 +95,7 @@ router.put(
     updateTerm,
 );
 
-router.get(APP_ROUTER.INDEX, getTerms);
+router.get(APP_ROUTER.INDEX, protectLecturer, getTerms);
 
 router.post(
     APP_ROUTER.INDEX,

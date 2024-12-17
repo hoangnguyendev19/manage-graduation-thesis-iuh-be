@@ -13,8 +13,6 @@ const { protectLecturer, checkRole } = require('../middleware/lecturer.middlewar
 
 const router = express.Router();
 
-router.get(APP_ROUTER.GROUP_STUDENT_NO_ASSIGN_BY_TYPE, getGroupStudentNoAssign);
-
 router.post(
     APP_ROUTER.INDEX,
     protectLecturer,
@@ -34,6 +32,13 @@ router.delete(
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteAssign,
+);
+
+router.get(
+    APP_ROUTER.GROUP_STUDENT_NO_ASSIGN_BY_TYPE,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    getGroupStudentNoAssign,
 );
 
 router.get(

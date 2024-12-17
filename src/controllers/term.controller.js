@@ -1,7 +1,7 @@
 const { Term, TermDetail } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
 const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
 const moment = require('moment');

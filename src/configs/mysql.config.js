@@ -1,8 +1,9 @@
 const { Sequelize } = require('sequelize');
+const logger = require('./logger.config');
 require('dotenv').config();
 
 const env = process.env.NODE_ENV;
-const config = require('./config')[env];
+const config = require('./multi.config')[env];
 
 const sequelize = new Sequelize({
     username: config.username,
@@ -32,10 +33,10 @@ const sequelize = new Sequelize({
 let connectDB = async () => {
     try {
         await sequelize.authenticate();
-        console.log('🚀 ~ connectDB ~ Connection has been successfully.');
+        logger.info('Connected to MySQL database successfully');
     } catch (error) {
-        console.error('🚀 ~ connectDB ~ Unable to connect to the database. Retrying...');
-        console.error('🚀 ~ Error details:', error.message);
+        logger.error('Unable to connect to the database. Retrying...');
+        logger.error('Error details:', error.message);
     }
 };
 

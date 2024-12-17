@@ -1,4 +1,5 @@
 const redis = require('redis');
+const logger = require('./logger.config');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -14,16 +15,16 @@ const client = redis.createClient({
 });
 
 client.on('error', (error) => {
-    console.error(error);
+    logger.error(error);
 });
 
 client.on('connect', () => {
-    console.log('🚀> Redis connected');
+    logger.info('Connected to Redis successfully');
 });
 
 client.connect((error) => {
     if (error) {
-        console.error(error);
+        logger.error(error);
     }
 });
 

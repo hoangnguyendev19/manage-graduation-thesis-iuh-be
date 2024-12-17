@@ -19,7 +19,6 @@ const suggest = require('./suggest.route');
 const article = require('./article.route');
 const finalReport = require('./finalReport.route');
 const event = require('./event.route');
-const check = require('./check.route');
 const comment = require('./comment.route');
 
 function router(app) {
@@ -42,7 +41,6 @@ function router(app) {
     app.use(APP_ROUTER.ARTICLE, article);
     app.use(APP_ROUTER.FINAL_REPORT, finalReport);
     app.use(APP_ROUTER.EVENT, event);
-    app.use(APP_ROUTER.CHECK, check);
     app.use(APP_ROUTER.COMMENT, comment);
 }
 

@@ -2,7 +2,7 @@ const { NotificationLecturer, LecturerTerm, Notification, Term } = require('../m
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { validationResult } = require('express-validator');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
 const _ = require('lodash');
 
 exports.getMyNotification = async (req, res) => {

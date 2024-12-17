@@ -8,7 +8,7 @@ const {
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
 const { checkDegree, validateDate } = require('../helper/handler');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
@@ -305,6 +305,12 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
     try {
         const { termId, type = 'ADVISOR' } = req.query;
 
+        // Check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const transcripts = [];
 
         if (type === 'ADVISOR') {
@@ -316,7 +322,8 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                 INNER JOIN topics t ON gs.topic_id = t.id
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
                 INNER JOIN evaluations e ON st.term_id = e.term_id
-                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND e.type = :type`,
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND e.type = :type
+                ORDER BY gs.name, s.full_name`,
                 {
                     type: sequelize.QueryTypes.SELECT,
                     replacements: { termId, lecturerId: req.user.id, type },
@@ -400,7 +407,8 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                 INNER JOIN assigns a ON gs.id = a.group_student_id
                 INNER JOIN group_lecturer_members glm ON a.group_lecturer_id = glm.group_lecturer_id
                 INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
-                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND a.type = :type`,
+                WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId AND a.type = :type
+                ORDER BY gs.name, s.full_name`,
                 {
                     type: sequelize.QueryTypes.SELECT,
                     replacements: { termId, lecturerId: req.user.id, type },
@@ -481,7 +489,8 @@ exports.exportTranscripts = async (req, res) => {
             INNER JOIN topics t ON gs.topic_id = t.id
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN evaluations e ON st.term_id = e.term_id
-            WHERE st.term_id = :termId AND e.type = :type`,
+            WHERE st.term_id = :termId AND e.type = :type
+            ORDER BY gs.name, s.full_name`,
             {
                 type: sequelize.QueryTypes.SELECT,
                 replacements: { termId, type },
@@ -527,7 +536,8 @@ exports.exportTranscripts = async (req, res) => {
                 INNER JOIN evaluations e ON t.evaluation_id = e.id
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE t.student_term_id = :studentTermId`,
+                WHERE t.student_term_id = :studentTermId
+                ORDER BY l.full_name`,
                 {
                     type: sequelize.QueryTypes.SELECT,
                     replacements: { studentTermId: student.studentTermId },
@@ -673,7 +683,8 @@ exports.exportAllTranscripts = async (req, res) => {
             INNER JOIN topics t ON gs.topic_id = t.id
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            WHERE st.term_id = :termId`,
+            WHERE st.term_id = :termId
+            ORDER BY gs.name, s.full_name`,
             {
                 type: sequelize.QueryTypes.SELECT,
                 replacements: { termId },
@@ -690,7 +701,8 @@ exports.exportAllTranscripts = async (req, res) => {
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
                 INNER JOIN lecturers l ON lt.lecturer_id = l.id
                 WHERE t.student_term_id = :studentTermId
-                GROUP BY lt.id, l.full_name, l.degree, e.type`,
+                GROUP BY lt.id, l.full_name, l.degree, e.type
+                ORDER BY l.full_name`,
                 {
                     type: sequelize.QueryTypes.SELECT,
                     replacements: { studentTermId: student.id },

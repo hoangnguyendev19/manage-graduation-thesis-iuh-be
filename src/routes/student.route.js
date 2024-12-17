@@ -35,7 +35,7 @@ const {
     validateForgotPassword,
     validateStudent,
 } = require('../middleware/validation.middleware');
-const upload = require('../configs/uploadConfig');
+const upload = require('../configs/upload.config');
 
 const router = express.Router();
 
@@ -49,11 +49,11 @@ router.delete(APP_ROUTER.LOGOUT, protectStudent, logout);
 
 router.get(APP_ROUTER.QUERY, protectLecturer, getStudentsOfSearch);
 
-router.get(APP_ROUTER.SEARCH, searchStudents);
+router.get(APP_ROUTER.SEARCH, protectLecturer, searchStudents);
 
 router.get(APP_ROUTER.STUDENTS_NO_HAVE_GROUP, protectLecturer, getStudentsNoHaveGroup);
 
-router.get(APP_ROUTER.COUNT, countStudentsByTermId);
+router.get(APP_ROUTER.COUNT, protectLecturer, countStudentsByTermId);
 
 router.put(APP_ROUTER.UPDATE_PASSWORD, protectStudent, validateUpdatePassword, updatePassword);
 

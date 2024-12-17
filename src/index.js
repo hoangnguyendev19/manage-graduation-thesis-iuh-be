@@ -1,8 +1,10 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
+const morgan = require('morgan');
+const logger = require('./configs/logger.config');
 const router = require('./routes/index');
-const { connectDB } = require('./configs/connectDB');
+const { connectDB } = require('./configs/mysql.config');
 
 require('dotenv').config();
 
@@ -28,6 +30,15 @@ app.use(express.urlencoded({ extended: true }));
 // Static Files Middleware
 app.use(express.static('public'));
 
+// Use Morgan with Winston
+app.use(
+    morgan('combined', {
+        stream: {
+            write: (message) => logger.info(message.trim()), // Pipe Morgan logs into Winston
+        },
+    }),
+);
+
 // Routes
 router(app);
 
@@ -36,4 +47,4 @@ connectDB();
 
 // Start the Server
 const port = process.env.PORT || 3001;
-app.listen(port, () => console.log('🚀> Server is up and running on port : ' + port));
+app.listen(port, () => logger.info('Server is up and running on port : ' + port));

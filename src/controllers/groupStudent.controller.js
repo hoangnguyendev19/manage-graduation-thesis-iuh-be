@@ -1,8 +1,16 @@
-const { GroupStudent, StudentTerm, Student, Topic, Term, Comment } = require('../models/index');
+const {
+    GroupStudent,
+    StudentTerm,
+    Student,
+    Topic,
+    Term,
+    Comment,
+    TermDetail,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
 const _ = require('lodash');
 const { validationResult } = require('express-validator');
 
@@ -232,6 +240,24 @@ exports.getGroupStudentsByTopicId = async (req, res) => {
 exports.getGroupStudentsByTermId = async (req, res) => {
     try {
         const { termId } = req.query;
+
+        // check if term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const termDetail = await TermDetail.findOne({
+            where: {
+                term_id: term.id,
+                name: 'CHOOSE_GROUP',
+            },
+        });
+
+        // check if now is between start date and end date of term detail
+        if (validateDate(termDetail.startDate, termDetail.endDate) === false) {
+            return Error.sendWarning(res, 'Hiện tại chưa đến thời gian chọn nhóm!');
+        }
 
         const groupStudents = await sequelize.query(
             `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs 
@@ -515,7 +541,7 @@ exports.getMyGroupStudent = async (req, res) => {
         });
 
         let groupLecturers = await sequelize.query(
-            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, lt.id as lecturerTermId, l.username, l.full_name as fullName
+            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, lt.id as lecturerTermId, l.full_name as fullName
             FROM group_lecturers gl
             INNER JOIN assigns a ON gl.id = a.group_lecturer_id
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
@@ -552,7 +578,6 @@ exports.getMyGroupStudent = async (req, res) => {
                     members: [
                         {
                             id: groupLecturer.lecturerTermId,
-                            username: groupLecturer.username,
                             fullName: groupLecturer.fullName,
                             comment: comment?.content || null,
                         },
@@ -561,7 +586,6 @@ exports.getMyGroupStudent = async (req, res) => {
             } else {
                 group.members.push({
                     id: groupLecturer.lecturerTermId,
-                    username: groupLecturer.username,
                     fullName: groupLecturer.fullName,
                     comment: comment?.content || null,
                 });

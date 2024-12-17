@@ -30,7 +30,7 @@ const {
     validateForgotPassword,
     validateLecturer,
 } = require('../middleware/validation.middleware');
-const upload = require('../configs/uploadConfig');
+const upload = require('../configs/upload.config');
 
 const router = express.Router();
 
@@ -48,7 +48,7 @@ router.get(APP_ROUTER.QUERY, protectLecturer, searchLecturer);
 
 router.get(APP_ROUTER.LECTURER_BY_MAJOR, getLecturersByMajorId);
 
-router.get(APP_ROUTER.COUNT, countLecturersByMajorId);
+router.get(APP_ROUTER.COUNT, protectLecturer, countLecturersByMajorId);
 
 router.post(
     APP_ROUTER.IMPORT,
