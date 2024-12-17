@@ -1,7 +1,8 @@
 const { Article, Term, GroupStudent, StudentTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
+const logger = require('../configs/logger.config');
 const fs = require('fs');
 
 exports.getArticles = async (req, res) => {
@@ -33,7 +34,7 @@ exports.getArticles = async (req, res) => {
             articles,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error.message);
         Error.sendError(res, error);
     }
 };
@@ -69,7 +70,7 @@ exports.getArticlesByLecturerId = async (req, res) => {
             articles,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error.message);
         Error.sendError(res, error);
     }
 };
@@ -101,7 +102,7 @@ exports.getArticleById = async (req, res) => {
             article: article[0],
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error.message);
         Error.sendError(res, error);
     }
 };
@@ -141,7 +142,7 @@ exports.getArticlesByStudentId = async (req, res) => {
             articles,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error.message);
         Error.sendError(res, error);
     }
 };
@@ -160,6 +161,12 @@ exports.createArticle = async (req, res) => {
 
         const fileName = req.file.filename;
         const filePath = `/temp/${fileName}`; // Relative path to `public` folder
+
+        // check if termId exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
 
         const studentTermId = await StudentTerm.findOne({
             attributes: ['id'],
@@ -182,7 +189,7 @@ exports.createArticle = async (req, res) => {
             article,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error.message);
         Error.sendError(res, error);
     }
 };
@@ -236,7 +243,7 @@ exports.updateArticle = async (req, res) => {
             article,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error.message);
         Error.sendError(res, error);
     }
 };
@@ -274,7 +281,7 @@ exports.updateStatusArticle = async (req, res) => {
             article,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error.message);
         Error.sendError(res, error);
     }
 };

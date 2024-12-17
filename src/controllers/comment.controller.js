@@ -1,7 +1,7 @@
 const { Comment, Term, LecturerTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
 
 exports.getCommentByType = async (req, res) => {
     try {

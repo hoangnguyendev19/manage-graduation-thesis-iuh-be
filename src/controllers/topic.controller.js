@@ -1,10 +1,18 @@
-const { Topic, LecturerTerm, Lecturer, Major, GroupLecturer, Term } = require('../models/index');
+const {
+    Topic,
+    LecturerTerm,
+    Lecturer,
+    Major,
+    GroupLecturer,
+    Term,
+    TermDetail,
+} = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
 const xlsx = require('xlsx');
 const _ = require('lodash');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
 const { validationResult } = require('express-validator');
 
 exports.getTopicsOfSearch = async (req, res) => {
@@ -48,7 +56,7 @@ exports.getTopicsOfSearch = async (req, res) => {
                     termId,
                     keywords: searchKey,
                     limit: validLimit,
-                    offset: offset,
+                    offset,
                 },
                 type: QueryTypes.SELECT,
             },
@@ -93,8 +101,13 @@ exports.getTopicByLecturer = async (req, res) => {
         const { termId } = req.query;
         const { lecturerId } = req.params;
 
-        let topics = null;
-        topics = await sequelize.query(
+        // check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const topics = await sequelize.query(
             `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max as quantityGroupMax, COUNT(gs.id) as quantityGroup FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -109,6 +122,7 @@ exports.getTopicByLecturer = async (req, res) => {
                 type: QueryTypes.SELECT,
             },
         );
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Get Success',
@@ -123,7 +137,31 @@ exports.getTopicByLecturer = async (req, res) => {
 exports.getTopicsApprovedOfSearch = async (req, res) => {
     try {
         const { termId, keywords, searchField, page, limit, sort } = req.query;
-        const offset = (page - 1) * limit;
+
+        // check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        const termDetail = await TermDetail.findOne({
+            where: {
+                term_id: term.id,
+                name: ['PUBLIC_TOPIC', 'CHOOSE_TOPIC'],
+            },
+        });
+
+        // check if now is between start date and end date of term detail
+        if (validateDate(termDetail.startDate, termDetail.endDate) === false) {
+            return Error.sendWarning(res, 'Hiện tại chưa đến thời gian công bố đề tài!');
+        }
+
+        // check if page and limit is valid
+        const validLimit =
+            _.toInteger(limit) > 0 && _.toInteger(limit) < 500 ? _.toInteger(limit) : 10;
+        const validPage = _.toInteger(page) > 0 && _.toInteger(page) < 100 ? _.toInteger(page) : 1;
+        const offset = (validPage - 1) * validLimit;
+
         let topics = [];
 
         let searchQuery = '';
@@ -166,8 +204,8 @@ exports.getTopicsApprovedOfSearch = async (req, res) => {
                     termId,
                     status: 'APPROVED',
                     keywords: searchKey,
-                    limit: _.toInteger(limit),
-                    offset: _.toInteger(offset),
+                    limit: validLimit,
+                    offset,
                 },
                 type: QueryTypes.SELECT,
             },

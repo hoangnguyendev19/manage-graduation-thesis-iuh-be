@@ -2,7 +2,7 @@ const { Assign, GroupLecturer, Term, GroupStudent } = require('../models/index')
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
-const { sequelize } = require('../configs/connectDB');
+const { sequelize } = require('../configs/mysql.config');
 const { checkDegree } = require('../helper/handler');
 
 const checkTypeGroup = (value) => {

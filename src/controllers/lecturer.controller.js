@@ -11,10 +11,11 @@ const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const _ = require('lodash');
 const xlsx = require('xlsx');
 const { QueryTypes } = require('sequelize');
-const { sequelize } = require('../configs/connectDB');
-const transporter = require('../configs/nodemailer');
+const { sequelize } = require('../configs/mysql.config');
+const transporter = require('../configs/nodemailer.config');
 const { validationResult } = require('express-validator');
 const moment = require('moment');
+const logger = require('../configs/logger.config');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -53,6 +54,8 @@ exports.login = async (req, res) => {
                 },
             ],
         });
+
+        logger.info(`Lecturer ${user.username} - ${user.fullName} logged in with IP: ${req.ip}`);
 
         const roles = await Role.findAll({
             where: { lecturer_id: user.id },
@@ -101,8 +104,10 @@ exports.refreshToken = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
-        const lecturer = req.user;
-        removeRefreshToken(lecturer.id);
+        logger.info(
+            `Lecturer ${req.user.username} - ${req.user.fullName} logged out with IP: ${req.ip}`,
+        );
+        removeRefreshToken(req.user.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Đăng xuất thành công!',

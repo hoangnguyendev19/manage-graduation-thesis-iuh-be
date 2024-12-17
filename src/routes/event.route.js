@@ -14,7 +14,7 @@ const {
 const { protectLecturer } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
 
-const upload = require('../configs/uploadTempConfig');
+const upload = require('../configs/uploadTemp.config');
 
 const router = express.Router();
 

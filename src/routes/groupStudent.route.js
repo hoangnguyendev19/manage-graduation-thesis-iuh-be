@@ -38,21 +38,21 @@ const router = express.Router();
 
 router.get(APP_ROUTER.ME, protectStudent, getMyGroupStudent);
 
-router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, getGroupStudentsByLecturerId);
+router.get(APP_ROUTER.GROUP_STUDENT_BY_LECTURER, protectLecturer, getGroupStudentsByLecturerId);
 
-router.get(APP_ROUTER.GROUP_STUDENT_BY_TOPIC, getGroupStudentsByTopicId);
+router.get(APP_ROUTER.GROUP_STUDENT_BY_TOPIC, protectLecturer, getGroupStudentsByTopicId);
 
 router.get(APP_ROUTER.GROUP_STUDENT_BY_ASSIGN, protectLecturer, getGroupStudentsByTypeAssign);
 
 router.get(APP_ROUTER.GROUP_STUDENT_BY_TERM, protectStudent, getGroupStudentsByTermId);
 
-router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, getGroupStudentMembers);
+router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, protectLecturer, getGroupStudentMembers);
 
-router.get(APP_ROUTER.COUNT, countGroupStudents);
+router.get(APP_ROUTER.COUNT, protectLecturer, countGroupStudents);
 
 router.get(APP_ROUTER.COUNT_BY_LECTURER, protectLecturer, countGroupStudentsByLecturerId);
 
-router.get(APP_ROUTER.SEARCH, searchGroupStudentByName);
+router.get(APP_ROUTER.SEARCH, protectLecturer, searchGroupStudentByName);
 
 router.post(
     APP_ROUTER.IMPORT,
@@ -110,16 +110,12 @@ router.put(
     removeTopic,
 );
 
-router.get(APP_ROUTER.ID, getGroupStudentById);
-
 router.delete(
     APP_ROUTER.ID,
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     deleteGroupStudent,
 );
-
-router.get(APP_ROUTER.INDEX, getGroupStudents);
 
 router.put(APP_ROUTER.GROUP_STUDENT_SUBMIT, protectStudent, submitLink);
 
@@ -130,5 +126,9 @@ router.post(
     validateGroupStudent,
     createGroupStudent,
 );
+
+router.get(APP_ROUTER.ID, protectLecturer, getGroupStudentById);
+
+router.get(APP_ROUTER.INDEX, protectLecturer, getGroupStudents);
 
 module.exports = router;

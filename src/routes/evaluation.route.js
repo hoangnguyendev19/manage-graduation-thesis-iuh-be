@@ -4,7 +4,6 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     getEvaluations,
-    getEvaluationById,
     createEvaluation,
     importEvaluations,
     importEvaluationsFromTermIdToSelectedTermId,
@@ -14,7 +13,7 @@ const {
 } = require('../controllers/evaluation.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { validateEvaluation } = require('../middleware/validation.middleware');
-const upload = require('../configs/uploadConfig');
+const upload = require('../configs/upload.config');
 
 const router = express.Router();
 
@@ -56,9 +55,7 @@ router.delete(
     deleteEvaluation,
 );
 
-router.get(APP_ROUTER.EVALUATION_SCORES, getEvaluationsForScoring);
-
-router.get(APP_ROUTER.ID, getEvaluationById);
+router.get(APP_ROUTER.EVALUATION_SCORES, protectLecturer, getEvaluationsForScoring);
 
 router.get(APP_ROUTER.INDEX, getEvaluations);
 

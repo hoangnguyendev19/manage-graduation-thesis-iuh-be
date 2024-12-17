@@ -18,10 +18,11 @@ const { comparePassword, hashPassword } = require('../helper/bcrypt');
 const xlsx = require('xlsx');
 const _ = require('lodash');
 const { QueryTypes } = require('sequelize');
-const { sequelize } = require('../configs/connectDB');
-const transporter = require('../configs/nodemailer');
+const { sequelize } = require('../configs/mysql.config');
+const transporter = require('../configs/nodemailer.config');
 const { validationResult } = require('express-validator');
 const moment = require('moment');
+const logger = require('../configs/logger.config');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -40,6 +41,7 @@ exports.login = async (req, res) => {
         if (!student) {
             return Error.sendNotFound(res, 'Tên đăng nhập không chính xác!');
         }
+
         const flag = await comparePassword(password, student.password);
         if (!flag) {
             return Error.sendNotFound(res, 'Mật khẩu không chính xác!');
@@ -62,6 +64,8 @@ exports.login = async (req, res) => {
                 },
             ],
         });
+
+        logger.info(`Student ${user.username} - ${user.fullName} logged in with IP: ${req.ip}`);
 
         const accessToken = generateAccessToken(student.id);
         const refreshToken = generateRefreshToken(student.id);
@@ -104,6 +108,9 @@ exports.refreshToken = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
+        logger.info(
+            `Student ${req.user.username} - ${req.user.fullName} logged out with IP: ${req.ip}`,
+        );
         removeRefreshToken(req.user.id);
         res.status(HTTP_STATUS.OK).json({
             success: true,
