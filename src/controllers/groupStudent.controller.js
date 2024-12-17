@@ -13,6 +13,7 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/mysql.config');
 const _ = require('lodash');
 const { validationResult } = require('express-validator');
+const { validateDate } = require('../helper/handler');
 
 exports.getGroupStudents = async (req, res) => {
     try {
