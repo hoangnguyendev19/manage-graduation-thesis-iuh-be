@@ -14,6 +14,7 @@ const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/mysql.config');
 const { validationResult } = require('express-validator');
+const { validateDate } = require('../helper/handler');
 
 exports.getTopicsOfSearch = async (req, res) => {
     try {
