@@ -11,6 +11,7 @@ const { sequelize } = require('../configs/mysql.config');
 const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
 const { validationResult } = require('express-validator');
+const { checkDegree } = require('../helper/handler');
 
 exports.getLecturerNoGroupByType = async (req, res) => {
     try {
@@ -59,7 +60,7 @@ exports.getGroupLecturers = async (req, res) => {
         }
 
         let groupLecturers = await sequelize.query(
-            `SELECT gl.id, gl.name, gl.start_date as startDate, gl.end_date as endDate, gl.location, l.username, l.full_name as fullName
+            `SELECT gl.id, gl.name, gl.start_date as startDate, gl.end_date as endDate, gl.location, l.id as lecturerId, l.full_name as fullName, l.degree, glm.position
             FROM group_lecturers gl
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
             INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
@@ -94,15 +95,17 @@ exports.getGroupLecturers = async (req, res) => {
                     location: groupLecturer.location,
                     members: [
                         {
-                            username: groupLecturer.username,
-                            fullName: groupLecturer.fullName,
+                            id: groupLecturer.lecturerId,
+                            fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
+                            position: groupLecturer.position,
                         },
                     ],
                 });
             } else {
                 group.members.push({
-                    username: groupLecturer.username,
-                    fullName: groupLecturer.fullName,
+                    id: groupLecturer.lecturerId,
+                    fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
+                    position: groupLecturer.position,
                 });
             }
             return acc;
@@ -165,7 +168,7 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
         }
 
         let groupLecturers = await sequelize.query(
-            `SELECT gl.id, gl.name, gl.type, gl.start_date AS startDate, gl.end_date AS endDate, gl.location, l.id AS lecturerId, l.username, l.full_name AS fullName
+            `SELECT gl.id, gl.name, gl.type, gl.start_date AS startDate, gl.end_date AS endDate, gl.location, l.id AS lecturerId, l.full_name AS fullName, l.degree, glm.position
             FROM group_lecturers gl
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
             INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
@@ -195,16 +198,16 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
                     members: [
                         {
                             id: curr.lecturerId,
-                            username: curr.username,
-                            fullName: curr.fullName,
+                            fullName: checkDegree(curr.degree, curr.fullName),
+                            position: curr.position,
                         },
                     ],
                 });
             } else {
                 group.members.push({
                     id: curr.lecturerId,
-                    username: curr.username,
-                    fullName: curr.fullName,
+                    fullName: checkDegree(curr.degree, curr.fullName),
+                    position: curr.position,
                 });
             }
 
@@ -585,7 +588,6 @@ exports.createGroupLecturer = async (req, res) => {
         }
 
         if (type === 'report_council') {
-            // Fetch existing lecturer IDs for this term and group type
             const existingLecturerIds = await sequelize.query(
                 `SELECT lt.lecturer_id as id 
                 FROM group_lecturers gl
@@ -601,7 +603,6 @@ exports.createGroupLecturer = async (req, res) => {
                 },
             );
 
-            // Check if the provided lecturers are already in the different group with the same type
             const isExist = lecturers.some((lec) =>
                 existingLecturerIds.map((e) => e.id).includes(lec),
             );
@@ -613,7 +614,6 @@ exports.createGroupLecturer = async (req, res) => {
                 );
             }
         } else {
-            // Check if the provided lecturers are already in the same group with the same type
             const groupLecturerIds = await GroupLecturer.findAll({
                 where: { term_id: termId, type: type.toUpperCase() },
                 attributes: ['id'],
@@ -644,13 +644,11 @@ exports.createGroupLecturer = async (req, res) => {
             }
         }
 
-        // Generate group name
         const countGr = await GroupLecturer.count({
             where: { term_id: termId, type: type.toUpperCase() },
         });
         const groupName = `${(countGr + 1).toString().padStart(2, '0')}`;
 
-        // Create the new group
         const groupLecturer = await GroupLecturer.create({
             name: groupName,
             term_id: termId,
@@ -658,7 +656,6 @@ exports.createGroupLecturer = async (req, res) => {
             keywords,
         });
 
-        // Fetch lecturer terms for all provided lecturers in one query
         const lecturerTerms = await LecturerTerm.findAll({
             where: {
                 lecturer_id: lecturers,
@@ -670,11 +667,20 @@ exports.createGroupLecturer = async (req, res) => {
             return Error.sendNotFound(res, 'Không tìm thấy giảng viên hợp lệ trong học kỳ này.');
         }
 
-        // Create group members
-        const groupLecturerMembers = lecturerTerms.map((lecturerTerm) => ({
-            group_lecturer_id: groupLecturer.id,
-            lecturer_term_id: lecturerTerm.id,
-        }));
+        let groupLecturerMembers = [];
+        if (type === 'report_council') {
+            groupLecturerMembers = lecturerTerms.map((lecturerTerm, index) => ({
+                group_lecturer_id: groupLecturer.id,
+                lecturer_term_id: lecturerTerm.id,
+                position: index === 0 ? 'PRESIDENT' : index === 1 ? 'VICE_PRESIDENT' : 'SECRETARY',
+            }));
+        } else {
+            groupLecturerMembers = lecturerTerms.map((lecturerTerm, index) => ({
+                group_lecturer_id: groupLecturer.id,
+                lecturer_term_id: lecturerTerm.id,
+                position: index === 0 ? 'MEMBER_ONE' : 'MEMBER_TWO',
+            }));
+        }
 
         await GroupLecturerMember.bulkCreate(groupLecturerMembers);
 
@@ -746,18 +752,21 @@ exports.getMemberFromGroupLecturer = async (req, res) => {
             return Error.sendNotFound(res, 'Không có nhóm giảng viên này');
         }
 
-        const query = `SELECT l.id, l.username, l.full_name as fullName, l.email, l.gender, l.degree, l.is_active, l.major_id 
-        FROM lecturers l JOIN lecturer_terms lt ON l.id = lt.lecturer_id JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id JOIN group_lecturers gl 
-        ON glm.group_lecturer_id = gl.id 
-        WHERE gl.id = :id and l.id = :lecturer;
-        `;
-
-        const groupLecturerMembers = await sequelize.query(query, {
-            type: QueryTypes.SELECT,
-            replacements: {
-                id,
+        const groupLecturerMembers = await sequelize.query(
+            `SELECT l.id, l.username, l.full_name as fullName, l.email, l.gender, l.degree, l.is_active, l.major_id, glm.position
+        FROM lecturers l 
+        INNER JOIN lecturer_terms lt ON l.id = lt.lecturer_id
+        INNER JOIN group_lecturer_members glm ON lt.id = glm.lecturer_term_id 
+        INNER JOIN group_lecturers gl ON glm.group_lecturer_id = gl.id 
+        WHERE gl.id = :id and l.id = :lecturerId`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: {
+                    id,
+                    lecturerId: req.user.id,
+                },
             },
-        });
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -833,8 +842,8 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
 
 exports.addMemberToGroupLecturer = async (req, res) => {
     try {
-        const { id } = req.params; // GroupLecturer ID
-        const { lecturerId } = req.body; // Lecturer ID to add
+        const { id } = req.params;
+        const { lecturerId } = req.body;
 
         // Check if the group exists
         const oldGr = await GroupLecturer.findByPk(id);

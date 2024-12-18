@@ -143,8 +143,7 @@ exports.exportLecturerAssigns = async (req, res) => {
 
         for (let i = 0; i < lecturers.length; i++) {
             lecturers[i]['STT'] = i + 1;
-            lecturers[i]['Họ tên'] =
-                checkDegree(lecturers[i].degree) + '. ' + lecturers[i].fullName;
+            lecturers[i]['Họ tên'] = checkDegree(lecturers[i].degree, lecturers[i].fullName);
             lecturers[i]['Ghi chú'] = '';
 
             delete lecturers[i].id;

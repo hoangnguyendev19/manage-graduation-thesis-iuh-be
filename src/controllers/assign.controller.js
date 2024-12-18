@@ -94,8 +94,10 @@ exports.exportAssigns = async (req, res) => {
                 },
             );
 
-            assigns[i]['GVHD'] =
-                checkDegree(lecturerSupport[0].degree) + '. ' + lecturerSupport[0].fullName;
+            assigns[i]['GVHD'] = checkDegree(
+                lecturerSupport[0].degree,
+                lecturerSupport[0].fullName,
+            );
 
             delete assigns[i].id;
 
