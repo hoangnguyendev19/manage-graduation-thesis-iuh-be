@@ -13,7 +13,7 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/mysql.config');
 const _ = require('lodash');
 const { validationResult } = require('express-validator');
-const { validateDate } = require('../helper/handler');
+const { validateDate, checkDegree } = require('../helper/handler');
 
 exports.getGroupStudents = async (req, res) => {
     try {
@@ -26,7 +26,7 @@ exports.getGroupStudents = async (req, res) => {
         }
 
         let groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.link, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, s.username, s.full_name as fullName, st.status
+            `SELECT gs.id, gs.name, gs.link, gs.topic_id as topicId, tc.name as topicName, l.full_name as lecturerName, l.degree, s.username, s.full_name as fullName, st.status
             FROM group_students gs 
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             LEFT JOIN students s ON st.student_id = s.id
@@ -52,8 +52,7 @@ exports.getGroupStudents = async (req, res) => {
                     link: groupStudent.link,
                     topicId: groupStudent.topicId,
                     topicName: groupStudent.topicName,
-                    lecturerName: groupStudent.lecturerName,
-
+                    lecturerName: checkDegree(groupStudent.degree, groupStudent.lecturerName),
                     members: [
                         {
                             username: groupStudent.username,
@@ -290,7 +289,8 @@ exports.getGroupStudentById = async (req, res) => {
         const { id } = req.params;
 
         const groupStudent = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.created_at as createdAt, tc.name as topicName, tc.description as topicDescription, tc.target as topicTarget, tc.standard_output as topicStandardOutput, tc.require_input as topicRequireInput, tc.expected_result as topicExpectedResult, l.full_name as lecturerName FROM group_students gs
+            `SELECT gs.id, gs.name, gs.created_at as createdAt, tc.name as topicName, tc.description as topicDescription, tc.target as topicTarget, tc.standard_output as topicStandardOutput, tc.require_input as topicRequireInput, tc.expected_result as topicExpectedResult, l.full_name as lecturerName, l.degree
+            FROM group_students gs
             LEFT JOIN student_terms st ON gs.id = st.group_student_id
             LEFT JOIN topics tc ON gs.topic_id = tc.id
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
@@ -358,7 +358,7 @@ exports.getGroupStudentById = async (req, res) => {
         );
 
         let groupLecturers = await sequelize.query(
-            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, l.username, l.full_name as fullName
+            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, l.id as lecturerId, l.full_name as fullName, l.degree, glm.position
             FROM group_lecturers gl
             INNER JOIN assigns a ON gl.id = a.group_lecturer_id
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
@@ -383,13 +383,18 @@ exports.getGroupStudentById = async (req, res) => {
                     endDate: groupLecturer.endDate,
                     location: groupLecturer.location,
                     members: [
-                        { username: groupLecturer.username, fullName: groupLecturer.fullName },
+                        {
+                            id: groupLecturer.lecturerId,
+                            fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
+                            position: groupLecturer.position,
+                        },
                     ],
                 });
             } else {
                 group.members.push({
-                    username: groupLecturer.username,
-                    fullName: groupLecturer.fullName,
+                    id: groupLecturer.lecturerId,
+                    fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
+                    position: groupLecturer.position,
                 });
             }
 
@@ -400,7 +405,10 @@ exports.getGroupStudentById = async (req, res) => {
             success: true,
             message: 'Lấy thông tin nhóm sinh viên thành công!',
             groupStudent: {
-                info: groupStudent[0],
+                info: {
+                    ...groupStudent[0],
+                    lecturerName: checkDegree(groupStudent[0].degree, groupStudent[0].lecturerName),
+                },
                 members: membersWithTranscripts,
                 groupLecturers,
             },
@@ -542,7 +550,7 @@ exports.getMyGroupStudent = async (req, res) => {
         });
 
         let groupLecturers = await sequelize.query(
-            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, lt.id as lecturerTermId, l.full_name as fullName
+            `SELECT gl.id, gl.name, gl.type, gl.start_date as startDate, gl.end_date as endDate, gl.location, lt.id as lecturerTermId, l.full_name as fullName, l.degree
             FROM group_lecturers gl
             INNER JOIN assigns a ON gl.id = a.group_lecturer_id
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
@@ -579,7 +587,7 @@ exports.getMyGroupStudent = async (req, res) => {
                     members: [
                         {
                             id: groupLecturer.lecturerTermId,
-                            fullName: groupLecturer.fullName,
+                            fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
                             comment: comment?.content || null,
                         },
                     ],
@@ -587,7 +595,7 @@ exports.getMyGroupStudent = async (req, res) => {
             } else {
                 group.members.push({
                     id: groupLecturer.lecturerTermId,
-                    fullName: groupLecturer.fullName,
+                    fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
                     comment: comment?.content || null,
                 });
             }

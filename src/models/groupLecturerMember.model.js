@@ -10,6 +10,16 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: false,
                 defaultValue: () => uuidv4(),
             },
+            position: {
+                type: DataTypes.ENUM(
+                    'PRESIDENT',
+                    'VICE_PRESIDENT',
+                    'SECRETARY',
+                    'MEMBER_ONE',
+                    'MEMBER_TWO',
+                ),
+                allowNull: false,
+            },
         },
         {
             tableName: 'group_lecturer_members',

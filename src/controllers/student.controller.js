@@ -23,6 +23,7 @@ const transporter = require('../configs/nodemailer.config');
 const { validationResult } = require('express-validator');
 const moment = require('moment');
 const logger = require('../configs/logger.config');
+const { checkDegree } = require('../helper/handler');
 
 // ----------------- Auth -----------------
 exports.login = async (req, res) => {
@@ -150,7 +151,7 @@ exports.getStudentsOfSearch = async (req, res) => {
         const orderBy = sort ? `ORDER BY s.${searchField} ${sort}` : 'ORDER BY s.full_name ASC';
 
         let students = await sequelize.query(
-            `SELECT s.id, s.username, s.full_name as fullName, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, s.is_active as isActive
+            `SELECT s.id, s.username, s.full_name as fullName, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, l.degree, s.is_active as isActive
             FROM students s
             LEFT JOIN student_terms st ON s.id = st.student_id
             LEFT JOIN group_students gs ON st.group_student_id = gs.id
@@ -193,6 +194,7 @@ exports.getStudentsOfSearch = async (req, res) => {
         students = students.map((stu) => {
             return {
                 ...stu,
+                lecturerName: checkDegree(stu.degree, stu.lecturerName),
                 isActive: Boolean(stu.isActive),
             };
         });

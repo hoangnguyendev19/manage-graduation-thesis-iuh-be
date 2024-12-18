@@ -14,7 +14,7 @@ const xlsx = require('xlsx');
 const _ = require('lodash');
 const { sequelize } = require('../configs/mysql.config');
 const { validationResult } = require('express-validator');
-const { validateDate } = require('../helper/handler');
+const { validateDate, checkDegree } = require('../helper/handler');
 
 exports.getTopicsOfSearch = async (req, res) => {
     try {
@@ -43,7 +43,7 @@ exports.getTopicsOfSearch = async (req, res) => {
         }
 
         let topics = await sequelize.query(
-            `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max AS quantityGroupMax, l.full_name AS fullName, COUNT(gs.id) AS quantityGroup
+            `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max AS quantityGroupMax, l.full_name AS fullName, l.degree, COUNT(gs.id) AS quantityGroup
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -62,6 +62,13 @@ exports.getTopicsOfSearch = async (req, res) => {
                 type: QueryTypes.SELECT,
             },
         );
+
+        topics = topics.map((topic) => {
+            return {
+                ...topic,
+                fullName: checkDegree(topic.degree, topic.fullName),
+            };
+        });
 
         const countResult = await sequelize.query(
             `SELECT COUNT(DISTINCT t.id) AS total
@@ -191,7 +198,7 @@ exports.getTopicsApprovedOfSearch = async (req, res) => {
         }
 
         topics = await sequelize.query(
-            `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
+            `SELECT t.id, t.key, t.name, t.status, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, l.degree, COUNT(gs.id) as quantityGroup
             FROM topics t
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
@@ -211,6 +218,13 @@ exports.getTopicsApprovedOfSearch = async (req, res) => {
                 type: QueryTypes.SELECT,
             },
         );
+
+        topics = topics.map((topic) => {
+            return {
+                ...topic,
+                fullName: checkDegree(topic.degree, topic.fullName),
+            };
+        });
 
         const countResult = await sequelize.query(
             `SELECT COUNT(t.id) as total

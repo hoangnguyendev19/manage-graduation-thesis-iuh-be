@@ -556,41 +556,41 @@ exports.exportTranscripts = async (req, res) => {
                         ...evaluation,
                         score: eva[0].score,
                         lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: checkDegree(eva[0].degree) + '. ' + eva[0].lecturerName,
+                        lecturerName: checkDegree(eva[0].degree, eva[0].lecturerName),
                     });
                 } else if (eva.length === 2) {
                     evaluations.push({
                         ...evaluation,
                         score: eva[0].score,
                         lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: checkDegree(eva[0].degree) + '. ' + eva[0].lecturerName,
+                        lecturerName: checkDegree(eva[0].degree, eva[0].lecturerName),
                     });
 
                     evaluations.push({
                         ...evaluation,
                         score: eva[1].score,
                         lecturerTermId: eva[1].lecturerTermId,
-                        lecturerName: checkDegree(eva[1].degree) + '. ' + eva[1].lecturerName,
+                        lecturerName: checkDegree(eva[1].degree, eva[1].lecturerName),
                     });
                 } else if (eva.length === 3) {
                     evaluations.push({
                         ...evaluation,
                         score: eva[0].score,
                         lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: checkDegree(eva[0].degree) + '. ' + eva[0].lecturerName,
+                        lecturerName: checkDegree(eva[0].degree, eva[0].lecturerName),
                     });
 
                     evaluations.push({
                         ...evaluation,
                         score: eva[1].score,
                         lecturerTermId: eva[1].lecturerTermId,
-                        lecturerName: checkDegree(eva[1].degree) + '. ' + eva[1].lecturerName,
+                        lecturerName: checkDegree(eva[1].degree, eva[1].lecturerName),
                     });
                     evaluations.push({
                         ...evaluation,
                         score: eva[2].score,
                         lecturerTermId: eva[2].lecturerTermId,
-                        lecturerName: checkDegree(eva[2].degree) + '. ' + eva[2].lecturerName,
+                        lecturerName: checkDegree(eva[2].degree, eva[2].lecturerName),
                     });
                 } else {
                     evaluations.push({
@@ -723,22 +723,16 @@ exports.exportAllTranscripts = async (req, res) => {
                 status: student.status,
                 groupName: student.groupName,
                 topicName: student.topicName,
-                GVHD: checkDegree(student.degree) + '. ' + student.lecturerName,
+                GVHD: checkDegree(student.degree, student.lecturerName),
                 GVPB1: reviewers[0]
-                    ? checkDegree(reviewers[0].degree) + '. ' + reviewers[0].lecturerName
+                    ? checkDegree(reviewers[0].degree, reviewers[0].lecturerName)
                     : '',
                 GVPB2: reviewers[1]
-                    ? checkDegree(reviewers[1].degree) + '. ' + reviewers[1].lecturerName
+                    ? checkDegree(reviewers[1].degree, reviewers[1].lecturerName)
                     : '',
-                GVHĐ1: reports[0]
-                    ? checkDegree(reports[0].degree) + '. ' + reports[0].lecturerName
-                    : '',
-                GVHĐ2: reports[1]
-                    ? checkDegree(reports[1].degree) + '. ' + reports[1].lecturerName
-                    : '',
-                GVHĐ3: reports[2]
-                    ? checkDegree(reports[2].degree) + '. ' + reports[2].lecturerName
-                    : '',
+                GVHĐ1: reports[0] ? checkDegree(reports[0].degree, reports[0].lecturerName) : '',
+                GVHĐ2: reports[1] ? checkDegree(reports[1].degree, reports[1].lecturerName) : '',
+                GVHĐ3: reports[2] ? checkDegree(reports[2].degree, reports[2].lecturerName) : '',
                 'Điểm GVHD': Number(advisor?.totalScore.toFixed(2)) || 0,
                 'Điểm GVPB1': Number(reviewers[0]?.totalScore.toFixed(2)) || 0,
                 'Điểm GVPB2': Number(reviewers[1]?.totalScore.toFixed(2)) || 0,
