@@ -287,8 +287,7 @@ exports.getGroupLecturersByTypeEvaluation = async (req, res) => {
                         {
                             id: groupLecturer.lecturerId,
                             username: groupLecturer.username,
-                            fullName: groupLecturer.fullName,
-                            degree: groupLecturer.degree,
+                            fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
                         },
                     ],
                 });
@@ -296,8 +295,7 @@ exports.getGroupLecturersByTypeEvaluation = async (req, res) => {
                 group.members.push({
                     id: groupLecturer.lecturerId,
                     username: groupLecturer.username,
-                    fullName: groupLecturer.fullName,
-                    degree: groupLecturer.degree,
+                    fullName: checkDegree(groupLecturer.degree, groupLecturer.fullName),
                 });
             }
 
@@ -415,7 +413,7 @@ exports.getGroupLecturerById = async (req, res) => {
             return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
         }
 
-        const members = await sequelize.query(
+        let members = await sequelize.query(
             `SELECT l.id, l.username, l.full_name as fullName, l.degree, m.name as majorName
             FROM group_lecturers gl
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
@@ -431,8 +429,15 @@ exports.getGroupLecturerById = async (req, res) => {
             },
         );
 
+        members = members.map((member) => {
+            return {
+                ...member,
+                fullName: checkDegree(member.degree, member.fullName),
+            };
+        });
+
         let groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, gs.link, t.name as topicName, lt.id as lecturerTermId, l.id as lecturerId, l.full_name as lecturerName, s.username, s.full_name as fullName
+            `SELECT gs.id, gs.name, gs.link, t.name as topicName, lt.id as lecturerTermId, l.id as lecturerId, l.full_name as lecturerName, l.degree, s.username, s.full_name as fullName
             FROM group_students gs
             INNER JOIN assigns a ON gs.id = a.group_student_id
             INNER JOIN topics t ON gs.topic_id = t.id
@@ -460,7 +465,7 @@ exports.getGroupLecturerById = async (req, res) => {
                     topicName: groupStudent.topicName,
                     lecturerTermId: groupStudent.lecturerTermId,
                     lecturerId: groupStudent.lecturerId,
-                    lecturerName: groupStudent.lecturerName,
+                    lecturerName: checkDegree(groupStudent.degree, groupStudent.lecturerName),
                     members: [
                         {
                             username: groupStudent.username,
