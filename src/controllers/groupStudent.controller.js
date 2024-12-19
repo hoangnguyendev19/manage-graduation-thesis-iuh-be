@@ -767,7 +767,7 @@ exports.exportGroupStudents = async (req, res) => {
 
         // column: Mã nhóm, Mã SV, Họ tên SV, GVHD, Mã đề tài, Tên đề tài
         let groupStudents = await sequelize.query(
-            `SELECT gs.name as 'Mã nhóm', s.username as 'Mã SV', s.full_name as 'Họ tên SV', l.full_name as 'GVHD', t.key as 'Mã đề tài', t.name as 'Tên đề tài'
+            `SELECT gs.name as groupName, s.username, s.full_name as fullName, l.full_name as lecturerName, l.degree, t.key, t.name as topicName
             FROM group_students gs
             INNER JOIN student_terms st ON gs.id = st.group_student_id
             INNER JOIN students s ON st.student_id = s.id
@@ -784,6 +784,15 @@ exports.exportGroupStudents = async (req, res) => {
 
         for (let i = 0; i < groupStudents.length; i++) {
             groupStudents[i]['STT'] = i + 1;
+            groupStudents[i]['Mã nhóm'] = groupStudents[i].groupName;
+            groupStudents[i]['Mã SV'] = groupStudents[i].username;
+            groupStudents[i]['Họ tên SV'] = groupStudents[i].fullName;
+            groupStudents[i]['GVHD'] = checkDegree(
+                groupStudents[i].degree,
+                groupStudents[i].lecturerName,
+            );
+            groupStudents[i]['Mã đề tài'] = groupStudents[i].key;
+            groupStudents[i]['Tên đề tài'] = groupStudents[i].topicName;
         }
 
         res.status(HTTP_STATUS.OK).json({
