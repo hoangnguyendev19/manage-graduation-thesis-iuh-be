@@ -4,6 +4,7 @@ const { APP_ROUTER } = require('../constants/router');
 
 const {
     getEvaluations,
+    getEvaluationById,
     createEvaluation,
     importEvaluations,
     importEvaluationsFromTermIdToSelectedTermId,
@@ -56,6 +57,8 @@ router.delete(
 );
 
 router.get(APP_ROUTER.EVALUATION_SCORES, protectLecturer, getEvaluationsForScoring);
+
+router.get(APP_ROUTER.ID, getEvaluationById);
 
 router.get(APP_ROUTER.INDEX, getEvaluations);
 
