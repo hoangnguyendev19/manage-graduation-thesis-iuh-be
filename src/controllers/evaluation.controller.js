@@ -32,6 +32,26 @@ exports.getEvaluations = async (req, res) => {
     }
 };
 
+exports.getEvaluationById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const evaluation = await Evaluation.findByPk(id);
+        if (!evaluation) {
+            return Error.sendNotFound(res, 'Đánh giá không tồn tại!');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy thông tin đánh giá thành công!',
+            evaluation,
+        });
+    } catch (error) {
+        console.log(error);
+        Error.sendError(res, error);
+    }
+};
+
 exports.getEvaluationsForScoring = async (req, res) => {
     try {
         const { termId, type } = req.query;

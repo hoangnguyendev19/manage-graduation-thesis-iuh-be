@@ -367,34 +367,38 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
             }, []);
 
             for (const student of students) {
-                let trans = await sequelize.query(
-                    `SELECT e.id, t.score
-                    FROM transcripts t
-                    INNER JOIN evaluations e ON t.evaluation_id = e.id
-                    WHERE t.student_term_id = :studentTermId AND t.lecturer_term_id = :lecturerTermId`,
-                    {
-                        type: sequelize.QueryTypes.SELECT,
-                        replacements: {
-                            studentTermId: student.studentTermId,
-                            lecturerTermId: student.lecturerTermId,
+                const newEvaluations = [];
+                let isScored = false;
+                for (const evaluation of student.evaluations) {
+                    const trans = await sequelize.query(
+                        `SELECT t.score
+                        FROM transcripts t
+                        WHERE t.student_term_id = :studentTermId AND t.lecturer_term_id = :lecturerTermId AND t.evaluation_id = :evaluationId`,
+                        {
+                            type: sequelize.QueryTypes.SELECT,
+                            replacements: {
+                                studentTermId: student.studentTermId,
+                                lecturerTermId: student.lecturerTermId,
+                                evaluationId: evaluation.id,
+                            },
                         },
-                    },
-                );
+                    );
 
-                const newEvaluations = student.evaluations.map((evaluation) => {
-                    const eva = trans.find((item) => item.id === evaluation.id);
+                    if (trans.length !== 0) {
+                        isScored = true;
+                    }
 
-                    return {
+                    newEvaluations.push({
                         ...evaluation,
-                        score: eva?.score || 0,
-                    };
-                });
+                        score: trans.length !== 0 ? trans[0].score : 0,
+                    });
+                }
 
                 transcripts.push({
                     ...student,
                     studentTermId: undefined,
                     lecturerTermId: undefined,
-                    isScored: trans.length !== 0,
+                    isScored,
                     evaluations: newEvaluations,
                 });
             }
@@ -427,34 +431,38 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
                     },
                 );
 
-                const trans = await sequelize.query(
-                    `SELECT e.id, t.score
-                    FROM transcripts t
-                    INNER JOIN evaluations e ON t.evaluation_id = e.id
-                    WHERE t.student_term_id = :studentTermId AND t.lecturer_term_id = :lecturerTermId`,
-                    {
-                        type: sequelize.QueryTypes.SELECT,
-                        replacements: {
-                            studentTermId: student.studentTermId,
-                            lecturerTermId: student.lecturerTermId,
+                let isScored = false;
+                const newEvaluations = [];
+                for (const evaluation of evaluations) {
+                    const trans = await sequelize.query(
+                        `SELECT t.score
+                        FROM transcripts t
+                        WHERE t.student_term_id = :studentTermId AND t.lecturer_term_id = :lecturerTermId AND t.evaluation_id = :evaluationId`,
+                        {
+                            type: sequelize.QueryTypes.SELECT,
+                            replacements: {
+                                studentTermId: student.studentTermId,
+                                lecturerTermId: student.lecturerTermId,
+                                evaluationId: evaluation.id,
+                            },
                         },
-                    },
-                );
+                    );
 
-                const newEvaluations = evaluations.map((evaluation) => {
-                    const eva = trans.find((item) => item.id === evaluation.id);
+                    if (trans.length !== 0) {
+                        isScored = true;
+                    }
 
-                    return {
+                    newEvaluations.push({
                         ...evaluation,
-                        score: eva?.score || 0,
-                    };
-                });
+                        score: trans.length !== 0 ? trans[0].score : 0,
+                    });
+                }
 
                 transcripts.push({
                     ...student,
                     studentTermId: undefined,
                     lecturerTermId: undefined,
-                    isScored: trans.length !== 0,
+                    isScored,
                     evaluations: newEvaluations,
                 });
             }
@@ -532,65 +540,64 @@ exports.exportTranscripts = async (req, res) => {
         }, []);
 
         for (const student of students) {
-            const trans = await sequelize.query(
-                `SELECT t.score, e.id, lt.id as lecturerTermId, l.full_name as lecturerName, l.degree
-                FROM transcripts t
-                INNER JOIN evaluations e ON t.evaluation_id = e.id
-                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                INNER JOIN lecturers l ON lt.lecturer_id = l.id
-                WHERE t.student_term_id = :studentTermId
-                ORDER BY l.full_name`,
-                {
-                    type: sequelize.QueryTypes.SELECT,
-                    replacements: { studentTermId: student.studentTermId },
-                },
-            );
-
             const evaluations = [];
+            for (const evaluation of student.evaluations) {
+                const trans = await sequelize.query(
+                    `SELECT t.id, t.score, lt.id as lecturerTermId, l.full_name as lecturerName, l.degree
+                    FROM transcripts t
+                    INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                    INNER JOIN lecturers l ON lt.lecturer_id = l.id
+                    WHERE t.student_term_id = :studentTermId AND t.evaluation_id = :evaluationId
+                    ORDER BY l.full_name`,
+                    {
+                        type: sequelize.QueryTypes.SELECT,
+                        replacements: {
+                            studentTermId: student.studentTermId,
+                            evaluationId: evaluation.id,
+                        },
+                    },
+                );
 
-            student.evaluations.map((evaluation) => {
-                const eva = trans.filter((item) => item.id === evaluation.id);
-
-                if (eva.length === 1) {
+                if (trans.length === 1) {
                     evaluations.push({
                         ...evaluation,
-                        score: eva[0].score,
-                        lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: checkDegree(eva[0].degree, eva[0].lecturerName),
+                        score: trans[0].score,
+                        lecturerTermId: trans[0].lecturerTermId,
+                        lecturerName: checkDegree(trans[0].degree, trans[0].lecturerName),
                     });
-                } else if (eva.length === 2) {
+                } else if (trans.length === 2) {
                     evaluations.push({
                         ...evaluation,
-                        score: eva[0].score,
-                        lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: checkDegree(eva[0].degree, eva[0].lecturerName),
+                        score: trans[0].score,
+                        lecturerTermId: trans[0].lecturerTermId,
+                        lecturerName: checkDegree(trans[0].degree, trans[0].lecturerName),
                     });
 
                     evaluations.push({
                         ...evaluation,
-                        score: eva[1].score,
-                        lecturerTermId: eva[1].lecturerTermId,
-                        lecturerName: checkDegree(eva[1].degree, eva[1].lecturerName),
+                        score: trans[1].score,
+                        lecturerTermId: trans[1].lecturerTermId,
+                        lecturerName: checkDegree(trans[1].degree, trans[1].lecturerName),
                     });
-                } else if (eva.length === 3) {
+                } else if (trans.length === 3) {
                     evaluations.push({
                         ...evaluation,
-                        score: eva[0].score,
-                        lecturerTermId: eva[0].lecturerTermId,
-                        lecturerName: checkDegree(eva[0].degree, eva[0].lecturerName),
+                        score: trans[0].score,
+                        lecturerTermId: trans[0].lecturerTermId,
+                        lecturerName: checkDegree(trans[0].degree, trans[0].lecturerName),
                     });
 
                     evaluations.push({
                         ...evaluation,
-                        score: eva[1].score,
-                        lecturerTermId: eva[1].lecturerTermId,
-                        lecturerName: checkDegree(eva[1].degree, eva[1].lecturerName),
+                        score: trans[1].score,
+                        lecturerTermId: trans[1].lecturerTermId,
+                        lecturerName: checkDegree(trans[1].degree, trans[1].lecturerName),
                     });
                     evaluations.push({
                         ...evaluation,
-                        score: eva[2].score,
-                        lecturerTermId: eva[2].lecturerTermId,
-                        lecturerName: checkDegree(eva[2].degree, eva[2].lecturerName),
+                        score: trans[2].score,
+                        lecturerTermId: trans[2].lecturerTermId,
+                        lecturerName: checkDegree(trans[2].degree, trans[2].lecturerName),
                     });
                 } else {
                     evaluations.push({
@@ -600,7 +607,7 @@ exports.exportTranscripts = async (req, res) => {
                         lecturerName: '',
                     });
                 }
-            });
+            }
 
             transcripts.push({
                 id: student.id,
@@ -805,60 +812,6 @@ exports.createTranscriptList = async (req, res) => {
                 evaluation_id: evaluation.id,
                 score,
             });
-
-            // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
-            const transcriptsOfStudent = await sequelize.query(
-                `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
-            FROM student_terms st
-            INNER JOIN transcripts t ON st.id = t.student_term_id
-            INNER JOIN evaluations e ON t.evaluation_id = e.id
-            WHERE st.id = :studentTermId AND e.type = :type
-            GROUP BY st.id, e.type`,
-                {
-                    replacements: {
-                        studentTermId: studentTerm.id,
-                        type: evaluation.type,
-                    },
-                    type: sequelize.QueryTypes.SELECT,
-                },
-            );
-
-            const totalScore = transcriptsOfStudent.reduce(
-                (total, transcript) => total + transcript.avgScore,
-                0,
-            );
-
-            if (totalScore >= 4) {
-                switch (evaluation.type) {
-                    case 'ADVISOR':
-                        studentTerm.status = 'PASS_ADVISOR';
-                        break;
-                    case 'REVIEWER':
-                        studentTerm.status = 'PASS_REVIEWER';
-                        break;
-                    case 'REPORT':
-                        studentTerm.status = 'PASS_REPORT';
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                switch (evaluation.type) {
-                    case 'ADVISOR':
-                        studentTerm.status = 'FAIL_ADVISOR';
-                        break;
-                    case 'REVIEWER':
-                        studentTerm.status = 'FAIL_REVIEWER';
-                        break;
-                    case 'REPORT':
-                        studentTerm.status = 'FAIL_REPORT';
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            await studentTerm.save();
         }
 
         res.status(HTTP_STATUS.CREATED).json({
@@ -933,60 +886,6 @@ exports.updateTranscriptList = async (req, res) => {
             transcript.score = score;
 
             await transcript.save();
-
-            // Update status of student term with type 'FAIL_ADVISOR','FAIL_REVIEWER','FAIL_REPORT','PASS_ADVISOR','PASS_REVIEWER','PASS_REPORT'
-            const transcriptsOfStudent = await sequelize.query(
-                `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
-            FROM student_terms st
-            INNER JOIN transcripts t ON st.id = t.student_term_id
-            INNER JOIN evaluations e ON t.evaluation_id = e.id
-            WHERE st.id = :studentTermId AND e.type = :type
-            GROUP BY st.id, e.type`,
-                {
-                    replacements: {
-                        studentTermId: studentTerm.id,
-                        type: evaluation.type,
-                    },
-                    type: sequelize.QueryTypes.SELECT,
-                },
-            );
-
-            const totalScore = transcriptsOfStudent.reduce(
-                (total, transcript) => total + transcript.avgScore,
-                0,
-            );
-
-            if (totalScore >= 4) {
-                switch (evaluation.type) {
-                    case 'ADVISOR':
-                        studentTerm.status = 'PASS_ADVISOR';
-                        break;
-                    case 'REVIEWER':
-                        studentTerm.status = 'PASS_REVIEWER';
-                        break;
-                    case 'REPORT':
-                        studentTerm.status = 'PASS_REPORT';
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                switch (evaluation.type) {
-                    case 'ADVISOR':
-                        studentTerm.status = 'FAIL_ADVISOR';
-                        break;
-                    case 'REVIEWER':
-                        studentTerm.status = 'FAIL_REVIEWER';
-                        break;
-                    case 'REPORT':
-                        studentTerm.status = 'FAIL_REPORT';
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            await studentTerm.save();
         }
 
         res.status(HTTP_STATUS.OK).json({
