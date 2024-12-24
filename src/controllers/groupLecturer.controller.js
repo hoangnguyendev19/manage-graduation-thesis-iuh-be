@@ -414,7 +414,7 @@ exports.getGroupLecturerById = async (req, res) => {
         }
 
         let members = await sequelize.query(
-            `SELECT l.id, l.username, l.full_name as fullName, l.degree, m.name as majorName
+            `SELECT l.id, l.username, l.full_name as fullName, l.degree, m.name as majorName, glm.position
             FROM group_lecturers gl
             INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
             INNER JOIN lecturer_terms lt ON glm.lecturer_term_id = lt.id
