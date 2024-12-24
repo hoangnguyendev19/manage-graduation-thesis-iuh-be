@@ -80,14 +80,6 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
                 return acc;
             }, []);
 
-            const comment = await Comment.findOne({
-                where: {
-                    group_student_id: students[0].groupStudentId,
-                    lecturer_term_id: students[0].lecturerTermId,
-                    type,
-                },
-            });
-
             for (const student of students) {
                 const newEvaluations = [];
                 for (const evaluation of student.evaluations) {
@@ -114,9 +106,7 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
                 transcripts.push({
                     ...student,
                     studentTermId: undefined,
-                    lecturerTermId: undefined,
                     evaluations: newEvaluations,
-                    comment: comment ? comment.content : '',
                 });
             }
         } else {
@@ -149,14 +139,6 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
                     replacements: { topicId: students[0].topicId },
                 },
             );
-
-            const comment = await Comment.findOne({
-                where: {
-                    group_student_id: students[0].groupStudentId,
-                    lecturer_term_id: students[0].lecturerTermId,
-                    type,
-                },
-            });
 
             for (const student of students) {
                 let evaluations = await sequelize.query(
@@ -194,24 +176,31 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
                 transcripts.push({
                     ...student,
                     studentTermId: undefined,
-                    lecturerTermId: undefined,
                     topicId: undefined,
                     lecturerSupport: checkDegree(
                         lecturerSupport[0].degree,
                         lecturerSupport[0].lecturerName,
                     ),
                     evaluations: newEvaluations,
-                    comment: comment ? comment.content : '',
                 });
             }
         }
 
-        const newTranscripts = transcripts.reduce((acc, transcript) => {
+        const newTranscripts = await transcripts.reduce(async (accPromise, transcript) => {
+            const acc = await accPromise;
             const groupStudent = acc.find(
                 (item) => item.groupStudentId === transcript.groupStudentId,
             );
 
             if (!groupStudent) {
+                const comment = await Comment.findOne({
+                    where: {
+                        group_student_id: transcript.groupStudentId,
+                        lecturer_term_id: transcript.lecturerTermId,
+                        type,
+                    },
+                });
+
                 acc.push({
                     groupStudentId: transcript.groupStudentId,
                     groupName: transcript.groupName,
@@ -219,7 +208,7 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
                     lecturerSupport: transcript.lecturerSupport,
                     evaluatorName: checkDegree(transcript.degree, transcript.lecturerName),
                     position: transcript.position,
-                    comment: transcript.comment,
+                    comment: comment ? comment.content : '',
                     students: [
                         {
                             id: transcript.id,
@@ -238,7 +227,7 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
                 });
             }
             return acc;
-        }, []);
+        }, Promise.resolve([]));
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
