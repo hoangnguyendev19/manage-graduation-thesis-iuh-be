@@ -79,7 +79,7 @@ exports.login = async (req, res) => {
             refreshToken,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -102,7 +102,7 @@ exports.refreshToken = async (req, res) => {
             refreshToken: newRefreshToken,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -118,7 +118,7 @@ exports.logout = async (req, res) => {
             message: 'Đăng xuất thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -213,7 +213,7 @@ exports.getStudentsOfSearch = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ getStudentsOfSearch ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -287,7 +287,7 @@ exports.getStudents = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -329,7 +329,7 @@ exports.searchStudents = async (req, res) => {
             students,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -359,7 +359,7 @@ exports.getStudentById = async (req, res) => {
             student,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -434,7 +434,7 @@ exports.createStudent = async (req, res) => {
             student: newStudent,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -506,7 +506,7 @@ exports.updateStudent = async (req, res) => {
             message: 'Cập nhật sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -649,7 +649,7 @@ exports.importStudents = async (req, res) => {
             message: 'Nhập danh sách sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -715,7 +715,7 @@ exports.exportStudents = async (req, res) => {
             students,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -768,7 +768,7 @@ exports.exportTestStudents = async (req, res) => {
             students,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -796,7 +796,7 @@ exports.deleteStudent = async (req, res) => {
             message: 'Xoá sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -817,7 +817,7 @@ exports.resetPassword = async (req, res) => {
             message: 'Làm mới mật khẩu sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -837,7 +837,7 @@ exports.lockAccount = async (req, res) => {
             message: 'Khóa tài khoản sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -859,7 +859,7 @@ exports.lockAccounts = async (req, res) => {
             message: 'Khóa danh sách tài khoản sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -879,7 +879,7 @@ exports.unlockAccount = async (req, res) => {
             message: 'Mở khóa tài khoản sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -932,7 +932,7 @@ exports.updateStatus = async (req, res) => {
             message: 'Cập nhật trạng thái sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -955,8 +955,8 @@ exports.getStudentsNoHaveGroup = async (req, res) => {
             students,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getStudentsNoHaveGroup= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -987,8 +987,8 @@ exports.countStudentsByTermId = async (req, res) => {
             count,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.countStudentsByTermId= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -1017,7 +1017,7 @@ exports.updatePassword = async (req, res) => {
             message: 'Cập nhật mật khẩu thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1047,7 +1047,7 @@ exports.getMe = async (req, res) => {
             user: student,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1066,7 +1066,7 @@ exports.updateMe = async (req, res) => {
             message: 'Cập nhật thông tin sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1130,7 +1130,7 @@ exports.forgotPassword = async (req, res) => {
             message: 'Bạn vui lòng kiểm tra email để nhận mật khẩu mới!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

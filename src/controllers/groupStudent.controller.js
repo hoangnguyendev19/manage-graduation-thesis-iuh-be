@@ -14,6 +14,7 @@ const { sequelize } = require('../configs/mysql.config');
 const _ = require('lodash');
 const { validationResult } = require('express-validator');
 const { validateDate, checkDegree } = require('../helper/handler');
+const logger = require('../configs/logger.config');
 
 exports.getGroupStudents = async (req, res) => {
     try {
@@ -78,7 +79,7 @@ exports.getGroupStudents = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log('🚀 ~ getGroupStudents ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -123,7 +124,7 @@ exports.getGroupStudentsByTypeAssign = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log('🚀 ~ getGroupStudentsByTypeAssign ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -185,7 +186,7 @@ exports.getGroupStudentsByLecturerId = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -232,7 +233,7 @@ exports.getGroupStudentsByTopicId = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -279,7 +280,7 @@ exports.getGroupStudentsByTermId = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -414,7 +415,7 @@ exports.getGroupStudentById = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -441,7 +442,7 @@ exports.getGroupStudentMembers = async (req, res) => {
             members,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -466,7 +467,7 @@ exports.searchGroupStudentByName = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -483,7 +484,7 @@ exports.countGroupStudents = async (req, res) => {
             nameCount: 'Nhóm số ' + count,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.countGroupStudents= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -510,7 +511,7 @@ exports.countGroupStudentsByLecturerId = async (req, res) => {
             count: count[0].total,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.countGroupStudentsByLecturerId= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -611,7 +612,7 @@ exports.getMyGroupStudent = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -716,7 +717,7 @@ exports.createGroupStudent = async (req, res) => {
             groupStudent: groupStudent[0],
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -747,7 +748,7 @@ exports.importGroupStudent = async (req, res) => {
             message: 'Nhập nhóm sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -801,7 +802,7 @@ exports.exportGroupStudents = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -849,7 +850,7 @@ exports.exportGroupStudentsByLecturerId = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -884,7 +885,7 @@ exports.assignAdminGroupStudent = async (req, res) => {
             message: 'Cập nhật trưởng nhóm thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -931,7 +932,7 @@ exports.addMemberGroupStudent = async (req, res) => {
             message: 'Thêm thành viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -973,7 +974,7 @@ exports.deleteMemberGroupStudent = async (req, res) => {
             message: 'Xoá thành viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1015,7 +1016,7 @@ exports.removeMemberGroupStudent = async (req, res) => {
             message: 'Xoá thành viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1052,7 +1053,7 @@ exports.leaveGroupStudent = async (req, res) => {
             message: 'Rời nhóm thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1098,7 +1099,7 @@ exports.joinGroupStudent = async (req, res) => {
             message: 'Tham gia nhóm thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1147,7 +1148,7 @@ exports.assignTopic = async (req, res) => {
             message: 'Chọn đề tài thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1171,7 +1172,7 @@ exports.removeTopic = async (req, res) => {
             message: 'Huỷ chọn đề tài thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1191,7 +1192,7 @@ exports.deleteGroupStudent = async (req, res) => {
             message: 'Xoá nhóm sinh viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1260,7 +1261,7 @@ exports.chooseTopic = async (req, res) => {
             message: 'Chọn đề tài thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1293,7 +1294,7 @@ exports.cancelTopic = async (req, res) => {
             message: 'Huỷ chọn đề tài thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1316,7 +1317,7 @@ exports.submitLink = async (req, res) => {
             message: 'Nộp link tài liệu thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

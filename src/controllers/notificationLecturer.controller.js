@@ -4,6 +4,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { validationResult } = require('express-validator');
 const { sequelize } = require('../configs/mysql.config');
 const _ = require('lodash');
+const logger = require('../configs/logger.config');
 
 exports.getMyNotification = async (req, res) => {
     try {
@@ -31,7 +32,7 @@ exports.getMyNotification = async (req, res) => {
             notifications,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getMyNotification= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -57,7 +58,7 @@ exports.getNotificationById = async (req, res) => {
             notification: notification[0],
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getNotificationById= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -107,7 +108,7 @@ exports.createAllNotificationLecturerTerms = async (req, res) => {
             message: `Gửi thông báo đến toàn bộ giảng viên hướng dẫn thành công.`,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.createAllNotificationLecturerTerms= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -140,7 +141,7 @@ exports.createNotificationLecturer = async (req, res) => {
             message: 'Gửi thông báo thành công.',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -163,7 +164,7 @@ exports.updateReadStatus = async (req, res) => {
             message: 'Cập nhật trạng thái đọc thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

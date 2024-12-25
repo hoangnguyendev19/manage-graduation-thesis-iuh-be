@@ -36,7 +36,7 @@ let connectDB = async () => {
         logger.info('Connected to MySQL database successfully');
     } catch (error) {
         logger.error('Unable to connect to the database. Retrying...');
-        logger.error('Error details:', error.message);
+        logger.error('Error details:', error);
     }
 };
 

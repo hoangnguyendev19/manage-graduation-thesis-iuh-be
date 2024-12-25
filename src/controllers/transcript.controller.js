@@ -11,6 +11,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/mysql.config');
 const { checkDegree, validateDate } = require('../helper/handler');
+const logger = require('../configs/logger.config');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
     try {
@@ -235,7 +236,7 @@ exports.getTranscriptByTypeEvaluation = async (req, res) => {
             transcripts: newTranscripts,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -278,7 +279,7 @@ exports.getTranscriptByGroupStudent = async (req, res) => {
             transcripts,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -361,7 +362,7 @@ exports.getTranscriptSummary = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -431,7 +432,7 @@ exports.getTranscriptByStudentId = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -609,7 +610,7 @@ exports.getTranscriptsByTypeAssign = async (req, res) => {
             transcripts,
         });
     } catch (error) {
-        console.log('🚀 ~ getGroupStudentsByTypeAssign ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -806,6 +807,7 @@ exports.exportTranscripts = async (req, res) => {
             transcripts: result,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -890,6 +892,7 @@ exports.exportAllTranscripts = async (req, res) => {
             students: result,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -916,20 +919,20 @@ exports.createTranscriptList = async (req, res) => {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
         }
 
+        // Check if student exist in term
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                term_id: term.id,
+                student_id: transcripts[0].studentId,
+            },
+        });
+
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+        }
+
         for (const transcript of transcripts) {
-            const { evaluationId, score, studentId } = transcript;
-
-            // Check if student exist in term
-            const studentTerm = await StudentTerm.findOne({
-                where: {
-                    term_id: term.id,
-                    student_id: studentId,
-                },
-            });
-
-            if (!studentTerm) {
-                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
-            }
+            const { evaluationId, score } = transcript;
 
             // Check if evaluation exist
             const evaluation = await Evaluation.findByPk(evaluationId);
@@ -939,6 +942,19 @@ exports.createTranscriptList = async (req, res) => {
 
             if (score > evaluation.scoreMax) {
                 return Error.sendWarning(res, 'Điểm không được lớn hơn điểm tối đa của đánh giá!');
+            }
+
+            // Check if transcript exist
+            const checkTranscript = await Transcript.findOne({
+                where: {
+                    student_term_id: studentTerm.id,
+                    evaluation_id: evaluation.id,
+                    lecturer_term_id: lecturerTerm.id,
+                },
+            });
+
+            if (checkTranscript) {
+                return Error.sendWarning(res, 'Bảng điểm đã tồn tại!');
             }
 
             await Transcript.create({
@@ -954,7 +970,7 @@ exports.createTranscriptList = async (req, res) => {
             message: 'Tạo bảng điểm thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -981,20 +997,20 @@ exports.updateTranscriptList = async (req, res) => {
             return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kỳ!');
         }
 
+        // Check if student exist in term
+        const studentTerm = await StudentTerm.findOne({
+            where: {
+                term_id: term.id,
+                student_id: transcripts[0].studentId,
+            },
+        });
+
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+        }
+
         for (const trans of transcripts) {
-            const { evaluationId, score, studentId } = trans;
-
-            // Check if student exist in term
-            const studentTerm = await StudentTerm.findOne({
-                where: {
-                    term_id: term.id,
-                    student_id: studentId,
-                },
-            });
-
-            if (!studentTerm) {
-                return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
-            }
+            const { evaluationId, score } = trans;
 
             // Check if evaluation exist
             const evaluation = await Evaluation.findByPk(evaluationId);
@@ -1028,7 +1044,7 @@ exports.updateTranscriptList = async (req, res) => {
             message: 'Cập nhật bảng điểm thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1060,7 +1076,8 @@ exports.getTranscriptGroupStudentByLecturerSupport = async (req, res) => {
             groupStudents,
         });
     } catch (error) {
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -1105,6 +1122,7 @@ exports.getGroupStudentMemberToScoring = async (req, res) => {
             groupStudentMembers,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1151,6 +1169,7 @@ exports.getStatisticTranscript = async (req, res) => {
             statistic: statisticTranscripts[0],
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

@@ -3,6 +3,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/mysql.config');
 const { validationResult } = require('express-validator');
+const logger = require('../configs/logger.config');
 
 exports.getRoles = async (req, res) => {
     try {
@@ -41,7 +42,8 @@ exports.getRoles = async (req, res) => {
             roles: Object.values(newRoles),
         });
     } catch (error) {
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -61,7 +63,8 @@ exports.getRolesByLecturerId = async (req, res) => {
             roles,
         });
     } catch (error) {
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -102,7 +105,8 @@ exports.createRole = async (req, res) => {
             role,
         });
     } catch (error) {
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -126,6 +130,7 @@ exports.deleteRole = async (req, res) => {
             message: 'Xoá vai trò thành công!',
         });
     } catch (error) {
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };

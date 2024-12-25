@@ -4,6 +4,7 @@ const { HTTP_STATUS } = require('../constants/constant');
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/mysql.config');
 const { checkDegree } = require('../helper/handler');
+const logger = require('../configs/logger.config');
 
 const checkTypeGroup = (value) => {
     switch (value) {
@@ -110,6 +111,7 @@ exports.exportAssigns = async (req, res) => {
             assigns,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -207,6 +209,7 @@ exports.exportAssignsByLecturerId = async (req, res) => {
             assigns,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -316,6 +319,7 @@ exports.createAssign = async (req, res) => {
             message: `Phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công!`,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -365,6 +369,7 @@ exports.updateAssign = async (req, res) => {
             message: `Cập nhật phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công`,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -397,6 +402,7 @@ exports.deleteAssign = async (req, res) => {
             message: `Xóa phân công ${groupLecturer.name} chấm điểm nhóm sinh viên thành công`,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -471,7 +477,7 @@ exports.getGroupStudentNoAssign = async (req, res) => {
             groupStudent,
         });
     } catch (error) {
-        console.error(error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };

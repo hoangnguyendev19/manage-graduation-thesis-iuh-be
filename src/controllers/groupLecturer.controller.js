@@ -12,6 +12,7 @@ const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
 const { validationResult } = require('express-validator');
 const { checkDegree } = require('../helper/handler');
+const logger = require('../configs/logger.config');
 
 exports.getLecturerNoGroupByType = async (req, res) => {
     try {
@@ -44,7 +45,7 @@ exports.getLecturerNoGroupByType = async (req, res) => {
             totalRows: lecturerTerm.length,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -140,7 +141,7 @@ exports.getGroupLecturers = async (req, res) => {
             groupLecturers,
         });
     } catch (error) {
-        console.log('🚀 ~ getGroupLecturers ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -224,7 +225,7 @@ exports.getGroupLecturersByLecturerId = async (req, res) => {
             groupLecturers,
         });
     } catch (error) {
-        console.error('🚀 ~ getGroupLecturersByLecturerId ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -308,7 +309,7 @@ exports.getGroupLecturersByTypeEvaluation = async (req, res) => {
             groupLecturers,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -396,7 +397,7 @@ exports.getGroupLecturersByTypeEvaluationAndLecturerId = async (req, res) => {
             groupLecturers,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -497,7 +498,7 @@ exports.getGroupLecturerById = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getMemberFromGroupLecturer= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -525,7 +526,7 @@ exports.searchGroupLecturerByName = async (req, res) => {
             groupLecturers,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.searchGroupLecturerByName= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -543,8 +544,8 @@ exports.countGroupLecturersByTermId = async (req, res) => {
             count,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.countLecturerTermsByTermId= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -573,8 +574,8 @@ exports.countGroupLecturersByLecturerId = async (req, res) => {
             count: count[0].total,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.countGroupLecturersByLecturerId= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -695,8 +696,8 @@ exports.createGroupLecturer = async (req, res) => {
             groupLecturer,
         });
     } catch (error) {
-        console.error('Error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -743,7 +744,7 @@ exports.deleteGroupLecturer = async (req, res) => {
             message: 'Xoá nhóm giảng viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -783,7 +784,7 @@ exports.getMemberFromGroupLecturer = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getMemberFromGroupLecturer= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -840,7 +841,7 @@ exports.removeLecturerFromGroupLecturer = async (req, res) => {
             message: 'Xóa giảng viên ra khỏi nhóm thành công',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -903,8 +904,8 @@ exports.addMemberToGroupLecturer = async (req, res) => {
             groupLecturerMember,
         });
     } catch (error) {
-        console.error(error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -929,7 +930,7 @@ exports.updateDateAndLocation = async (req, res) => {
             message: 'Cập nhật thông tin ngày và địa điểm thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

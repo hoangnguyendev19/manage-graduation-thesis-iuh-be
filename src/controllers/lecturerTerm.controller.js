@@ -6,6 +6,7 @@ const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../configs/mysql.config');
 const { validationResult } = require('express-validator');
 const { checkDegree } = require('../helper/handler');
+const logger = require('../configs/logger.config');
 
 exports.importLecturerTerms = async (req, res) => {
     try {
@@ -39,7 +40,7 @@ exports.importLecturerTerms = async (req, res) => {
             message: 'Nhập danh sách giảng viên vào học kì thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -97,7 +98,7 @@ exports.exportLecturerTerms = async (req, res) => {
             lecturerTerms,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.exportLecturerTerms= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -157,6 +158,7 @@ exports.exportLecturerAssigns = async (req, res) => {
             lecturers,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -226,8 +228,8 @@ exports.getLecturerTerms = async (req, res) => {
             lecturerTerms: newLecturerTerms,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getLecturerTerms= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -320,7 +322,7 @@ exports.searchLecturerTerms = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ exports.searchLecturerTerms= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -356,8 +358,8 @@ exports.getLecturerTermsToAdding = async (req, res) => {
             total: lecturerTerms.length,
         });
     } catch (error) {
-        console.log('🚀 ~ export.getLecturerTermsToAdding= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -389,7 +391,7 @@ exports.getLecturerTermById = async (req, res) => {
             lecturerTerm: lecturerTerm[0],
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -407,8 +409,8 @@ exports.countLecturerTermsByTermId = async (req, res) => {
             count,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.countLecturerTermsByTermId= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -441,8 +443,8 @@ exports.createLecturerTerm = async (req, res) => {
             message: `Thêm giảng viên ${lecturer.fullName} thành công.`,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.addLecturerTerm= ~ error:', error);
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -463,7 +465,7 @@ exports.deleteLecturerTerm = async (req, res) => {
             message: 'Xóa giảng viên trong học kì thành công!',
         });
     } catch (error) {
-        console.log('🚀 ~ exports.deleteLecturerTerm ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

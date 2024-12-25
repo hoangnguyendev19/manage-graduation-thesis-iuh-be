@@ -5,7 +5,7 @@ const { sequelize } = require('../configs/mysql.config');
 const { QueryTypes } = require('sequelize');
 const _ = require('lodash');
 const moment = require('moment');
-const { validationResult } = require('express-validator');
+const logger = require('../configs/logger.config');
 
 exports.getTerms = async (req, res) => {
     try {
@@ -31,7 +31,7 @@ exports.getTerms = async (req, res) => {
             terms,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -64,7 +64,7 @@ exports.getTermsByMajorId = async (req, res) => {
             terms,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -100,7 +100,7 @@ exports.getTermById = async (req, res) => {
             term: term[0],
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -136,7 +136,7 @@ exports.getTermNow = async (req, res) => {
             term: term[0],
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -221,7 +221,7 @@ exports.getTermsByLecturerId = async (req, res) => {
             terms,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -241,7 +241,7 @@ exports.getTermDetailWithChooseGroup = async (req, res) => {
             termDetail,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -261,7 +261,7 @@ exports.getTermDetailWithPublicTopic = async (req, res) => {
             termDetail,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -281,7 +281,7 @@ exports.getTermDetailWithChooseTopic = async (req, res) => {
             termDetail,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -301,7 +301,7 @@ exports.getTermDetailWithDiscussion = async (req, res) => {
             termDetail,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -321,7 +321,7 @@ exports.getTermDetailWithReport = async (req, res) => {
             termDetail,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -341,7 +341,7 @@ exports.getTermDetailWithPublicResult = async (req, res) => {
             termDetail,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -349,11 +349,6 @@ exports.getTermDetailWithPublicResult = async (req, res) => {
 exports.createTerm = async (req, res) => {
     try {
         const { name, startDate, endDate, majorId } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
 
         // check if startDate and endDate is valid using moment
         if (moment(startDate).isAfter(endDate)) {
@@ -387,7 +382,7 @@ exports.createTerm = async (req, res) => {
             term,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -395,12 +390,7 @@ exports.createTerm = async (req, res) => {
 exports.updateTerm = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, startDate, endDate } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
+        const { startDate, endDate } = req.body;
 
         // check if startDate and endDate is valid using moment
         if (moment(startDate).isAfter(endDate)) {
@@ -412,24 +402,13 @@ exports.updateTerm = async (req, res) => {
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        const existedTerm = await Term.findOne({
-            where: {
-                major_id: term.major_id,
-                name,
-            },
-        });
-
-        if (existedTerm && existedTerm.id !== term.id) {
-            return Error.sendConflict(res, 'Tên học kỳ đã tồn tại!');
-        }
-
-        await term.update({ name, startDate, endDate });
+        await term.update({ startDate, endDate });
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Cập nhật học kỳ thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -438,11 +417,6 @@ exports.updateChooseGroupTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -477,7 +451,7 @@ exports.updateChooseGroupTerm = async (req, res) => {
             message: 'Cập nhật thời gian chọn nhóm thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -486,11 +460,6 @@ exports.updatePublicTopicTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -524,7 +493,7 @@ exports.updatePublicTopicTerm = async (req, res) => {
             message: 'Cập nhật thời gian công bố đề tài thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -533,11 +502,6 @@ exports.updateChooseTopicTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -572,7 +536,7 @@ exports.updateChooseTopicTerm = async (req, res) => {
             message: 'Cập nhật thời gian chọn đề tài thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -581,11 +545,6 @@ exports.updateDiscussionTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -620,7 +579,7 @@ exports.updateDiscussionTerm = async (req, res) => {
             message: 'Cập nhật thời gian phản biện thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -629,11 +588,6 @@ exports.updateReportTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -667,7 +621,7 @@ exports.updateReportTerm = async (req, res) => {
             message: 'Cập nhật thời gian báo cáo thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -676,11 +630,6 @@ exports.updatePublicResultTerm = async (req, res) => {
     try {
         const { id } = req.params;
         const { startDate, endDate } = req.body;
-
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return Error.sendWarning(res, errors.array()[0].msg);
-        }
 
         const term = await Term.findByPk(id);
         if (!term) {
@@ -715,7 +664,7 @@ exports.updatePublicResultTerm = async (req, res) => {
             message: 'Cập nhật thời gian công bố kết quả thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

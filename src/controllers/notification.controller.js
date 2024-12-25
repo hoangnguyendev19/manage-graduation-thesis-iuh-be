@@ -11,6 +11,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/mysql.config');
 const _ = require('lodash');
+const logger = require('../configs/logger.config');
 
 exports.getNotifications = async (req, res) => {
     try {
@@ -64,7 +65,7 @@ exports.getNotifications = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getNotifications= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -163,7 +164,7 @@ exports.getNotificationById = async (req, res) => {
             details,
         });
     } catch (error) {
-        console.log('🚀 ~ exports.getNotifications= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -213,7 +214,7 @@ exports.updateNotification = async (req, res) => {
             message: 'Cập nhật thông báo thành công!',
         });
     } catch (error) {
-        console.log('🚀 ~ exports.updateNotification= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -249,7 +250,7 @@ exports.deleteNotification = async (req, res) => {
             message: 'Xóa thông báo thành công!',
         });
     } catch (error) {
-        console.log('🚀 ~ exports.deleteNotification= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

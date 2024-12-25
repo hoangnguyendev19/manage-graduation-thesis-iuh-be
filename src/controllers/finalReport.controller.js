@@ -3,6 +3,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/mysql.config');
 const fs = require('fs');
+const logger = require('../configs/logger.config');
 
 exports.getFinalReports = async (req, res) => {
     try {
@@ -34,7 +35,7 @@ exports.getFinalReports = async (req, res) => {
             finalReports,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -68,7 +69,7 @@ exports.getFinalReportsByLecturerId = async (req, res) => {
             finalReports,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -84,7 +85,7 @@ exports.getFinalReportByGroupStudentId = async (req, res) => {
         }
 
         const finalReport = await sequelize.query(
-            `SELECT fr.id, fr.link, fr.comment, fr.created_at as createdAt
+            `SELECT fr.id, fr.link, fr.comment
             FROM final_reports fr
             INNER JOIN group_students gs ON fr.group_student_id = gs.id
             INNER JOIN student_terms st ON st.group_student_id = gs.id
@@ -95,13 +96,17 @@ exports.getFinalReportByGroupStudentId = async (req, res) => {
             },
         );
 
+        if (finalReport.length === 0) {
+            return Error.sendNotFound(res, 'Nhóm sinh viên không có báo cáo cuối kỳ!');
+        }
+
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy báo cáo cuối kỳ thành công!',
             finalReport: finalReport[0],
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -132,7 +137,7 @@ exports.createFinalReport = async (req, res) => {
             finalReport,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -169,7 +174,7 @@ exports.updateFinalReport = async (req, res) => {
             finalReport,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -192,7 +197,7 @@ exports.commentFinalReport = async (req, res) => {
             finalReport,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

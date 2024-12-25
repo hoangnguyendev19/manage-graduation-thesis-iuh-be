@@ -34,7 +34,7 @@ exports.getArticles = async (req, res) => {
             articles,
         });
     } catch (error) {
-        logger.error(error.message);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -70,7 +70,7 @@ exports.getArticlesByLecturerId = async (req, res) => {
             articles,
         });
     } catch (error) {
-        logger.error(error.message);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -102,7 +102,7 @@ exports.getArticleById = async (req, res) => {
             article: article[0],
         });
     } catch (error) {
-        logger.error(error.message);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -138,11 +138,11 @@ exports.getArticlesByStudentId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lấy danh sách bài báo khoa học thành công!',
+            message: 'Lấy danh sách bài viết khoa học thành công!',
             articles,
         });
     } catch (error) {
-        logger.error(error.message);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -173,6 +173,18 @@ exports.createArticle = async (req, res) => {
             where: { term_id: termId, student_id: req.user.id },
         });
 
+        if (!studentTermId) {
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+        }
+
+        const articleExist = await Article.findOne({
+            where: { student_term_id: studentTermId.id, name },
+        });
+
+        if (articleExist) {
+            return Error.sendConflict(res, 'Bài viết đã tồn tại!');
+        }
+
         const article = await Article.create({
             name,
             type,
@@ -189,7 +201,7 @@ exports.createArticle = async (req, res) => {
             article,
         });
     } catch (error) {
-        logger.error(error.message);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -213,11 +225,8 @@ exports.updateArticle = async (req, res) => {
             return Error.sendNotFound(res, 'Bài viết không tồn tại!');
         }
 
-        if (article.status === 'APPROVED') {
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({
-                success: false,
-                message: 'Không thể cập nhật bài viết đã được chấp nhận!',
-            });
+        if (article.status === 'APPROVED' || article.status === 'REJECTED') {
+            return Error.sendForbidden(res, 'Không thể cập nhật bài viết đã được chấp nhận!');
         }
 
         // Delete the old file
@@ -234,7 +243,6 @@ exports.updateArticle = async (req, res) => {
             authorNumber,
             publicDate,
             link: filePath,
-            status: 'PENDING',
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -243,7 +251,37 @@ exports.updateArticle = async (req, res) => {
             article,
         });
     } catch (error) {
-        logger.error(error.message);
+        logger.error(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.deleteArticle = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const article = await Article.findByPk(id);
+
+        if (!article) {
+            return Error.sendNotFound(res, 'Bài viết không tồn tại!');
+        }
+
+        if (article.status === 'APPROVED' || article.status === 'REJECTED') {
+            return Error.sendForbidden(res, 'Không thể xóa bài viết đã được chấp nhận!');
+        }
+
+        // Delete the file
+        const filePath = article.link; // format: '/temp/fileName'
+        fs.unlinkSync(`public${filePath}`); // Delete the file
+
+        await article.destroy();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xóa bài viết thành công!',
+        });
+    } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -281,7 +319,7 @@ exports.updateStatusArticle = async (req, res) => {
             article,
         });
     } catch (error) {
-        logger.error(error.message);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

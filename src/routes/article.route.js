@@ -7,6 +7,7 @@ const {
     getArticlesByStudentId,
     createArticle,
     updateArticle,
+    deleteArticle,
     updateStatusArticle,
 } = require('../controllers/article.controller');
 
@@ -16,6 +17,8 @@ const { protectStudent } = require('../middleware/student.middleware');
 const upload = require('../configs/uploadTemp.config');
 
 const router = express.Router();
+
+router.delete(APP_ROUTER.ID, protectStudent, deleteArticle);
 
 router.put(APP_ROUTER.ARTICLE_BY_STATUS, protectLecturer, updateStatusArticle);
 

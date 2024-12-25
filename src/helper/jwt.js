@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const client = require('../configs/redis.config');
 const Error = require('./errors');
+const logger = require('../configs/logger.config');
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ exports.generateRefreshToken = (id) => {
 
     client.set(id.toString(), token, 'EX', 24 * 3600, (error, reply) => {
         if (error) {
+            logger.error(error);
             return Error.sendError(res, error);
         }
     });
@@ -34,6 +36,7 @@ exports.verifyAccessToken = async (token) => {
             return { payload: jwt.decode(token), expired: true };
         }
 
+        logger.error(error);
         return Error.sendError(res, error);
     }
 };
@@ -43,6 +46,7 @@ exports.verifyRefreshToken = (token) => {
 
     client.get(data.id.toString(), (error, result) => {
         if (error) {
+            logger.error(error);
             return Error.sendError(res, error);
         }
         if (result !== token) {
@@ -56,6 +60,7 @@ exports.verifyRefreshToken = (token) => {
 exports.removeRefreshToken = (id) => {
     client.del(id.toString(), (error, reply) => {
         if (error) {
+            logger.error(error);
             return Error.sendError(res, error);
         }
         if (reply !== 1) {
