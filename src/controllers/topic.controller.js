@@ -15,6 +15,7 @@ const _ = require('lodash');
 const { sequelize } = require('../configs/mysql.config');
 const { validationResult } = require('express-validator');
 const { validateDate, checkDegree } = require('../helper/handler');
+const logger = require('../configs/logger.config');
 
 exports.getTopicsOfSearch = async (req, res) => {
     try {
@@ -99,7 +100,7 @@ exports.getTopicsOfSearch = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ getTopicOfSearch ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -137,7 +138,7 @@ exports.getTopicByLecturer = async (req, res) => {
             topics,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -257,7 +258,7 @@ exports.getTopicsApprovedOfSearch = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -290,7 +291,7 @@ exports.getTopicsApproved = async (req, res) => {
             topics,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -336,7 +337,7 @@ exports.getTopicsByGroupLecturerId = async (req, res) => {
             topics: Object.values(newTopics),
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -383,7 +384,7 @@ exports.getTopicById = async (req, res) => {
             topic,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -408,7 +409,7 @@ exports.countTopicsByTermId = async (req, res) => {
             count,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -453,7 +454,7 @@ exports.countTopicsByLecturerId = async (req, res) => {
             countApprovedTopics: countApprovedTopics[0].count,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -542,7 +543,7 @@ exports.createTopic = async (req, res) => {
             topic,
         });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -593,7 +594,7 @@ exports.updateTopic = async (req, res) => {
             topic,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -621,7 +622,7 @@ exports.updateQuantityGroupMax = async (req, res) => {
             message: 'Cập nhật số lượng thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -815,7 +816,7 @@ exports.importTopics = async (req, res) => {
             message: 'Import danh sách đề tài thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -858,7 +859,7 @@ exports.exportTopics = async (req, res) => {
             topics,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -902,7 +903,7 @@ exports.exportTopicsByLecturerId = async (req, res) => {
             topics,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -977,7 +978,7 @@ exports.importTopicsFromTermIdToSelectedTermId = async (req, res) => {
             message: 'Import danh sách đề tài thành công!',
         });
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1001,7 +1002,7 @@ exports.updateStatusTopic = async (req, res) => {
             message: 'Cập nhật trạng thái thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1022,7 +1023,7 @@ exports.deleteTopic = async (req, res) => {
             message: 'Xoá thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -1062,7 +1063,7 @@ exports.getKeywords = async (req, res) => {
             keywords: keywordsSorted,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

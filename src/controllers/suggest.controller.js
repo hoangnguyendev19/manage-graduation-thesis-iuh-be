@@ -2,6 +2,7 @@ const { Topic, LecturerTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const axios = require('axios');
+const logger = require('../configs/logger.config');
 
 exports.suggestTopics = async (req, res) => {
     try {
@@ -51,7 +52,7 @@ exports.suggestTopics = async (req, res) => {
             data,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

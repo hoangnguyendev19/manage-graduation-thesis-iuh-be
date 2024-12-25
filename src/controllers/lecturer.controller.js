@@ -74,7 +74,7 @@ exports.login = async (req, res) => {
             refreshToken,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -97,7 +97,7 @@ exports.refreshToken = async (req, res) => {
             refreshToken: newRefreshToken,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -113,7 +113,7 @@ exports.logout = async (req, res) => {
             message: 'Đăng xuất thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -186,7 +186,7 @@ exports.searchLecturer = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log('🚀 ~ exports.searchLecturer= ~ error:', error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -261,7 +261,7 @@ exports.getLecturers = async (req, res) => {
             },
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -287,7 +287,7 @@ exports.getLecturersByMajorId = async (req, res) => {
             lecturers,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -359,7 +359,7 @@ exports.createLecturer = async (req, res) => {
             roles: roles.map((role) => role.name),
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -394,7 +394,7 @@ exports.updateLecturer = async (req, res) => {
             message: 'Cập nhật giảng viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -459,7 +459,7 @@ exports.importLecturers = async (req, res) => {
             message: 'Nhâp danh sách giảng viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -507,7 +507,7 @@ exports.exportLecturers = async (req, res) => {
             lecturers,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -527,7 +527,7 @@ exports.deleteLecturer = async (req, res) => {
             message: 'Xoá giảng viên thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -548,7 +548,7 @@ exports.resetPassword = async (req, res) => {
             message: 'Làm mới mật khẩu thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -568,7 +568,7 @@ exports.lockAccount = async (req, res) => {
             message: 'Khóa tài khoản thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -588,7 +588,7 @@ exports.unlockAccount = async (req, res) => {
             message: 'Mở khóa tài khoản thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -604,7 +604,7 @@ exports.countLecturersByMajorId = async (req, res) => {
             count,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -640,7 +640,7 @@ exports.getLecturerById = async (req, res) => {
             lecturer,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -670,7 +670,7 @@ exports.updatePassword = async (req, res) => {
             message: 'Cập nhật mật khẩu thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -706,7 +706,7 @@ exports.getMe = async (req, res) => {
             roles: roles.map((role) => role.name),
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -722,7 +722,7 @@ exports.updateMe = async (req, res) => {
             message: 'Cập nhật thông tin cá nhân thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -786,7 +786,7 @@ exports.forgotPassword = async (req, res) => {
             message: 'Bạn vui lòng kiểm tra email để nhận mật khẩu mới!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

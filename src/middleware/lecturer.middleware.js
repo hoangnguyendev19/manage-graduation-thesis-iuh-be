@@ -2,6 +2,7 @@ const Error = require('../helper/errors');
 const { Lecturer, Role } = require('../models/index');
 const { verifyAccessToken } = require('../helper/jwt');
 const { Op } = require('sequelize');
+const logger = require('../configs/logger.config');
 
 exports.protectLecturer = async (req, res, next) => {
     try {
@@ -26,7 +27,8 @@ exports.protectLecturer = async (req, res, next) => {
         req.user = lecturer;
         next();
     } catch (error) {
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };
 
@@ -49,7 +51,8 @@ exports.checkRole = (roles) => {
 
             next();
         } catch (error) {
-            return Error.sendError(res, error);
+            logger.error(error);
+            Error.sendError(res, error);
         }
     };
 };

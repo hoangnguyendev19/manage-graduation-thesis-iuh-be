@@ -12,6 +12,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/mysql.config');
 const fs = require('fs');
+const logger = require('../configs/logger.config');
 
 exports.getEvents = async (req, res) => {
     try {
@@ -40,7 +41,7 @@ exports.getEvents = async (req, res) => {
             events,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -90,7 +91,7 @@ exports.getEventById = async (req, res) => {
             event,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -116,7 +117,7 @@ exports.getEventsByGroupStudentId = async (req, res) => {
             events,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -217,7 +218,7 @@ exports.createEvent = async (req, res) => {
             message: 'Tạo sự kiện thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -240,7 +241,7 @@ exports.updateEvent = async (req, res) => {
             message: 'Cập nhật sự kiện thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -266,7 +267,7 @@ exports.deleteEvent = async (req, res) => {
             message: 'Xóa sự kiện thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -318,7 +319,7 @@ exports.submitEvent = async (req, res) => {
             message: 'Nộp sự kiện thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -353,7 +354,7 @@ exports.commentEvent = async (req, res) => {
             message: 'Nhận xét sự kiện thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

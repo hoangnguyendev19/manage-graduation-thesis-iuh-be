@@ -2,6 +2,7 @@ const { Major } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { validationResult } = require('express-validator');
+const logger = require('../configs/logger.config');
 
 exports.getMajors = async (req, res) => {
     try {
@@ -12,7 +13,7 @@ exports.getMajors = async (req, res) => {
             majors,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -27,7 +28,7 @@ exports.getMajorById = async (req, res) => {
             major,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -54,7 +55,7 @@ exports.createMajor = async (req, res) => {
             major,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -84,7 +85,7 @@ exports.updateMajor = async (req, res) => {
             major,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -105,7 +106,7 @@ exports.deleteMajor = async (req, res) => {
             message: 'Xoá chuyên ngành thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

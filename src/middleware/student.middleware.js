@@ -1,6 +1,7 @@
 const Error = require('../helper/errors');
 const { Student } = require('../models/index');
 const { verifyAccessToken } = require('../helper/jwt');
+const logger = require('../configs/logger.config');
 
 exports.protectStudent = async (req, res, next) => {
     try {
@@ -28,6 +29,7 @@ exports.protectStudent = async (req, res, next) => {
         req.user = student;
         next();
     } catch (error) {
-        return Error.sendError(res, error);
+        logger.error(error);
+        Error.sendError(res, error);
     }
 };

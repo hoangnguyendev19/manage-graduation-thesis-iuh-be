@@ -3,6 +3,7 @@ const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const xlsx = require('xlsx');
 const { validationResult } = require('express-validator');
+const logger = require('../configs/logger.config');
 
 exports.getEvaluations = async (req, res) => {
     try {
@@ -27,7 +28,7 @@ exports.getEvaluations = async (req, res) => {
             evaluations,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -47,7 +48,7 @@ exports.getEvaluationById = async (req, res) => {
             evaluation,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -76,7 +77,7 @@ exports.getEvaluationsForScoring = async (req, res) => {
             evaluations,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -105,7 +106,7 @@ exports.createEvaluation = async (req, res) => {
             evaluation,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -207,7 +208,7 @@ exports.importEvaluations = async (req, res) => {
             message: 'Nhập danh sách đánh giá thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -251,7 +252,7 @@ exports.importEvaluationsFromTermIdToSelectedTermId = async (req, res) => {
             message: 'Nhập danh sách đánh giá thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -283,7 +284,7 @@ exports.updateEvaluation = async (req, res) => {
             evaluation,
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -303,7 +304,7 @@ exports.deleteEvaluation = async (req, res) => {
             message: 'Xoá đánh giá thành công!',
         });
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         Error.sendError(res, error);
     }
 };

@@ -2,6 +2,7 @@ const { Comment, Term, LecturerTerm } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/mysql.config');
+const logger = require('../configs/logger.config');
 
 exports.getCommentByType = async (req, res) => {
     try {
@@ -39,6 +40,7 @@ exports.getCommentByType = async (req, res) => {
             comment,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -118,6 +120,7 @@ exports.createComment = async (req, res) => {
             comment,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
@@ -146,6 +149,7 @@ exports.updateComment = async (req, res) => {
             comment,
         });
     } catch (error) {
+        logger.error(error);
         Error.sendError(res, error);
     }
 };
