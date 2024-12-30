@@ -351,10 +351,11 @@ exports.updateStatusArticle = async (req, res) => {
             });
         }
 
-        if (status === 'APPROVED' && bonusScore === 0) {
+        if (status === 'APPROVED' && bonusScore === 0 && bonusScore > 2) {
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
-                message: 'Điểm thưởng phải lớn hơn 0 khi chấp nhận bài viết!',
+                message:
+                    'Điểm thưởng phải lớn hơn 0 và nhỏ hơn hoặc bằng 2 khi chấp nhận bài viết!',
             });
         }
 
