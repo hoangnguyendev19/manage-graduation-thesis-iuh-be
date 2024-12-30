@@ -159,31 +159,50 @@ exports.createArticle = async (req, res) => {
     try {
         const { name, type, author, authorNumber, publicDate, termId } = req.body;
 
-        const fileName = req.file.filename;
-        const filePath = `/temp/${fileName}`; // Relative path to `public` folder
-
         // check if termId exists
         const term = await Term.findByPk(termId);
         if (!term) {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
         }
 
-        const studentTermId = await StudentTerm.findOne({
-            attributes: ['id'],
-            where: { term_id: termId, student_id: req.user.id },
-        });
+        const studentTerm = await sequelize.query(
+            `SELECT st.id, s.username
+            FROM student_terms st
+            INNER JOIN students s ON st.student_id = s.id
+            WHERE st.student_id = :studentId AND st.term_id = :termId`,
+            {
+                replacements: { studentId: req.user.id, termId },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
 
-        if (!studentTermId) {
+        if (studentTerm.length === 0) {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
         }
 
         const articleExist = await Article.findOne({
-            where: { student_term_id: studentTermId.id, name },
+            where: { student_term_id: studentTerm[0].id, name },
         });
 
         if (articleExist) {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendConflict(res, 'Bài viết đã tồn tại!');
         }
+
+        const fileName =
+            term.name + '_' + 'BBKH' + '_' + studentTerm[0].username + '_' + Date.now() + '.pdf';
+        const filePath = `/temp/${fileName}`; // Relative path to `public` folder
+
+        // Rename the file after it is saved
+        fs.rename(req.file.path, `public${filePath}`, (err) => {
+            if (err) {
+                fs.unlinkSync(req.file.path); // Delete the file
+                logger.error(`Error renaming file: ${err}`);
+                return Error.sendError(res, err);
+            }
+        });
 
         const article = await Article.create({
             name,
@@ -192,7 +211,7 @@ exports.createArticle = async (req, res) => {
             authorNumber,
             publicDate,
             link: filePath,
-            student_term_id: studentTermId.id,
+            student_term_id: studentTerm[0].id,
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -201,6 +220,7 @@ exports.createArticle = async (req, res) => {
             article,
         });
     } catch (error) {
+        fs.unlinkSync(req.file.path); // Delete the file
         logger.error(error);
         Error.sendError(res, error);
     }
@@ -219,38 +239,65 @@ exports.updateArticle = async (req, res) => {
         const { id } = req.params;
         const { name, type, author, authorNumber, publicDate } = req.body;
 
-        const article = await Article.findByPk(id);
+        const article = await sequelize.query(
+            `SELECT a.id, a.link, a.status, s.username, t.name
+            FROM articles a
+            INNER JOIN student_terms st ON a.student_term_id = st.id
+            INNER JOIN students s ON st.student_id = s.id
+            INNER JOIN terms t ON st.term_id = t.id
+            WHERE a.id = :id`,
+            {
+                replacements: { id },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
 
-        if (!article) {
+        if (article.length === 0) {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendNotFound(res, 'Bài viết không tồn tại!');
         }
 
-        if (article.status === 'APPROVED' || article.status === 'REJECTED') {
+        if (article[0].status === 'APPROVED') {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendForbidden(res, 'Không thể cập nhật bài viết đã được chấp nhận!');
         }
 
         // Delete the old file
-        const oldFilePath = article.link; // format: '/temp/fileName'
+        const oldFilePath = article[0].link; // format: '/temp/fileName'
         fs.unlinkSync(`public${oldFilePath}`); // Delete the file
 
-        const fileName = req.file.filename;
+        const fileName =
+            article[0].name + '_' + 'BBKH' + '_' + article[0].username + '_' + Date.now() + '.pdf';
         const filePath = `/temp/${fileName}`; // Relative path to `public` folder
 
-        await article.update({
-            name,
-            type,
-            author,
-            authorNumber,
-            publicDate,
-            link: filePath,
+        // Rename the file after it is saved
+        fs.rename(req.file.path, `public${filePath}`, (err) => {
+            if (err) {
+                fs.unlinkSync(req.file.path); // Delete the file
+                logger.error(`Error renaming file: ${err}`);
+                return Error.sendError(res, err);
+            }
         });
+
+        await Article.update(
+            {
+                name,
+                type,
+                author,
+                authorNumber,
+                publicDate,
+                link: filePath,
+                status: 'PENDING',
+            },
+            { where: { id } },
+        );
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Cập nhật bài viết thành công!',
-            article,
         });
     } catch (error) {
+        fs.unlinkSync(req.file.path); // Delete the file
         logger.error(error);
         Error.sendError(res, error);
     }

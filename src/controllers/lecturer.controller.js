@@ -55,7 +55,14 @@ exports.login = async (req, res) => {
             ],
         });
 
-        logger.info(`Lecturer ${user.username} - ${user.fullName} logged in with IP: ${req.ip}`);
+        if (!user.isActive) {
+            return Error.sendNotFound(
+                res,
+                'Tài khoản của bạn đã bị khóa! Vui lòng liên hệ với giảng viên chủ quản để được hỗ trợ.',
+            );
+        }
+
+        logger.warn(`Lecturer ${user.username} - ${user.fullName} logged in with IP: ${req.ip}`);
 
         const roles = await Role.findAll({
             where: { lecturer_id: user.id },
@@ -104,7 +111,7 @@ exports.refreshToken = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
-        logger.info(
+        logger.warn(
             `Lecturer ${req.user.username} - ${req.user.fullName} logged out with IP: ${req.ip}`,
         );
         removeRefreshToken(req.user.id);
