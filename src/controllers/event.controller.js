@@ -285,16 +285,25 @@ exports.submitEvent = async (req, res) => {
         const { id } = req.params;
         const { groupStudentId } = req.body;
 
-        const fileName = req.file.filename;
-        const filePath = `/temp/${fileName}`; // Relative path to `public` folder
-
         const event = await Event.findByPk(id);
         if (!event) {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendNotFound(res, 'Sự kiện không tồn tại!');
         }
 
-        const groupStudent = await GroupStudent.findByPk(groupStudentId);
-        if (!groupStudent) {
+        const groupStudent = await sequelize.query(
+            `SELECT gs.id, gs.name, t.name as termName
+                    FROM group_students gs
+                    INNER JOIN terms t ON gs.term_id = t.id
+                    WHERE gs.id = :groupStudentId`,
+            {
+                replacements: { groupStudentId },
+                type: sequelize.QueryTypes.SELECT,
+            },
+        );
+
+        if (groupStudent.length === 0) {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
 
@@ -303,6 +312,7 @@ exports.submitEvent = async (req, res) => {
         });
 
         if (!eventGroupStudent) {
+            fs.unlinkSync(req.file.path); // Delete the file
             return Error.sendNotFound(res, 'Sự kiện không tồn tại!');
         }
 
@@ -312,6 +322,24 @@ exports.submitEvent = async (req, res) => {
             fs.unlinkSync(`public${oldFilePath}`); // Delete the file
         }
 
+        const fileName =
+            groupStudent[0].termName +
+            '_SUKIEN_NHOM_' +
+            groupStudent[0].name +
+            '_' +
+            Date.now() +
+            '.pdf';
+        const filePath = `/temp/${fileName}`; // Relative path to `public` folder
+
+        // Rename the file after it is saved
+        fs.rename(req.file.path, `public${filePath}`, (err) => {
+            if (err) {
+                fs.unlinkSync(req.file.path); // Delete the file
+                logger.error(`Error renaming file: ${err}`);
+                return Error.sendError(res, err);
+            }
+        });
+
         await eventGroupStudent.update({ link: filePath });
 
         res.status(HTTP_STATUS.OK).json({
@@ -319,6 +347,7 @@ exports.submitEvent = async (req, res) => {
             message: 'Nộp sự kiện thành công!',
         });
     } catch (error) {
+        fs.unlinkSync(req.file.path); // Delete the file
         logger.error(error);
         Error.sendError(res, error);
     }

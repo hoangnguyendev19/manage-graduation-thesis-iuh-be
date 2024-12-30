@@ -6,7 +6,7 @@ const storage = multer.diskStorage({
         cb(null, 'public/temp'); // Files will be saved in 'public/temp' folder
     },
     filename: (_, file, cb) => {
-        cb(null, `${file.originalname}`);
+        cb(null, `${Date.now()}_${file.originalname}`); // Files will be renamed to include the current timestamp
     },
 });
 

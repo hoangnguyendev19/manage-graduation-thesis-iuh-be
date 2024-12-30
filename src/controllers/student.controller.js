@@ -66,7 +66,14 @@ exports.login = async (req, res) => {
             ],
         });
 
-        logger.info(`Student ${user.username} - ${user.fullName} logged in with IP: ${req.ip}`);
+        if (!user.isActive) {
+            return Error.sendNotFound(
+                res,
+                'Tài khoản của bạn đã bị khóa! Vui lòng liên hệ với giảng viên chủ quản để được hỗ trợ.',
+            );
+        }
+
+        logger.warn(`Student ${user.username} - ${user.fullName} logged in with IP: ${req.ip}`);
 
         const accessToken = generateAccessToken(student.id);
         const refreshToken = generateRefreshToken(student.id);
@@ -109,7 +116,7 @@ exports.refreshToken = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
-        logger.info(
+        logger.warn(
             `Student ${req.user.username} - ${req.user.fullName} logged out with IP: ${req.ip}`,
         );
         removeRefreshToken(req.user.id);
@@ -194,7 +201,7 @@ exports.getStudentsOfSearch = async (req, res) => {
         students = students.map((stu) => {
             return {
                 ...stu,
-                lecturerName: checkDegree(stu.degree, stu.lecturerName),
+                lecturerName: stu.lecturerName ? checkDegree(stu.degree, stu.lecturerName) : null,
                 isActive: Boolean(stu.isActive),
             };
         });
@@ -573,7 +580,7 @@ exports.importStudents = async (req, res) => {
             const gender = student['Giới tính'] === 'Nam' ? 'MALE' : 'FEMALE';
             const dateOfBirth = student['Ngày sinh']; // 19/10/2000
             const clazzName = student['Lớp học'];
-            const major_id = majorId;
+
             const password = await hashPassword(dateOfBirth.split('/').join('')); // 19102000
 
             students.push({
@@ -583,7 +590,7 @@ exports.importStudents = async (req, res) => {
                 gender,
                 dateOfBirth: moment(dateOfBirth, 'DD/MM/YYYY').format('YYYY-MM-DD'),
                 clazzName,
-                major_id,
+                major_id: majorId,
             });
         }
 
