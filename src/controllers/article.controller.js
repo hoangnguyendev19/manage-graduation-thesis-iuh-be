@@ -80,11 +80,10 @@ exports.getArticleById = async (req, res) => {
         const { id } = req.params;
 
         const article = await sequelize.query(
-            `SELECT a.id, a.name, a.type, a.author, a.author_number as authorNumber, a.public_date as publicDate, a.status, a.link, a.bonus_score as bonusScore, a.comment, s.username, s.full_name as fullName, gs.name as groupName
+            `SELECT a.id, a.name, a.type, a.author, a.author_number as authorNumber, a.public_date as publicDate, a.status, a.link, a.bonus_score as bonusScore, a.comment, s.username, s.full_name as fullName
             FROM articles a
             INNER JOIN student_terms st ON a.student_term_id = st.id
             INNER JOIN students s ON st.student_id = s.id
-            INNER JOIN group_students gs ON st.group_student_id = gs.id
             WHERE a.id = :id`,
             {
                 replacements: { id },
