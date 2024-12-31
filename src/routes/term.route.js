@@ -6,6 +6,7 @@ const {
     getTermById,
     getTermsByLecturerId,
     getTermNow,
+    getTermByStudentId,
     getTermDetailWithChooseGroup,
     getTermDetailWithPublicTopic,
     getTermDetailWithChooseTopic,
@@ -23,10 +24,13 @@ const {
 } = require('../controllers/term.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
+const { protectStudent } = require('../middleware/student.middleware');
 
 const router = express.Router();
 
-router.get(APP_ROUTER.TERM_NOW, getTermNow);
+router.get(APP_ROUTER.TERM_BY_STUDENT, protectStudent, getTermByStudentId);
+
+router.get(APP_ROUTER.TERM_NOW, protectLecturer, getTermNow);
 
 router.get(APP_ROUTER.TERM_BY_MAJOR, protectLecturer, getTermsByMajorId);
 

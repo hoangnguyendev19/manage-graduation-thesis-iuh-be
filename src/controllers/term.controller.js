@@ -122,17 +122,55 @@ exports.getTermNow = async (req, res) => {
             WHERE t.start_date <= NOW() AND t.end_date >= NOW() AND t.major_id = :majorId`,
             {
                 type: QueryTypes.SELECT,
-                replacements: { majorId: majorId },
+                replacements: { majorId },
             },
         );
 
-        if (!term) {
+        if (term.length === 0) {
             return Error.sendNotFound(res, 'Học kỳ hiện tại không tồn tại!');
         }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin học kỳ hiện tại thành công!',
+            term: term[0],
+        });
+    } catch (error) {
+        logger.error(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.getTermByStudentId = async (req, res) => {
+    try {
+        const term = await sequelize.query(
+            `SELECT t.id, t.name, t.start_date as startDate, t.end_date as endDate, td1.start_date as startChooseGroupDate, td1.end_date as endChooseGroupDate, td2.start_date as startPublicTopicDate, td2.end_date as endPublicTopicDate, td3.start_date as startChooseTopicDate, td3.end_date as endChooseTopicDate, td4.start_date as startDiscussionDate, td4.end_date as endDiscussionDate, td5.start_date as startReportDate, td5.end_date as endReportDate, td6.start_date as startPublicResultDate, td6.end_date as endPublicResultDate, m.name as majorName
+            FROM students s
+            LEFT JOIN student_terms st ON s.id = st.student_id
+            LEFT JOIN terms t ON st.term_id = t.id
+            LEFT JOIN term_details td1 ON t.id = td1.term_id AND td1.name = 'CHOOSE_GROUP'
+            LEFT JOIN term_details td2 ON t.id = td2.term_id AND td2.name = 'PUBLIC_TOPIC'  
+            LEFT JOIN term_details td3 ON t.id = td3.term_id AND td3.name = 'CHOOSE_TOPIC'
+            LEFT JOIN term_details td4 ON t.id = td4.term_id AND td4.name = 'DISCUSSION'
+            LEFT JOIN term_details td5 ON t.id = td5.term_id AND td5.name = 'REPORT'
+            LEFT JOIN term_details td6 ON t.id = td6.term_id AND td6.name = 'PUBLIC_RESULT'
+            LEFT JOIN majors m ON t.major_id = m.id
+            WHERE s.id = :studentId
+            ORDER BY t.start_date DESC
+            LIMIT 1`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: { studentId: req.user.id },
+            },
+        );
+
+        if (term.length === 0) {
+            return Error.sendNotFound(res, 'Học kỳ mà sinh viên tham gia không tồn tại!');
+        }
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Lấy thông tin học kỳ mà sinh viên tham gia thành công!',
             term: term[0],
         });
     } catch (error) {
@@ -235,6 +273,10 @@ exports.getTermDetailWithChooseGroup = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Thời gian chọn nhóm không tồn tại!');
+        }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin thời gian chọn nhóm thành công!',
@@ -254,6 +296,10 @@ exports.getTermDetailWithPublicTopic = async (req, res) => {
             where: { term_id: id, name: 'PUBLIC_TOPIC' },
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Thời gian công bố đề tài không tồn tại!');
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -275,6 +321,10 @@ exports.getTermDetailWithChooseTopic = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Thời gian chọn đề tài không tồn tại!');
+        }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin thời gian chọn đề tài thành công!',
@@ -294,6 +344,10 @@ exports.getTermDetailWithDiscussion = async (req, res) => {
             where: { term_id: id, name: 'DISCUSSION' },
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Thời gian phản biện không tồn tại!');
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -315,6 +369,10 @@ exports.getTermDetailWithReport = async (req, res) => {
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
 
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Thời gian báo cáo không tồn tại!');
+        }
+
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy thông tin thời gian báo cáo thành công!',
@@ -334,6 +392,10 @@ exports.getTermDetailWithPublicResult = async (req, res) => {
             where: { term_id: id, name: 'PUBLIC_RESULT' },
             attributes: { exclude: ['created_at', 'updated_at'] },
         });
+
+        if (!termDetail) {
+            return Error.sendNotFound(res, 'Thời gian công bố kết quả không tồn tại!');
+        }
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
