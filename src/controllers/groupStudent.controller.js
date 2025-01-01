@@ -261,11 +261,12 @@ exports.getGroupStudentsByTermId = async (req, res) => {
         }
 
         const groupStudents = await sequelize.query(
-            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers FROM group_students gs 
-                LEFT JOIN student_terms st ON gs.id = st.group_student_id 
-                WHERE gs.term_id = :termId
-                GROUP BY gs.id
-                ORDER BY COUNT(st.student_id) ASC`,
+            `SELECT gs.id, gs.name, COUNT(st.student_id) as numOfMembers
+            FROM group_students gs 
+            LEFT JOIN student_terms st ON gs.id = st.group_student_id 
+            WHERE gs.term_id = :termId
+            GROUP BY gs.id
+            ORDER BY COUNT(st.student_id) ASC`,
             {
                 type: QueryTypes.SELECT,
                 replacements: {
@@ -276,7 +277,7 @@ exports.getGroupStudentsByTermId = async (req, res) => {
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
-            message: 'Lây danh sách nhóm sinh viên thành công!',
+            message: 'Lấy danh sách nhóm sinh viên thành công!',
             groupStudents,
         });
     } catch (error) {
@@ -895,6 +896,12 @@ exports.addMemberGroupStudent = async (req, res) => {
         const { id } = req.params;
         const { studentId, termId } = req.body;
 
+        // check term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const studentTerm = await StudentTerm.findOne({
             where: {
                 student_id: studentId,
@@ -915,6 +922,7 @@ exports.addMemberGroupStudent = async (req, res) => {
         const studentTerms = await StudentTerm.findAll({
             where: {
                 group_student_id: id,
+                isAdmin: true,
             },
         });
 
@@ -942,15 +950,22 @@ exports.deleteMemberGroupStudent = async (req, res) => {
         const { id } = req.params;
         const { studentId, termId } = req.body;
 
+        // check term exists
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const studentTerm = await StudentTerm.findOne({
             where: {
                 student_id: studentId,
                 term_id: termId,
+                group_student_id: id,
             },
         });
 
         if (!studentTerm) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ!');
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong nhóm học kỳ!');
         }
 
         studentTerm.group_student_id = null;
@@ -961,6 +976,7 @@ exports.deleteMemberGroupStudent = async (req, res) => {
         const studentTerms = await StudentTerm.findAll({
             where: {
                 group_student_id: id,
+                isAdmin: false,
             },
         });
 
@@ -1025,6 +1041,11 @@ exports.leaveGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
 
+        const groupStudent = await GroupStudent.findByPk(id);
+        if (!groupStudent) {
+            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        }
+
         const studentTerm = await StudentTerm.findOne({
             where: {
                 student_id: req.user.id,
@@ -1040,6 +1061,7 @@ exports.leaveGroupStudent = async (req, res) => {
         const studentTerms = await StudentTerm.findAll({
             where: {
                 group_student_id: id,
+                isAdmin: false,
             },
         });
 
@@ -1062,9 +1084,15 @@ exports.joinGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
 
+        const groupStudent = await GroupStudent.findByPk(id);
+        if (!groupStudent) {
+            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        }
+
         const studentTerm = await StudentTerm.findOne({
             where: {
                 student_id: req.user.id,
+                term_id: groupStudent.term_id,
             },
         });
 
@@ -1125,13 +1153,13 @@ exports.assignTopic = async (req, res) => {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
 
-        const groupStudents = await GroupStudent.findAll({
+        const count = await GroupStudent.count({
             where: {
                 topic_id: topicId,
             },
         });
 
-        if (groupStudents.length >= topic.quantityGroupMax) {
+        if (count >= topic.quantityGroupMax) {
             return Error.sendForbidden(res, 'Số lượng nhóm đã đủ!');
         }
 
@@ -1158,7 +1186,6 @@ exports.removeTopic = async (req, res) => {
         const { id } = req.params;
 
         const groupStudent = await GroupStudent.findByPk(id);
-
         if (!groupStudent) {
             Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
         }
@@ -1180,9 +1207,22 @@ exports.removeTopic = async (req, res) => {
 exports.deleteGroupStudent = async (req, res) => {
     try {
         const { id } = req.params;
+
         const groupStudent = await GroupStudent.findByPk(id);
         if (!groupStudent) {
             Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+        }
+
+        const studentTerms = await StudentTerm.findAll({
+            where: {
+                group_student_id: id,
+            },
+        });
+        if (studentTerms.length > 0) {
+            return Error.sendForbidden(
+                res,
+                'Nhóm sinh viên đã có thành viên, không thể xoá! Chỉ được phép xoá khi nhóm không có thành viên!',
+            );
         }
 
         await groupStudent.destroy();
@@ -1204,13 +1244,16 @@ exports.chooseTopic = async (req, res) => {
 
         const groupStudent = await GroupStudent.findByPk(id);
         if (!groupStudent) {
-            return Error.sendNotFound(res, 'Nhóm sinh viên không tồn tại!');
+            return Error.sendNotFound(
+                res,
+                'Hiện tại bạn chưa tham gia nhóm sinh viên nào! Cần tham gia nhóm trước khi chọn đề tài!',
+            );
         }
 
         if (groupStudent.topic_id) {
             return Error.sendForbidden(
                 res,
-                'Nhóm sinh viên đã chọn đề tài! Vui lòng huỷ đề tài hiện tại trước khi chọn đề tài mới!',
+                'Nhóm của bạn đã có đề tài! Bạn vui lòng thực hiện huỷ đề tài hiện tại trước khi chọn đề tài mới!',
             );
         }
 
@@ -1235,7 +1278,10 @@ exports.chooseTopic = async (req, res) => {
         });
 
         if (!studentTerm.isAdmin) {
-            return Error.sendForbidden(res, 'Bạn không phải là trưởng nhóm!');
+            return Error.sendForbidden(
+                res,
+                'Bạn không phải là trưởng nhóm nên không thể chọn đề tài!',
+            );
         }
 
         const topic = await Topic.findByPk(topicId);
@@ -1250,7 +1296,7 @@ exports.chooseTopic = async (req, res) => {
         });
 
         if (groupStudents.length >= topic.quantityGroupMax) {
-            return Error.sendForbidden(res, 'Số lượng nhóm đã đủ!');
+            return Error.sendForbidden(res, 'Số lượng nhóm chọn đề tài đã đạt tối đa!');
         }
 
         groupStudent.topic_id = topicId;
@@ -1278,7 +1324,10 @@ exports.cancelTopic = async (req, res) => {
         });
 
         if (!studentTerm.isAdmin) {
-            return Error.sendForbidden(res, 'Bạn không phải là trưởng nhóm!');
+            return Error.sendForbidden(
+                res,
+                'Bạn không phải là trưởng nhóm nên không thể huỷ đề tài!',
+            );
         }
 
         const groupStudent = await GroupStudent.findByPk(id);

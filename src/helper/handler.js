@@ -11,7 +11,7 @@ exports.checkDegree = (degree, fullName) => {
         case 'PROFESSOR':
             return 'PGS.TS ' + fullName;
         default:
-            return 'ThS. ' + fullName;
+            return '';
     }
 };
 
