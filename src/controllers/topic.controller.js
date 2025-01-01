@@ -267,6 +267,11 @@ exports.getTopicsApproved = async (req, res) => {
     try {
         const { termId } = req.query;
 
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
         const topics = await sequelize.query(
             `SELECT t.id, t.key, t.name, t.quantity_group_max as quantityGroupMax, l.full_name as fullName, COUNT(gs.id) as quantityGroup
             FROM topics t
@@ -345,7 +350,10 @@ exports.getTopicsByGroupLecturerId = async (req, res) => {
 exports.getTopicById = async (req, res) => {
     try {
         const { id } = req.params;
-        const topic = await Topic.findOne({
+        let topic = await Topic.findOne({
+            attributes: {
+                exclude: ['lecturer_term_id', 'created_at', 'updated_at'],
+            },
             where: {
                 id,
             },
@@ -354,20 +362,7 @@ exports.getTopicById = async (req, res) => {
                 attributes: ['id'],
                 include: {
                     model: Lecturer,
-                    attributes: [
-                        'id',
-                        'userName',
-                        'fullName',
-                        'email',
-                        'phone',
-                        'gender',
-                        'degree',
-                    ],
-                    include: {
-                        model: Major,
-                        attributes: ['id', 'name'],
-                        as: 'major',
-                    },
+                    attributes: ['id', 'fullName', 'degree', 'email', 'phone'],
                     as: 'lecturer',
                 },
                 as: 'lecturerTerm',
@@ -377,6 +372,13 @@ exports.getTopicById = async (req, res) => {
         if (!topic) {
             return Error.sendNotFound(res, 'Đề tài không tồn tại!');
         }
+
+        topic.lecturerTerm.lecturer.fullName = checkDegree(
+            topic.lecturerTerm.lecturer.degree,
+            topic.lecturerTerm.lecturer.fullName,
+        );
+
+        topic.note = topic.note ? topic.note : 'Chưa có';
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -479,6 +481,12 @@ exports.createTopic = async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return Error.sendWarning(res, errors.array()[0].msg);
+        }
+
+        // check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
         // Check if lecturer is valid for this term
