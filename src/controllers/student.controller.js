@@ -201,7 +201,8 @@ exports.getStudentsOfSearch = async (req, res) => {
         students = students.map((stu) => {
             return {
                 ...stu,
-                lecturerName: stu.lecturerName ? checkDegree(stu.degree, stu.lecturerName) : null,
+                degree: undefined,
+                lecturerName: checkDegree(stu.degree, stu.lecturerName),
                 isActive: Boolean(stu.isActive),
             };
         });

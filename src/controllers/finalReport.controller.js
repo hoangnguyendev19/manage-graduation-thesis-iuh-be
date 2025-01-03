@@ -22,7 +22,8 @@ exports.getFinalReports = async (req, res) => {
             INNER JOIN topics t ON gs.topic_id = t.id
             INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
-            WHERE gs.term_id = :termId`,
+            WHERE gs.term_id = :termId
+            ORDER BY gs.name`,
             {
                 replacements: { termId },
                 type: sequelize.QueryTypes.SELECT,
