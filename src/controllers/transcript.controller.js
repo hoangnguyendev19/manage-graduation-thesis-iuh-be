@@ -904,7 +904,8 @@ exports.exportAllTranscripts = async (req, res) => {
                 `SELECT e.id, e.key, e.type, e.score_max as scoreMax, t.score, t.lecturer_term_id as lecturerTermId
                 FROM transcripts t
                 INNER JOIN evaluations e ON t.evaluation_id = e.id
-                WHERE t.student_term_id = :studentTermId`,
+                WHERE t.student_term_id = :studentTermId
+                ORDER BY e.key`,
                 {
                     type: sequelize.QueryTypes.SELECT,
                     replacements: { studentTermId: student.id },
