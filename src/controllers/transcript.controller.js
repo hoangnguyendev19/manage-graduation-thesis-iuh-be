@@ -900,6 +900,49 @@ exports.exportAllTranscripts = async (req, res) => {
                 ).toFixed(2),
             );
 
+            const evaluations = await sequelize.query(
+                `SELECT e.id, e.key, e.type, e.score_max as scoreMax, t.score, t.lecturer_term_id as lecturerTermId
+                FROM transcripts t
+                INNER JOIN evaluations e ON t.evaluation_id = e.id
+                WHERE t.student_term_id = :studentTermId`,
+                {
+                    type: sequelize.QueryTypes.SELECT,
+                    replacements: { studentTermId: student.id },
+                },
+            );
+
+            const evaluationAdvisor = evaluations.filter(
+                (evaluation) =>
+                    evaluation.type === 'ADVISOR' && evaluation.lecturerTermId === advisor?.id,
+            );
+
+            const evaluationReviewer1 = evaluations.filter(
+                (evaluation) =>
+                    evaluation.type === 'REVIEWER' &&
+                    evaluation.lecturerTermId === reviewers[0]?.id,
+            );
+
+            const evaluationReviewer2 = evaluations.filter(
+                (evaluation) =>
+                    evaluation.type === 'REVIEWER' &&
+                    evaluation.lecturerTermId === reviewers[1]?.id,
+            );
+
+            const evaluationReport1 = evaluations.filter(
+                (evaluation) =>
+                    evaluation.type === 'REPORT' && evaluation.lecturerTermId === reports[0]?.id,
+            );
+
+            const evaluationReport2 = evaluations.filter(
+                (evaluation) =>
+                    evaluation.type === 'REPORT' && evaluation.lecturerTermId === reports[1]?.id,
+            );
+
+            const evaluationReport3 = evaluations.filter(
+                (evaluation) =>
+                    evaluation.type === 'REPORT' && evaluation.lecturerTermId === reports[2]?.id,
+            );
+
             result.push({
                 id: student.id,
                 username: student.username,
@@ -913,11 +956,17 @@ exports.exportAllTranscripts = async (req, res) => {
                 GVHĐ1: checkDegree(reports[0]?.degree, reports[0]?.lecturerName),
                 GVHĐ2: checkDegree(reports[1]?.degree, reports[1]?.lecturerName),
                 GVHĐ3: checkDegree(reports[2]?.degree, reports[2]?.lecturerName),
+                evaluationAdvisor,
                 'Tổng điểm GVHD': advisor?.totalScore || 0,
+                evaluationReviewer1,
                 'Tổng điểm GVPB1': reviewers[0]?.totalScore || 0,
+                evaluationReviewer2,
                 'Tổng điểm GVPB2': reviewers[1]?.totalScore || 0,
+                evaluationReport1,
                 'Tổng điểm GVHĐ1': reports[0]?.totalScore || 0,
+                evaluationReport2,
                 'Tổng điểm GVHĐ2': reports[1]?.totalScore || 0,
+                evaluationReport3,
                 'Tổng điểm GVHĐ3': reports[2]?.totalScore || 0,
                 'Điểm TB GVHD': avgAdvisor,
                 'Điểm TB GVPB1': avgReviewer1,

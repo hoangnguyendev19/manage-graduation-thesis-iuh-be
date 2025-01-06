@@ -34,7 +34,8 @@ exports.getGroupStudents = async (req, res) => {
             LEFT JOIN topics tc ON gs.topic_id = tc.id 
             LEFT JOIN lecturer_terms lt ON tc.lecturer_term_id = lt.id
             LEFT JOIN lecturers l ON l.id = lt.lecturer_id
-            WHERE gs.term_id = :termId`,
+            WHERE gs.term_id = :termId
+            ORDER BY gs.name ASC`,
             {
                 type: QueryTypes.SELECT,
                 replacements: {
@@ -734,10 +735,9 @@ exports.importGroupStudent = async (req, res) => {
         });
 
         const numberOfGroups = Math.ceil(studentTermCount / 2);
-        const numberOfDigits = numberOfGroups.toString().length;
 
         for (let i = 0; i < numberOfGroups; i++) {
-            const groupNumber = (i + 1).toString().padStart(numberOfDigits, '0');
+            const groupNumber = (i + 1).toString().padStart(3, '0');
             await GroupStudent.create({
                 name: `${groupNumber}`,
                 term_id: termId,
