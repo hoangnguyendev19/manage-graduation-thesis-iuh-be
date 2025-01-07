@@ -58,38 +58,46 @@ exports.exportLecturerTerms = async (req, res) => {
             return Error.sendNotFound(res, 'Học kì không tồn tại!');
         }
 
-        let lecturerTerms = await sequelize.query(
-            `SELECT l.username as 'Mã GV', l.full_name as 'Tên GV',
-                (SELECT COUNT(t.id)
-                FROM topics t
-                INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS 'Số đề tài',
+        const result = await sequelize.query(
+            `SELECT lt.id, l.username, l.full_name AS fullName, l.degree,
                 (SELECT COUNT(gs.id)
                 FROM group_students gs
                 INNER JOIN topics t ON t.id = gs.topic_id
-                INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS 'Số nhóm hướng dẫn',
-                (SELECT COUNT(glm.id)
-                FROM group_lecturer_members glm
-                INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS 'Số nhóm phân công'
-            FROM lecturers l
-            WHERE EXISTS (
-                SELECT 1
-                FROM lecturer_terms lt
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId
-            )
-            ORDER BY l.created_at DESC`,
+                WHERE t.lecturer_term_id = lt.id) AS totalGroupStudents,
+                (SELECT COUNT(a.group_student_id)
+                FROM assigns a
+                INNER JOIN group_lecturers gl ON gl.id = a.group_lecturer_id
+                INNER JOIN group_lecturer_members glm ON glm.group_lecturer_id = gl.id
+                WHERE glm.lecturer_term_id = lt.id AND gl.type = 'REVIEWER') AS totalReviewers,
+                (SELECT COUNT(a.group_student_id)
+                FROM assigns a
+                INNER JOIN group_lecturers gl ON gl.id = a.group_lecturer_id
+                INNER JOIN group_lecturer_members glm ON glm.group_lecturer_id = gl.id
+                WHERE glm.lecturer_term_id = lt.id AND gl.type LIKE 'REPORT%') AS totalReporters
+            FROM lecturer_terms lt
+            INNER JOIN lecturers l ON l.id = lt.lecturer_id
+            WHERE lt.term_id = :termId
+            GROUP BY lt.id, l.username, l.full_name, l.degree
+            ORDER BY l.full_name`,
             {
                 replacements: {
-                    termId: termId,
+                    termId,
                 },
                 type: QueryTypes.SELECT,
             },
         );
 
-        for (let i = 0; i < lecturerTerms.length; i++) {
-            lecturerTerms[i]['STT'] = i + 1;
+        const lecturerTerms = [];
+        for (let i = 0; i < result.length; i++) {
+            lecturerTerms.push({
+                STT: i + 1,
+                'Mã nhân sự': result[i].username,
+                'Họ tên': checkDegree(result[i].degree, result[i].fullName),
+                'Số nhóm SV Hướng dẫn': result[i].totalGroupStudents,
+                'Số nhóm SV chấm Phản biện': result[i].totalReviewers,
+                'Số nhóm SV chấm Hội đồng/Poster': result[i].totalReporters,
+                'Ghi chú': '',
+            });
         }
 
         res.status(HTTP_STATUS.OK).json({
@@ -263,23 +271,27 @@ exports.searchLecturerTerms = async (req, res) => {
             `SELECT lt.id, l.username, l.full_name AS fullName, m.name AS majorName,
                 (SELECT COUNT(t.id)
                 FROM topics t
-                INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId AND t.status = 'APPROVED') AS totalTopics,
+                WHERE t.lecturer_term_id = lt.id) AS totalTopics,
                 (SELECT COUNT(gs.id)
                 FROM group_students gs
                 INNER JOIN topics t ON t.id = gs.topic_id
-                INNER JOIN lecturer_terms lt ON lt.id = t.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS totalGroupStudents,
-                (SELECT COUNT(glm.id)
-                FROM group_lecturer_members glm
-                INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId) AS totalGroupLecturers
+                WHERE t.lecturer_term_id = lt.id) AS totalGroupStudents,
+                (SELECT COUNT(a.group_student_id)
+                FROM assigns a
+                INNER JOIN group_lecturers gl ON gl.id = a.group_lecturer_id
+                INNER JOIN group_lecturer_members glm ON glm.group_lecturer_id = gl.id
+                WHERE glm.lecturer_term_id = lt.id AND gl.type = 'REVIEWER') AS totalReviewers,
+                (SELECT COUNT(a.group_student_id)
+                FROM assigns a
+                INNER JOIN group_lecturers gl ON gl.id = a.group_lecturer_id
+                INNER JOIN group_lecturer_members glm ON glm.group_lecturer_id = gl.id
+                WHERE glm.lecturer_term_id = lt.id AND gl.type LIKE 'REPORT%') AS totalReporters
             FROM lecturer_terms lt
             INNER JOIN lecturers l ON l.id = lt.lecturer_id
             INNER JOIN majors m ON m.id = l.major_id
             WHERE lt.term_id = :termId
             ${searchQuery}
-            GROUP BY lt.id, l.username, l.full_name, l.id
+            GROUP BY lt.id, l.username, l.full_name, m.name
             ${orderBy}
             LIMIT :limit OFFSET :offset`,
             {

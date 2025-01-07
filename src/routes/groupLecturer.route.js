@@ -18,6 +18,7 @@ const {
     countGroupLecturersByLecturerId,
     searchGroupLecturerByName,
     updateDateAndLocation,
+    updatePosition,
 } = require('../controllers/groupLecturer.controller');
 
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
@@ -61,6 +62,13 @@ router.put(
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     removeLecturerFromGroupLecturer,
+);
+
+router.put(
+    APP_ROUTER.GROUP_LECTURER_POSITION,
+    protectLecturer,
+    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
+    updatePosition,
 );
 
 router.put(

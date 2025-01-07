@@ -407,7 +407,7 @@ exports.getGroupLecturerById = async (req, res) => {
         const { id } = req.params;
 
         const groupLecturer = await GroupLecturer.findByPk(id, {
-            attributes: ['name', 'type', 'keywords', 'startDate', 'endDate', 'location'],
+            attributes: ['id', 'name', 'type', 'keywords', 'startDate', 'endDate', 'location'],
         });
 
         if (!groupLecturer) {
@@ -487,12 +487,7 @@ exports.getGroupLecturerById = async (req, res) => {
             success: true,
             message: 'Lấy thông tin nhóm giảng viên thành công!',
             groupLecturer: {
-                name: groupLecturer.name,
-                type: groupLecturer.type,
-                keywords: groupLecturer.keywords,
-                startDate: groupLecturer.startDate,
-                endDate: groupLecturer.endDate,
-                location: groupLecturer.location,
+                ...groupLecturer.toJSON(),
                 members,
                 groupStudents,
             },
@@ -928,6 +923,48 @@ exports.updateDateAndLocation = async (req, res) => {
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Cập nhật thông tin ngày và địa điểm thành công!',
+        });
+    } catch (error) {
+        logger.error(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.updatePosition = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { lecturerId, position } = req.body;
+
+        const groupLecturer = await GroupLecturer.findByPk(id);
+        if (!groupLecturer) {
+            return Error.sendNotFound(res, 'Nhóm giảng viên không tồn tại!');
+        }
+
+        const lecturerTerm = await LecturerTerm.findOne({
+            where: {
+                lecturer_id: lecturerId,
+                term_id: groupLecturer.term_id,
+            },
+        });
+
+        if (!lecturerTerm) {
+            return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kì này');
+        }
+
+        const groupLecturerMember = await GroupLecturerMember.findOne({
+            where: {
+                group_lecturer_id: id,
+                lecturer_term_id: lecturerTerm.id,
+            },
+        });
+
+        await groupLecturerMember.update({
+            position,
+        });
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Cập nhật chức vụ thành công!',
         });
     } catch (error) {
         logger.error(error);
