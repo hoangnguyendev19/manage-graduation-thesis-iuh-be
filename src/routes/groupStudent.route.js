@@ -46,7 +46,7 @@ router.get(APP_ROUTER.GROUP_STUDENT_BY_ASSIGN, protectLecturer, getGroupStudents
 
 router.get(APP_ROUTER.GROUP_STUDENT_BY_TERM, protectStudent, getGroupStudentsByTermId);
 
-router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, protectLecturer, getGroupStudentMembers);
+router.get(APP_ROUTER.GROUP_STUDENT_MEMBER, getGroupStudentMembers);
 
 router.get(APP_ROUTER.COUNT, protectLecturer, countGroupStudents);
 

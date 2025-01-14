@@ -47,7 +47,6 @@ const APP_ROUTER = {
 
     // LECTURER_TERM
     LECTURER_TERM: '/api/v1/lecturer-terms',
-    LECTURER_TERM_EXPORT_ASSIGN: '/export-assign',
     LECTURER_TERM_TO_ADDING: '/to-adding',
 
     //STUDENTS

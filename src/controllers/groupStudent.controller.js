@@ -325,37 +325,55 @@ exports.getGroupStudentById = async (req, res) => {
 
         const membersWithTranscripts = await Promise.all(
             members.map(async (member) => {
-                const transcripts = await sequelize.query(
-                    `SELECT e.type, sum(t.score) / sum(e.score_max) * 10 as avgScore
+                let transcripts = await sequelize.query(
+                    `SELECT l.id, l.full_name as fullName, l.degree, e.type, sum(t.score) / sum(e.score_max) * 10 as avgScore
                     FROM transcripts t
-                    LEFT JOIN evaluations e ON t.evaluation_id = e.id
+                    INNER JOIN evaluations e ON t.evaluation_id = e.id
+                    INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+                    INNER JOIN lecturers l ON lt.lecturer_id = l.id
                     WHERE t.student_term_id = :studentTermId
-                    GROUP BY e.type`,
+                    GROUP BY l.id, l.full_name, l.degree, e.type`,
                     {
                         type: QueryTypes.SELECT,
                         replacements: { studentTermId: member.id },
                     },
                 );
 
+                transcripts = transcripts.map((transcript) => {
+                    return {
+                        ...transcript,
+                        fullName: checkDegree(transcript.degree, transcript.fullName),
+                        degree: undefined,
+                        avgScore: Number(transcript.avgScore.toFixed(2)),
+                    };
+                });
+
                 const advisor = transcripts.find((transcript) => transcript.type === 'ADVISOR');
-                const reviewer = transcripts.find((transcript) => transcript.type === 'REVIEWER');
-                const report = transcripts.find((transcript) => transcript.type === 'REPORT');
-
-                const advisorScore = Number(advisor?.avgScore.toFixed(2) || 0);
-                const reviewerScore = Number(reviewer?.avgScore.toFixed(2) || 0);
-                const reportScore = Number(report?.avgScore.toFixed(2) || 0);
-
-                const totalAvgScore =
-                    Number(((advisorScore + reviewerScore + reportScore) / 3).toFixed(2)) +
-                    (member.bonusScore || 0);
+                const firstReviewer = transcripts.filter(
+                    (transcript) => transcript.type === 'REVIEWER',
+                )[0];
+                const secondReviewer = transcripts.filter(
+                    (transcript) => transcript.type === 'REVIEWER',
+                )[1];
+                const firstReport = transcripts.filter(
+                    (transcript) => transcript.type === 'REPORT',
+                )[0];
+                const secondReport = transcripts.filter(
+                    (transcript) => transcript.type === 'REPORT',
+                )[1];
+                const thirdReport = transcripts.filter(
+                    (transcript) => transcript.type === 'REPORT',
+                )[2];
 
                 return {
                     ...member,
+                    advisor: advisor || null,
+                    firstReviewer: firstReviewer || null,
+                    secondReviewer: secondReviewer || null,
+                    firstReport: firstReport || null,
+                    secondReport: secondReport || null,
+                    thirdReport: thirdReport || null,
                     bonusScore: member.bonusScore || 0,
-                    advisorScore,
-                    reviewerScore,
-                    reportScore,
-                    totalAvgScore,
                 };
             }),
         );
