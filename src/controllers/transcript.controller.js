@@ -7,11 +7,13 @@ const {
     TermDetail,
     Comment,
     Article,
+    GroupStudent,
 } = require('../models/index');
 const Error = require('../helper/errors');
 const { HTTP_STATUS } = require('../constants/constant');
 const { sequelize } = require('../configs/mysql.config');
 const { checkDegree, validateDate } = require('../helper/handler');
+const xlsx = require('xlsx');
 const logger = require('../configs/logger.config');
 
 exports.getTranscriptByTypeEvaluation = async (req, res) => {
@@ -307,13 +309,15 @@ exports.getTranscriptSummary = async (req, res) => {
             return Error.sendWarning(res, 'Hiện tại chưa đến thời gian công bố kết quả!');
         }
 
-        const transcripts = await sequelize.query(
-            `SELECT st.id, e.type, (sum(t.score) / sum(e.score_max)) * 10 as avgScore
+        let transcripts = await sequelize.query(
+            `SELECT st.id, e.type, l.full_name as fullName, l.degree, sum(t.score) / sum(e.score_max) * 10 as avgScore 
             FROM transcripts t
             INNER JOIN evaluations e ON t.evaluation_id = e.id
             INNER JOIN student_terms st ON t.student_term_id = st.id
+            INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
+            INNER JOIN lecturers l ON lt.lecturer_id = l.id
             WHERE st.term_id = :termId AND st.student_id = :studentId
-            GROUP BY st.id, e.type`,
+            GROUP BY st.id, e.type, l.full_name, l.degree`,
             {
                 replacements: {
                     termId,
@@ -322,6 +326,31 @@ exports.getTranscriptSummary = async (req, res) => {
                 type: sequelize.QueryTypes.SELECT,
             },
         );
+
+        transcripts = transcripts
+            .map((transcript) => {
+                return {
+                    ...transcript,
+                    fullName: checkDegree(transcript.degree, transcript.fullName),
+                    degree: undefined,
+                    avgScore: Number(transcript.avgScore.toFixed(2)),
+                };
+            })
+            .sort((a, b) => {
+                if (a.type === 'ADVISOR') {
+                    return -1;
+                }
+                if (b.type === 'ADVISOR') {
+                    return 1;
+                }
+                if (a.type === 'REVIEWER' && b.type === 'REPORT') {
+                    return -1;
+                }
+                if (a.type === 'REPORT' && b.type === 'REVIEWER') {
+                    return 1;
+                }
+                return 0;
+            });
 
         const result = await sequelize.query(
             `SELECT sum(bonus_score) as bonusScore
@@ -338,28 +367,14 @@ exports.getTranscriptSummary = async (req, res) => {
             },
         );
 
-        const advisor = transcripts.find((transcript) => transcript.type === 'ADVISOR');
-        const reviewer = transcripts.find((transcript) => transcript.type === 'REVIEWER');
-        const report = transcripts.find((transcript) => transcript.type === 'REPORT');
-
-        const advisorScore = Number(advisor?.avgScore.toFixed(2) || 0);
-        const reviewerScore = Number(reviewer?.avgScore.toFixed(2) || 0);
-        const reportScore = Number(report?.avgScore.toFixed(2) || 0);
-
         const bonusScore = result[0]?.bonusScore || 0;
-
-        const totalAvgScore =
-            Number(((advisorScore + reviewerScore + reportScore) / 3).toFixed(2)) + bonusScore;
 
         res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy bảng điểm tổng kết thành công!',
             transcript: {
-                advisorScore,
-                reviewerScore,
-                reportScore,
+                transcripts,
                 bonusScore,
-                totalAvgScore: totalAvgScore > 10 ? 10 : totalAvgScore,
             },
         });
     } catch (error) {
@@ -843,7 +858,7 @@ exports.exportAllTranscripts = async (req, res) => {
 
         for (const student of students) {
             let transcripts = await sequelize.query(
-                `SELECT lt.id, l.full_name as lecturerName, l.degree, e.type, sum(t.score) as totalScore, sum(e.score_max) as totalScoreMax
+                `SELECT lt.id, l.full_name as lecturerName, l.degree, e.type, sum(t.score) as totalScore, sum(t.score) / sum(e.score_max) * 10 as avgScore
                 FROM transcripts t
                 INNER JOIN evaluations e ON t.evaluation_id = e.id
                 INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
@@ -865,28 +880,12 @@ exports.exportAllTranscripts = async (req, res) => {
             const reviewers = transcripts.filter((transcript) => transcript.type === 'REVIEWER');
             const reports = transcripts.filter((transcript) => transcript.type === 'REPORT');
 
-            const avgAdvisor = Number(
-                Number((advisor?.totalScore / advisor?.totalScoreMax || 0) * 10).toFixed(2),
-            );
-            const avgReviewer1 = Number(
-                Number((reviewers[0]?.totalScore / reviewers[0]?.totalScoreMax || 0) * 10).toFixed(
-                    2,
-                ),
-            );
-            const avgReviewer2 = Number(
-                Number((reviewers[1]?.totalScore / reviewers[1]?.totalScoreMax || 0) * 10).toFixed(
-                    2,
-                ),
-            );
-            const avgReport1 = Number(
-                Number((reports[0]?.totalScore / reports[0]?.totalScoreMax || 0) * 10).toFixed(2),
-            );
-            const avgReport2 = Number(
-                Number((reports[1]?.totalScore / reports[1]?.totalScoreMax || 0) * 10).toFixed(2),
-            );
-            const avgReport3 = Number(
-                Number((reports[2]?.totalScore / reports[2]?.totalScoreMax || 0) * 10).toFixed(2),
-            );
+            const avgAdvisor = Number((advisor?.avgScore || 0).toFixed(2));
+            const avgReviewer1 = Number((reviewers[0]?.avgScore || 0).toFixed(2));
+            const avgReviewer2 = Number((reviewers[1]?.avgScore || 0).toFixed(2));
+            const avgReport1 = Number((reports[0]?.avgScore || 0).toFixed(2));
+            const avgReport2 = Number((reports[1]?.avgScore || 0).toFixed(2));
+            const avgReport3 = Number((reports[2]?.avgScore || 0).toFixed(2));
 
             const totalAvgScore = Number(
                 (
@@ -978,7 +977,9 @@ exports.exportAllTranscripts = async (req, res) => {
                 'Điểm TB': totalAvgScore,
                 'Điểm Cộng': bonusScore || 0,
                 'Tổng Điểm':
-                    totalAvgScore + (bonusScore || 0) > 10 ? 10 : totalAvgScore + (bonusScore || 0),
+                    Number(totalAvgScore + (bonusScore || 0).toFixed(2)) > 10
+                        ? 10
+                        : Number(totalAvgScore + (bonusScore || 0).toFixed(2)),
             });
         }
 
@@ -986,6 +987,207 @@ exports.exportAllTranscripts = async (req, res) => {
             success: true,
             message: 'Xuất bảng điểm thành công!',
             students: result,
+        });
+    } catch (error) {
+        logger.error(error);
+        Error.sendError(res, error);
+    }
+};
+
+exports.importTranscripts = async (req, res) => {
+    try {
+        const { termId, type } = req.body;
+
+        // check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        const evaluations = await Evaluation.findAll({
+            attributes: ['id', 'key', 'scoreMax'],
+            where: {
+                term_id: term.id,
+                type: type.split('_')[0],
+            },
+        });
+
+        if (evaluations.length === 0) {
+            return Error.sendNotFound(
+                res,
+                'Tiêu chí đánh giá của loại này trong học kì này chưa được thêm!',
+            );
+        }
+
+        if (!req.file || !req.file.buffer) {
+            return Error.sendWarning(res, 'Vui lòng chọn file tải lên');
+        }
+
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = xlsx.utils.sheet_to_json(sheet);
+
+        for (const data of jsonData) {
+            if (!data['Mã nhóm']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Mã nhóm không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(data) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            if (!data['Mã sinh viên']) {
+                return Error.sendWarning(
+                    res,
+                    `Tên cột Mã sinh viên không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(data) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                );
+            }
+
+            const studentTerm = await sequelize.query(
+                `SELECT st.id
+                FROM student_terms st
+                INNER JOIN students s ON s.id = st.student_id
+                WHERE st.term_id = :termId AND s.username = :username`,
+                {
+                    type: sequelize.QueryTypes.SELECT,
+                    replacements: {
+                        termId,
+                        username: data['Mã sinh viên'],
+                    },
+                },
+            );
+
+            if (studentTerm.length === 0) {
+                return Error.sendNotFound(
+                    res,
+                    `Sinh viên có mã ${data['Mã sinh viên']} không tồn tại trong học kì này!`,
+                );
+            }
+
+            const lecturerTerm = await LecturerTerm.findOne({
+                where: {
+                    term_id: term.id,
+                    lecturer_id: req.user.id,
+                },
+            });
+
+            if (!lecturerTerm) {
+                return Error.sendNotFound(res, 'Giảng viên không tồn tại trong học kì này!');
+            }
+
+            const groupStudent = await GroupStudent.findOne({
+                where: {
+                    term_id: term.id,
+                    name: data['Mã nhóm'],
+                },
+            });
+
+            if (!groupStudent) {
+                return Error.sendNotFound(
+                    res,
+                    `Nhóm có mã ${data['Mã nhóm']} không tồn tại trong học kì này!`,
+                );
+            }
+
+            if (type !== 'ADVISOR') {
+                const checkAssign = await sequelize.query(
+                    `SELECT a.id
+                    FROM assigns a
+                    INNER JOIN group_lecturer_members glm ON a.group_lecturer_id = glm.group_lecturer_id
+                    WHERE a.group_student_id = :groupStudentId AND glm.lecturer_term_id = :lecturerTermId AND a.type = :type`,
+                    {
+                        type: sequelize.QueryTypes.SELECT,
+                        replacements: {
+                            groupStudentId: groupStudent.id,
+                            lecturerTermId: lecturerTerm.id,
+                            type: type,
+                        },
+                    },
+                );
+
+                if (checkAssign.length === 0) {
+                    return Error.sendNotFound(
+                        res,
+                        `Bạn không được phân công chấm điểm cho nhóm có mã ${data['Mã nhóm']}!`,
+                    );
+                }
+            } else {
+                const checkLecturer = await sequelize.query(
+                    `SELECT t.lecturer_term_id as id
+                    FROM group_students gs
+                    INNER JOIN topics t ON gs.topic_id = t.id
+                    WHERE gs.id = :groupStudentId`,
+                    {
+                        type: sequelize.QueryTypes.SELECT,
+                        replacements: {
+                            groupStudentId: groupStudent.id,
+                        },
+                    },
+                );
+
+                console.log(checkLecturer[0].id, lecturerTerm.id);
+
+                if (checkLecturer[0].id !== lecturerTerm.id) {
+                    return Error.sendNotFound(
+                        res,
+                        `Bạn không phải là giảng viên hướng dẫn của nhóm có mã ${data['Mã nhóm']}!`,
+                    );
+                }
+            }
+
+            const transcripts = [];
+            for (const evaluation of evaluations) {
+                if (!data[`${evaluation.key} (${evaluation.scoreMax})`]) {
+                    return Error.sendWarning(
+                        res,
+                        `Tên cột ${evaluation.key} (${evaluation.scoreMax}) không đúng định dạng hoặc dòng dữ liệu thứ ${jsonData.indexOf(data) + 2} chứa giá trị rỗng của tên cột đó (nếu tên cột là dòng thứ 1 của file excel).`,
+                    );
+                }
+
+                if (data[`${evaluation.key} (${evaluation.scoreMax})`] > evaluation.scoreMax) {
+                    return Error.sendWarning(
+                        res,
+                        `Điểm ${evaluation.key} (${evaluation.scoreMax}) không được lớn hơn điểm tối đa của đánh giá!`,
+                    );
+                }
+
+                transcripts.push({
+                    evaluation_id: evaluation.id,
+                    score: data[`${evaluation.key} (${evaluation.scoreMax})`],
+                    student_term_id: studentTerm[0].id,
+                    lecturer_term_id: lecturerTerm.id,
+                });
+            }
+
+            for (const transcript of transcripts) {
+                const checkTranscript = await Transcript.findOne({
+                    where: {
+                        student_term_id: transcript.student_term_id,
+                        evaluation_id: transcript.evaluation_id,
+                        lecturer_term_id: transcript.lecturer_term_id,
+                    },
+                });
+
+                if (checkTranscript) {
+                    await Transcript.update(
+                        { score: transcript.score },
+                        {
+                            where: {
+                                student_term_id: transcript.student_term_id,
+                                evaluation_id: transcript.evaluation_id,
+                                lecturer_term_id: transcript.lecturer_term_id,
+                            },
+                        },
+                    );
+                } else {
+                    await Transcript.create(transcript);
+                }
+            }
+        }
+
+        res.status(HTTP_STATUS.CREATED).json({
+            success: true,
+            message: 'Import bảng điểm thành công!',
         });
     } catch (error) {
         logger.error(error);

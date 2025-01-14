@@ -5,7 +5,6 @@ const { APP_ROUTER } = require('../constants/router');
 const {
     importLecturerTerms,
     exportLecturerTerms,
-    exportLecturerAssigns,
     getLecturerTerms,
     getLecturerTermById,
     deleteLecturerTerm,
@@ -25,13 +24,6 @@ router.post(
     protectLecturer,
     checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
     importLecturerTerms,
-);
-
-router.get(
-    APP_ROUTER.LECTURER_TERM_EXPORT_ASSIGN,
-    protectLecturer,
-    checkRole(['ADMIN', 'HEAD_LECTURER', 'HEAD_COURSE']),
-    exportLecturerAssigns,
 );
 
 router.get(

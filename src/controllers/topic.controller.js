@@ -2,7 +2,6 @@ const {
     Topic,
     LecturerTerm,
     Lecturer,
-    Major,
     GroupLecturer,
     Term,
     TermDetail,
@@ -638,6 +637,12 @@ exports.updateQuantityGroupMax = async (req, res) => {
 exports.importTopics = async (req, res) => {
     try {
         const { termId } = req.body;
+
+        // check if term exist
+        const term = await Term.findByPk(termId);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
 
         if (!req.file || !req.file.buffer) {
             return Error.sendWarning(res, 'Vui lòng chọn file tải lên');

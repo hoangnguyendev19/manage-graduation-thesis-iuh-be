@@ -15,10 +15,11 @@ const {
     getStatisticTranscript,
     getTranscriptsByTypeAssign,
     exportAllTranscripts,
+    importTranscripts,
 } = require('../controllers/transcript.controller');
 const { protectLecturer, checkRole } = require('../middleware/lecturer.middleware');
 const { protectStudent } = require('../middleware/student.middleware');
-
+const upload = require('../configs/upload.config');
 const router = express.Router();
 
 router.get(APP_ROUTER.TRANSCRIPT_BY_GROUP_STUDENT, protectLecturer, getTranscriptByGroupStudent);
@@ -48,7 +49,7 @@ router.get(
 
 router.get(APP_ROUTER.TRANSCRIPT_STATISTIC, protectLecturer, getStatisticTranscript);
 
-router.get(APP_ROUTER.TRANSCRIPT_BY_STUDENT, protectStudent, getTranscriptByStudentId);
+// router.get(APP_ROUTER.TRANSCRIPT_BY_STUDENT, protectStudent, getTranscriptByStudentId);
 
 router.get(
     APP_ROUTER.EXPORT,
@@ -58,6 +59,8 @@ router.get(
 );
 
 router.post(APP_ROUTER.LIST, protectLecturer, createTranscriptList);
+
+router.post(APP_ROUTER.IMPORT, protectLecturer, upload.single('file'), importTranscripts);
 
 router.put(APP_ROUTER.LIST, protectLecturer, updateTranscriptList);
 

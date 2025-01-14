@@ -111,66 +111,6 @@ exports.exportLecturerTerms = async (req, res) => {
     }
 };
 
-exports.exportLecturerAssigns = async (req, res) => {
-    try {
-        const { termId } = req.query;
-
-        if (!termId) {
-            return Error.sendWarning(res, 'Hãy chọn học kỳ!');
-        }
-
-        const term = await Term.findByPk(termId);
-        if (!term) {
-            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
-        }
-
-        const lecturers = await sequelize.query(
-            `SELECT lt.id, l.username as 'Mã nhân sự', l.full_name AS fullName, l.degree AS degree,
-                (SELECT COUNT(t.id)
-                FROM topics t
-                INNER JOIN lecturer_terms lt ON t.lecturer_term_id = lt.id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId AND t.status = 'APPROVED') AS 'Số đề tài hướng dẫn KLTN',
-                (SELECT COUNT(glm.id)
-                FROM group_lecturers gl
-                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
-                INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId AND gl.type = 'REVIEWER') AS 'Số đề tài chấm phản biện',
-                (SELECT COUNT(glm.id)
-                FROM group_lecturers gl
-                INNER JOIN group_lecturer_members glm ON gl.id = glm.group_lecturer_id
-                INNER JOIN lecturer_terms lt ON lt.id = glm.lecturer_term_id
-                WHERE lt.lecturer_id = l.id AND lt.term_id = :termId AND gl.type LIKE 'REPORT%') AS 'Số đề tài chấm Hội đồng/poster'
-            FROM lecturers l
-            INNER JOIN lecturer_terms lt ON l.id = lt.lecturer_id
-            WHERE lt.term_id = :termId
-            GROUP BY lt.id, l.id, l.username, l.full_name`,
-            {
-                replacements: { termId },
-                type: QueryTypes.SELECT,
-            },
-        );
-
-        for (let i = 0; i < lecturers.length; i++) {
-            lecturers[i]['STT'] = i + 1;
-            lecturers[i]['Họ tên'] = checkDegree(lecturers[i].degree, lecturers[i].fullName);
-            lecturers[i]['Ghi chú'] = '';
-
-            delete lecturers[i].id;
-            delete lecturers[i].degree;
-            delete lecturers[i].fullName;
-        }
-
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Xuất danh sách giảng viên phân công thành công!',
-            lecturers,
-        });
-    } catch (error) {
-        logger.error(error);
-        Error.sendError(res, error);
-    }
-};
-
 exports.getLecturerTerms = async (req, res) => {
     try {
         const { termId } = req.query;
@@ -271,7 +211,7 @@ exports.searchLecturerTerms = async (req, res) => {
             `SELECT lt.id, l.username, l.full_name AS fullName, m.name AS majorName,
                 (SELECT COUNT(t.id)
                 FROM topics t
-                WHERE t.lecturer_term_id = lt.id) AS totalTopics,
+                WHERE t.lecturer_term_id = lt.id AND t.status = 'APPROVED') AS totalTopics,
                 (SELECT COUNT(gs.id)
                 FROM group_students gs
                 INNER JOIN topics t ON t.id = gs.topic_id
