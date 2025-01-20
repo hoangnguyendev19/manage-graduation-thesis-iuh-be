@@ -121,7 +121,8 @@ exports.getTopicByLecturer = async (req, res) => {
             INNER JOIN lecturers l ON lt.lecturer_id = l.id
             LEFT JOIN group_students gs ON t.id = gs.topic_id
             WHERE lt.term_id = :termId AND lt.lecturer_id = :lecturerId
-            GROUP BY t.id, t.key, t.name, t.status, t.quantity_group_max`,
+            GROUP BY t.id, t.key, t.name, t.status, t.quantity_group_max
+            ORDER BY t.key`,
             {
                 replacements: {
                     termId,
