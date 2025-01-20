@@ -158,7 +158,7 @@ exports.getStudentsOfSearch = async (req, res) => {
         const orderBy = sort ? `ORDER BY s.${searchField} ${sort}` : 'ORDER BY s.full_name ASC';
 
         let students = await sequelize.query(
-            `SELECT s.id, s.username, s.full_name as fullName, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, l.degree, s.is_active as isActive
+            `SELECT s.id, st.id as studentTermId, s.username, s.full_name as fullName, gs.name as groupName, t.name as topicName, l.full_name as lecturerName, l.degree, s.is_active as isActive
             FROM students s
             LEFT JOIN student_terms st ON s.id = st.student_id
             LEFT JOIN group_students gs ON st.group_student_id = gs.id
@@ -320,11 +320,11 @@ exports.searchStudents = async (req, res) => {
         }
 
         students = await sequelize.query(
-            `SELECT st.id as studentId, st.username, st.full_name as studentName, gs.id as groupId, gs.name as groupName
-            FROM students st
-            LEFT JOIN student_terms stt ON st.id = stt.student_id
-            LEFT JOIN group_students gs ON stt.group_student_id = gs.id
-            WHERE stt.term_id = :termId ${searchQuery}`,
+            `SELECT st.id as studentId, s.username, s.full_name as studentName, gs.id as groupId, gs.name as groupName
+            FROM students s
+            LEFT JOIN student_terms st ON s.id = st.student_id
+            LEFT JOIN group_students gs ON st.group_student_id = gs.id
+            WHERE st.term_id = :termId ${searchQuery}`,
             {
                 replacements: { termId, keywords: `%${keywords}` },
                 type: QueryTypes.SELECT,
@@ -345,7 +345,6 @@ exports.searchStudents = async (req, res) => {
 exports.getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
-
         const student = await Student.findOne({
             where: { id },
             attributes: {
@@ -391,55 +390,46 @@ exports.createStudent = async (req, res) => {
         if (!errors.isEmpty()) {
             return Error.sendWarning(res, errors.array()[0].msg);
         }
+        let student = null;
 
         const existedStudent = await Student.findOne({ where: { username } });
-        if (existedStudent) {
-            return Error.sendConflict(res, 'Mã sinh viên đã tồn tại!');
+        if (!existedStudent) {
+            // 2000-10-19 => 19102000
+            const password = await hashPassword(dateOfBirth.split('-').reverse().join(''));
+
+            student = await Student.create({
+                username,
+                fullName,
+                password,
+                gender,
+                dateOfBirth,
+                phone,
+                email,
+                typeTraining,
+                clazzName,
+                major_id: majorId,
+            });
+        } else {
+            const existedStudentTerm = await StudentTerm.findOne({
+                where: { student_id: existedStudent.id, term_id: termId },
+            });
+
+            if (existedStudentTerm) {
+                return Error.sendConflict(res, 'Sinh viên đã tồn tại trong học kỳ này!');
+            }
+
+            student = existedStudent;
         }
-
-        // 2000-10-19 => 19102000
-        const password = await hashPassword(dateOfBirth.split('-').reverse().join(''));
-
-        const student = await Student.create({
-            username,
-            fullName,
-            password,
-            gender,
-            dateOfBirth,
-            phone,
-            email,
-            typeTraining,
-            clazzName,
-            major_id: majorId,
-        });
 
         await StudentTerm.create({
             student_id: student.id,
             term_id: termId,
         });
 
-        const newStudent = await Student.findOne({
-            where: { id: student.id },
-            attributes: {
-                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
-                include: [
-                    ['major_id', 'majorId'],
-                    [sequelize.col('major.name'), 'majorName'],
-                ],
-            },
-            include: [
-                {
-                    model: Major,
-                    attributes: [],
-                    as: 'major',
-                },
-            ],
-        });
-
         res.status(HTTP_STATUS.CREATED).json({
             success: true,
             message: 'Tạo sinh viên thành công!',
-            student: newStudent,
+            student,
         });
     } catch (error) {
         logger.error(error);
@@ -468,7 +458,6 @@ exports.updateStudent = async (req, res) => {
         }
 
         const student = await Student.findByPk(id);
-
         if (!student) {
             return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
         }
@@ -489,24 +478,6 @@ exports.updateStudent = async (req, res) => {
             typeTraining,
             clazzName,
             major_id: majorId,
-        });
-
-        const newStudent = await Student.findOne({
-            where: { id },
-            attributes: {
-                exclude: ['password', 'created_at', 'updated_at', 'major_id', 'major'],
-                include: [
-                    ['major_id', 'majorId'],
-                    [sequelize.col('major.name'), 'majorName'],
-                ],
-            },
-            include: [
-                {
-                    model: Major,
-                    attributes: [],
-                    as: 'major',
-                },
-            ],
         });
 
         res.status(HTTP_STATUS.OK).json({
@@ -784,20 +755,15 @@ exports.exportTestStudents = async (req, res) => {
 exports.deleteStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        const student = await Student.findByPk(id);
-        if (!student) {
-            return Error.sendNotFound(res, 'Sinh viên không tồn tại!');
-        }
-
-        const studentTerms = await StudentTerm.findAll({
-            where: { student_id: id },
+        const studentTerm = await StudentTerm.findOne({
+            where: { id },
         });
 
-        for (let i = 0; i < studentTerms.length; i++) {
-            await studentTerms[i].destroy();
+        if (!studentTerm) {
+            return Error.sendNotFound(res, 'Sinh viên không tồn tại trong học kỳ này!');
         }
 
-        await student.destroy();
+        await studentTerm.destroy();
 
         res.status(HTTP_STATUS.OK).json({
             success: true,

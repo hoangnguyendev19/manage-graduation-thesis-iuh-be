@@ -730,3 +730,24 @@ exports.updatePublicResultTerm = async (req, res) => {
         Error.sendError(res, error);
     }
 };
+
+exports.deleteTerm = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const term = await Term.findByPk(id);
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kỳ không tồn tại!');
+        }
+
+        await term.destroy();
+
+        res.status(HTTP_STATUS.OK).json({
+            success: true,
+            message: 'Xóa học kỳ thành công!',
+        });
+    } catch (error) {
+        logger.error(error);
+        Error.sendError(res, error);
+    }
+};

@@ -282,32 +282,42 @@ exports.searchLecturerTerms = async (req, res) => {
 exports.getLecturerTermsToAdding = async (req, res) => {
     try {
         const { termId, majorId } = req.query;
-        const query = `SELECT l.id AS lecturerId, l.full_name AS fullName,l.username as username,
-        l.email,l.degree, m.name AS majorName
+
+        // Check if termId exists
+        const term = await Term.findByPk(termId, {
+            attribues: ['id'],
+        });
+        if (!term) {
+            return Error.sendNotFound(res, 'Học kì không tồn tại!');
+        }
+
+        let lecturerTerms = await sequelize.query(
+            `SELECT l.id, l.full_name AS fullName, l.username as username, l.degree, m.name AS majorName
         FROM lecturers l
         LEFT JOIN lecturer_terms lt ON lt.lecturer_id = l.id AND lt.term_id = :termId
         LEFT JOIN majors m ON m.id = l.major_id
-        WHERE 
-        lt.lecturer_id IS NULL
-        OR
-        ( l.major_id  != :majorId AND  lt.lecturer_id IS NULL )`;
-
-        const lecturerTerms = await sequelize.query(query, {
-            type: QueryTypes.SELECT,
-            replacements: {
-                majorId: majorId,
-                termId: termId,
+        WHERE l.major_id != :majorId`,
+            {
+                type: QueryTypes.SELECT,
+                replacements: {
+                    majorId: majorId,
+                    termId: termId,
+                },
             },
+        );
+
+        lecturerTerms = lecturerTerms.map((lt) => {
+            return {
+                ...lt,
+                fullName: checkDegree(lt.degree, lt.fullName),
+                degree: undefined,
+            };
         });
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
             message: 'Lấy danh sách giảng viên để thêm vào học kì thành công',
-            lecturerTerms: lecturerTerms.map((lec) => ({
-                ...lec,
-                nameSelect: 'GV: ' + lec.fullName + ' - ' + lec.majorName,
-            })),
-            total: lecturerTerms.length,
+            lecturerTerms,
         });
     } catch (error) {
         logger.error(error);
